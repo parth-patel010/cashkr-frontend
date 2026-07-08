@@ -67,6 +67,9 @@ function App() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'PageView');
+    }
   }, [location.pathname]);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
