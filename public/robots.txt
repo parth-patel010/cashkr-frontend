@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /signup
+Disallow: /dashboard
+Disallow: /schedule-pickup
+Disallow: /orders/
+
+Sitemap: https://www.devicekart.in/sitemap.xml

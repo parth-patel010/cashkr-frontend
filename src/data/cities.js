@@ -1,0 +1,36 @@
+export const CITIES = [
+  { slug: 'mumbai', name: 'Mumbai', state: 'Maharashtra' },
+  { slug: 'delhi', name: 'Delhi', state: 'Delhi' },
+  { slug: 'bangalore', name: 'Bangalore', state: 'Karnataka' },
+  { slug: 'hyderabad', name: 'Hyderabad', state: 'Telangana' },
+  { slug: 'chennai', name: 'Chennai', state: 'Tamil Nadu' },
+  { slug: 'kolkata', name: 'Kolkata', state: 'West Bengal' },
+  { slug: 'pune', name: 'Pune', state: 'Maharashtra' },
+  { slug: 'ahmedabad', name: 'Ahmedabad', state: 'Gujarat' },
+  { slug: 'jaipur', name: 'Jaipur', state: 'Rajasthan' },
+  { slug: 'lucknow', name: 'Lucknow', state: 'Uttar Pradesh' },
+  { slug: 'chandigarh', name: 'Chandigarh', state: 'Chandigarh' },
+  { slug: 'kochi', name: 'Kochi', state: 'Kerala' },
+  { slug: 'indore', name: 'Indore', state: 'Madhya Pradesh' },
+  { slug: 'nagpur', name: 'Nagpur', state: 'Maharashtra' },
+  { slug: 'coimbatore', name: 'Coimbatore', state: 'Tamil Nadu' },
+  { slug: 'visakhapatnam', name: 'Visakhapatnam', state: 'Andhra Pradesh' },
+  { slug: 'bhopal', name: 'Bhopal', state: 'Madhya Pradesh' },
+  { slug: 'patna', name: 'Patna', state: 'Bihar' },
+  { slug: 'vadodara', name: 'Vadodara', state: 'Gujarat' },
+  { slug: 'ludhiana', name: 'Ludhiana', state: 'Punjab' },
+  { slug: 'surat', name: 'Surat', state: 'Gujarat' },
+  { slug: 'noida', name: 'Noida', state: 'Uttar Pradesh' },
+  { slug: 'gurgaon', name: 'Gurgaon', state: 'Haryana' },
+  { slug: 'thane', name: 'Thane', state: 'Maharashtra' },
+  { slug: 'faridabad', name: 'Faridabad', state: 'Haryana' },
+  { slug: 'ghaziabad', name: 'Ghaziabad', state: 'Uttar Pradesh' },
+  { slug: 'rajkot', name: 'Rajkot', state: 'Gujarat' },
+  { slug: 'nashik', name: 'Nashik', state: 'Maharashtra' },
+  { slug: 'goa', name: 'Goa', state: 'Goa' },
+  { slug: 'mysore', name: 'Mysore', state: 'Karnataka' },
+];
+
+export function getCityBySlug(slug) {
+  return CITIES.find((c) => c.slug === slug?.toLowerCase());
+}

@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.footer-root {
+  font-family: 'DM Sans', sans-serif;
+  background: #111827;
+  color: #e5e7eb;
+}
+
+/* Main Footer */
+.footer-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 32px 40px;
+  display: grid;
+  grid-template-columns: 280px repeat(4, 1fr);
+  gap: 40px;
+}
+
+/* Brand Column */
+.footer-brand {}
+.footer-brand-tagline {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+.footer-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  background: #1f2937;
+  border-radius: 10px;
+  padding: 10px 14px;
+  width: fit-content;
+}
+.footer-stars {
+  display: flex;
+  gap: 2px;
+}
+.star { color: #f59e0b; font-size: 14px; }
+.footer-rating-text { font-size: 13px; color: #9ca3af; }
+.footer-rating-text strong { color: #fff; }
+
+/* App Buttons */
+.footer-app-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+}
+.app-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+.app-btn:hover { background: #374151; border-color: #0565E6; }
+.app-btn-text {}
+.app-btn-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+.app-btn-name { font-size: 14px; font-weight: 600; color: #fff; }
+.app-btn-icon { color: #0565E6; display: flex; }
+
+/* Links Column */
+.footer-col {}
+.footer-col-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #0565E6;
+  margin-bottom: 18px;
+}
+.footer-col-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-col-links li a,
+.footer-col-links li button {
+  font-size: 14px;
+  color: #9ca3af;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  padding: 0;
+  transition: color 0.15s;
+  text-align: left;
+}
+.footer-col-links li a:hover,
+.footer-col-links li button:hover { color: #fff; }
+
+/* Divider */
+.footer-divider {
+  max-width: 1280px;
+  margin: 0 auto;
+  border: none;
+  border-top: 1px solid #1f2937;
+}
+
+/* Bottom Bar */
+.footer-bottom {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer-copy {
+  font-size: 13px;
+  color: #6b7280;
+}
+.footer-copy a {
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-copy a:hover { color: #fff; }
+
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #9ca3af;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.social-btn:hover { background: #0565E6; color: #fff; border-color: #0565E6; }
+
+.footer-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.footer-badge {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .footer-main {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-app-buttons { flex-direction: row; flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .footer-main {
+    grid-template-columns: 1fr 1fr;
+    padding: 40px 20px 28px;
+    gap: 28px;
+  }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+  .footer-app-buttons { flex-direction: column; }
+}

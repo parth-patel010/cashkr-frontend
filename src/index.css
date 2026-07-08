@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0565E6;
+  --color-primary-dark: #044BA8;
+  --color-primary-light: #E8F1FF;
+  --color-cash-green: #0565E6;
+  --color-cash-green-light: #E8F1FF;
+  --color-border-light: #D4E1FF;
+  --color-text-primary: #111;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-bg-alt: #f9fafb;
+  --font-sans: 'DM Sans', sans-serif;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html, body {
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: #fff;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { margin: 0; }
+}
+
+/* Animated price counter */
+@keyframes priceFlash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); color: #0565E6; }
+  100% { transform: scale(1); }
+}
+.price-animate {
+  animation: priceFlash 0.4s ease;
+}
+
+/* Checkmark animation */
+@keyframes checkDraw {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes scaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.check-animate-circle {
+  animation: scaleIn 0.5s ease forwards;
+}
+.check-animate-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: checkDraw 0.5s ease 0.3s forwards;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Search Results Dropdown */
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 3000;
+  animation: searchDropIn 0.15s ease;
+  scrollbar-width: thin;
+}
+
+@keyframes searchDropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  transition: background 0.12s;
+}
+.search-result-item:hover {
+  background: #f0f4ff;
+}
+.search-result-item:first-child {
+  border-radius: 14px 14px 0 0;
+}
+.search-result-item:last-child {
+  border-radius: 0 0 14px 14px;
+}
+.search-result-item:only-child {
+  border-radius: 14px;
+}
+.search-result-item + .search-result-item {
+  border-top: 1px solid #f0f0f0;
+}
+
+.search-result-image {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.search-result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.search-result-placeholder {
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-result-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.search-result-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-meta {
+  font-size: 12px;
+  color: #888;
+  font-weight: 400;
+}
+
+.search-result-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0565E6;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.search-loading, .search-empty {
+  justify-content: center;
+  padding: 20px 16px;
+  color: #888;
+  font-size: 14px;
+  cursor: default;
+}
+.search-loading:hover, .search-empty:hover {
+  background: none;
+}
+
+.search-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid #e0e0e0;
+  border-top-color: #0565E6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.search-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #0565E6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

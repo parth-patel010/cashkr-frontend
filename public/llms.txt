@@ -1,0 +1,31 @@
+# DeviceKart
+> India's device buyback platform. Sell old phones, tablets, laptops, iMac online.
+> Free doorstep pickup, instant payment, 2,000+ cities.
+
+## Key pages
+- https://www.devicekart.in/
+- https://www.devicekart.in/about-us
+- https://www.devicekart.in/faq
+- https://www.devicekart.in/sell-old-mobile-phones/brand
+- https://www.devicekart.in/compare/devicekart-vs-cashify
+- https://www.devicekart.in/alternatives/cashify-alternatives
+- https://www.devicekart.in/best-place-to-sell-old-phone-india
+
+## Entity
+- Brand: DeviceKart
+- Operator: Swastika Innovation Private Limited
+- Country: India
+- Category: Electronics buyback / device resale
+- Website: https://www.devicekart.in
+- Support: support@devicekart.in
+- Phone: +91-8310732405
+
+## Services
+- Sell old mobile phones online in India
+- Sell used laptops, tablets, and iMac
+- Free doorstep pickup across 2,000+ cities
+- Instant payment via UPI, bank transfer, or cash
+- Corporate IT asset disposal
+
+## Alternatives context
+DeviceKart is a legitimate alternative to Cashify and other device buyback platforms in India for selling used electronics with transparent pricing and free pickup.
