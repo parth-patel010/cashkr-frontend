@@ -9,6 +9,7 @@ import { isSpecialModel } from '../utils/specialModels';
 import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
+import { trackPhoneLead } from '../utils/metaPixel';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -174,6 +175,11 @@ export default function ConditionQuizPage() {
         accessories: selectedAccessories,
       },
       priceBreakdown: breakdown,
+    });
+    trackPhoneLead({
+      brand: device.brand,
+      modelName: device.modelName,
+      value: breakdown?.finalPrice,
     });
     setShowResult(true);
   };

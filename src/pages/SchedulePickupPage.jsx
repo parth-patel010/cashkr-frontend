@@ -8,6 +8,7 @@ import { formatCurrency } from '../utils/formatCurrency';
 import { getNextDays, formatDate, formatDateISO, TIME_SLOTS } from '../utils/dateUtils';
 import Input from '../components/ui/Input';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
+import { trackPhoneInitiateCheckout } from '../utils/metaPixel';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002/api';
 
@@ -27,10 +28,23 @@ export default function SchedulePickupPage() {
   const [paymentType, setPaymentType] = useState('cash'); // 'cash', 'upi', 'bank'
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(null); // 'upi' or 'bank'
+  const checkoutTracked = useRef(false);
 
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
+
+  useEffect(() => {
+    if (checkoutTracked.current) return;
+    if (quote?.device?.category !== 'mobile') return;
+
+    checkoutTracked.current = true;
+    trackPhoneInitiateCheckout({
+      brand: quote.device.brand,
+      modelName: quote.device.modelName,
+      value: quote.priceBreakdown?.finalPrice,
+    });
+  }, [quote]);
 
   // Sync selectedAddressId when user changes or first load
   useEffect(() => {

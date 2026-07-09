@@ -6,6 +6,7 @@ import Loader from '../components/ui/Loader';
 import { CategoryPageSEO } from '../components/seo/DevicePageSEO';
 import { CATEGORY_SEO } from '../config/seo';
 import { BRANDS } from '../constants/devices';
+import { trackPhoneViewContent } from '../utils/metaPixel';
 
 const MobileIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -38,6 +39,10 @@ export default function BrandSelectionPage() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failedLogos, setFailedLogos] = useState({});
+
+  useEffect(() => {
+    trackPhoneViewContent();
+  }, []);
 
   useEffect(() => {
     deviceService.getBrands('mobile').then(res => {

@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { orderService } from '../services/order.service';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
+import { trackPhonePurchase } from '../utils/metaPixel';
 
 export default function OrderConfirmationPage() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activePayment, setActivePayment] = useState('cash');
+  const purchaseTracked = useRef(false);
 
   useEffect(() => {
     orderService.getOrder(orderId).then(res => {
@@ -17,6 +19,15 @@ export default function OrderConfirmationPage() {
       setLoading(false);
       if (res.data.pickup?.paymentMethod) {
         setActivePayment(res.data.pickup.paymentMethod);
+      }
+      if (!purchaseTracked.current && res.data.device?.category === 'mobile') {
+        purchaseTracked.current = true;
+        trackPhonePurchase({
+          orderId: res.data.orderId,
+          brand: res.data.device.brand,
+          modelName: res.data.device.modelName,
+          value: res.data.priceBreakdown?.finalPrice,
+        });
       }
     }).catch(() => setLoading(false));
   }, [orderId]);
