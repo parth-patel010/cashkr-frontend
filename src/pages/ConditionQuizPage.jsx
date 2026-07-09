@@ -112,7 +112,6 @@ export default function ConditionQuizPage() {
       const selectedVariant = dev.variants.find(v => v.storage === storage) || dev.variants[0];
       setCurrentPrice(selectedVariant.basePrice);
       
-      // If the model does not support eSIM, default the state so it doesn't block validation
       if (!supportsESIM(dev.modelName)) {
         seteSIMSupport('physical+esim');
       }
@@ -166,6 +165,7 @@ export default function ConditionQuizPage() {
   ]);
 
   const handleGetBestPrice = () => {
+    const quoteValue = breakdown?.finalPrice ?? currentPrice;
     updateQuote({
       device: { 
         brand: device.brand, 
@@ -187,10 +187,24 @@ export default function ConditionQuizPage() {
       },
       priceBreakdown: breakdown,
     });
+    leadTrackedRef.current = true;
+    trackPhoneLead({
+      brand: device.brand,
+      modelName: device.modelName,
+      value: quoteValue,
+    });
     setShowResult(true);
   };
 
   const handleSchedulePickup = () => {
+    if (!leadTrackedRef.current) {
+      leadTrackedRef.current = true;
+      trackPhoneLead({
+        brand: device.brand,
+        modelName: device.modelName,
+        value: breakdown?.finalPrice ?? currentPrice,
+      });
+    }
     trackPhoneInitiateCheckout({
       brand: device.brand,
       modelName: device.modelName,
