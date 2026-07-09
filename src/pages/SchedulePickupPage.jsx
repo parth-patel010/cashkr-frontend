@@ -8,7 +8,7 @@ import { formatCurrency } from '../utils/formatCurrency';
 import { getNextDays, formatDate, formatDateISO, TIME_SLOTS } from '../utils/dateUtils';
 import Input from '../components/ui/Input';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
-import { trackPhoneInitiateCheckout } from '../utils/metaPixel';
+import { trackPhoneInitiateCheckout, isMobileQuote } from '../utils/metaPixel';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002/api';
 
@@ -36,7 +36,7 @@ export default function SchedulePickupPage() {
 
   useEffect(() => {
     if (checkoutTracked.current) return;
-    if (quote?.device?.category !== 'mobile') return;
+    if (!isMobileQuote(quote?.device)) return;
 
     checkoutTracked.current = true;
     trackPhoneInitiateCheckout({

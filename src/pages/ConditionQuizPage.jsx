@@ -9,7 +9,7 @@ import { isSpecialModel } from '../utils/specialModels';
 import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
-import { trackPhoneLead } from '../utils/metaPixel';
+import { trackPhoneLead, trackPhoneInitiateCheckout } from '../utils/metaPixel';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -185,6 +185,16 @@ export default function ConditionQuizPage() {
   };
 
   const handleSchedulePickup = () => {
+    trackPhoneLead({
+      brand: device.brand,
+      modelName: device.modelName,
+      value: breakdown?.finalPrice ?? currentPrice,
+    });
+    trackPhoneInitiateCheckout({
+      brand: device.brand,
+      modelName: device.modelName,
+      value: breakdown?.finalPrice ?? currentPrice,
+    });
     if (!isAuthenticated) {
       navigate('/login?returnUrl=/schedule-pickup');
     } else {

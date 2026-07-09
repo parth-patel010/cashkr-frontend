@@ -4,7 +4,7 @@ import { orderService } from '../services/order.service';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
-import { trackPhonePurchase } from '../utils/metaPixel';
+import { trackPhonePurchase, isMobileQuote } from '../utils/metaPixel';
 
 export default function OrderConfirmationPage() {
   const { orderId } = useParams();
@@ -20,7 +20,7 @@ export default function OrderConfirmationPage() {
       if (res.data.pickup?.paymentMethod) {
         setActivePayment(res.data.pickup.paymentMethod);
       }
-      if (!purchaseTracked.current && res.data.device?.category === 'mobile') {
+      if (!purchaseTracked.current && isMobileQuote(res.data.device)) {
         purchaseTracked.current = true;
         trackPhonePurchase({
           orderId: res.data.orderId,
