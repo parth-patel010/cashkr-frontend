@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
@@ -92,6 +92,17 @@ export default function ConditionQuizPage() {
   const [priceAnimating, setPriceAnimating] = useState(false);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [breakdown, setBreakdown] = useState(null);
+  const leadTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (!showResult || !device || leadTrackedRef.current) return;
+    leadTrackedRef.current = true;
+    trackPhoneLead({
+      brand: device.brand,
+      modelName: device.modelName,
+      value: breakdown?.finalPrice ?? currentPrice,
+    });
+  }, [showResult, device, breakdown, currentPrice]);
 
   useEffect(() => {
     deviceService.getDevice(slug).then(res => {
@@ -176,20 +187,10 @@ export default function ConditionQuizPage() {
       },
       priceBreakdown: breakdown,
     });
-    trackPhoneLead({
-      brand: device.brand,
-      modelName: device.modelName,
-      value: breakdown?.finalPrice,
-    });
     setShowResult(true);
   };
 
   const handleSchedulePickup = () => {
-    trackPhoneLead({
-      brand: device.brand,
-      modelName: device.modelName,
-      value: breakdown?.finalPrice ?? currentPrice,
-    });
     trackPhoneInitiateCheckout({
       brand: device.brand,
       modelName: device.modelName,
@@ -248,7 +249,10 @@ export default function ConditionQuizPage() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => setShowResult(false)}
+                      onClick={() => {
+                        leadTrackedRef.current = false;
+                        setShowResult(false);
+                      }}
                       className="text-[#0565E6] font-black text-sm underline underline-offset-8 hover:text-[#044BA8] transition-all"
                     >
                       Recalculate

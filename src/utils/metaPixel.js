@@ -1,13 +1,13 @@
 const CURRENCY = 'INR';
 const MOBILE_CATEGORY = 'mobile';
 
-function trackMetaEvent(eventName, params = {}) {
+function trackMetaEvent(eventName, params = {}, options = {}) {
   if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
-    window.fbq('track', eventName, params);
+    window.fbq('track', eventName, params, options);
   }
 }
 
-/** Fire each named event at most once per browser session (avoids React StrictMode doubles) */
+/** Fire at most once per session (InitiateCheckout, Purchase, ViewContent) */
 function trackOnce(sessionKey, eventName, params = {}) {
   if (typeof window === 'undefined') return;
   try {
@@ -23,14 +23,12 @@ function trackOnce(sessionKey, eventName, params = {}) {
 export function isMobileQuote(device) {
   if (!device) return false;
   if (device.category === 'mobile') return true;
-  // Phone quotes have storage; laptop/tablet quotes use ram / yearBracket
   if (device.storage && !device.ram && device.category !== 'laptop' && device.category !== 'tablet' && device.category !== 'mac') {
     return true;
   }
   return false;
 }
 
-/** Ad landing: user opens the sell-phone brand page */
 export function trackPhoneViewContent() {
   trackOnce('view_content_mobile', 'ViewContent', {
     content_category: MOBILE_CATEGORY,
@@ -38,18 +36,22 @@ export function trackPhoneViewContent() {
   });
 }
 
-/** User completed the condition quiz and received a price quote */
+/** User completed the quiz and received a price quote — always fires (no session dedupe) */
 export function trackPhoneLead({ brand, modelName, value }) {
-  const slug = `${brand}_${modelName}`.replace(/\s+/g, '_').toLowerCase();
-  trackOnce(`lead_${slug}`, 'Lead', {
-    content_category: MOBILE_CATEGORY,
-    content_name: `${brand} ${modelName}`,
-    value: value || 0,
-    currency: CURRENCY,
-  });
+  const contentName = `${brand} ${modelName}`;
+  const eventId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  trackMetaEvent(
+    'Lead',
+    {
+      content_category: MOBILE_CATEGORY,
+      content_name: contentName,
+      value: value || 0,
+      currency: CURRENCY,
+    },
+    { eventID: eventId },
+  );
 }
 
-/** User opened the schedule-pickup step */
 export function trackPhoneInitiateCheckout({ brand, modelName, value }) {
   const slug = `${brand}_${modelName}`.replace(/\s+/g, '_').toLowerCase();
   trackOnce(`checkout_${slug}`, 'InitiateCheckout', {
@@ -60,7 +62,6 @@ export function trackPhoneInitiateCheckout({ brand, modelName, value }) {
   });
 }
 
-/** User placed an order (pickup scheduled) */
 export function trackPhonePurchase({ orderId, brand, modelName, value }) {
   trackOnce(`purchase_${orderId}`, 'Purchase', {
     content_category: MOBILE_CATEGORY,
