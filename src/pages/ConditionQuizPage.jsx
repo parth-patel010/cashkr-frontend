@@ -93,6 +93,54 @@ export default function ConditionQuizPage() {
   const [currentPrice, setCurrentPrice] = useState(0);
   const [breakdown, setBreakdown] = useState(null);
   const leadTrackedRef = useRef(false);
+  const quizRestoredRef = useRef(false);
+  const autoShowResultRef = useRef(false);
+
+  const quizStorageKey = `devicekart_quiz_${slug}_${storage || 'default'}`;
+
+  const getQuizReturnPath = () => {
+    const params = storage ? `?storage=${encodeURIComponent(storage)}` : '';
+    return `/sell-old-mobile-phones/${brand}/${slug}/quiz${params}`;
+  };
+
+  const persistQuizState = (extra = {}) => {
+    try {
+      sessionStorage.setItem(quizStorageKey, JSON.stringify({
+        currentStepIndex,
+        deviceAge,
+        underWarranty,
+        eSIMSupport,
+        ableToMakeCalls,
+        isTouchScreenWorking,
+        isScreenOriginal,
+        physicalIssues,
+        technicalIssues,
+        selectedAccessories,
+        ...extra,
+      }));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const applySavedQuizState = (saved) => {
+    if (saved.currentStepIndex != null) setCurrentStepIndex(saved.currentStepIndex);
+    if (saved.deviceAge) setDeviceAge(saved.deviceAge);
+    if (saved.underWarranty !== undefined) setUnderWarranty(saved.underWarranty);
+    if (saved.eSIMSupport) seteSIMSupport(saved.eSIMSupport);
+    if (saved.ableToMakeCalls !== undefined) setAbleToMakeCalls(saved.ableToMakeCalls);
+    if (saved.isTouchScreenWorking !== undefined) setIsTouchScreenWorking(saved.isTouchScreenWorking);
+    if (saved.isScreenOriginal !== undefined) setIsScreenOriginal(saved.isScreenOriginal);
+    if (saved.physicalIssues) setPhysicalIssues(saved.physicalIssues);
+    if (saved.technicalIssues) setTechnicalIssues(saved.technicalIssues);
+    if (saved.selectedAccessories) setSelectedAccessories(saved.selectedAccessories);
+  };
+
+  const redirectToLogin = (pendingShowResult = false) => {
+    persistQuizState({ pendingShowResult });
+    const returnUrl = encodeURIComponent(getQuizReturnPath());
+    navigate(`/login?returnUrl=${returnUrl}`);
+  };
 
   useEffect(() => {
     if (!showResult || !device || leadTrackedRef.current) return;
@@ -105,6 +153,22 @@ export default function ConditionQuizPage() {
   }, [showResult, device, breakdown, currentPrice]);
 
   useEffect(() => {
+    if (!isAuthenticated || !device) return;
+    try {
+      const raw = sessionStorage.getItem(quizStorageKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved.pendingShowResult) {
+        applySavedQuizState(saved);
+        persistQuizState({ ...saved, pendingShowResult: false });
+        autoShowResultRef.current = true;
+      }
+    } catch {
+      // ignore
+    }
+  }, [isAuthenticated, device, quizStorageKey]);
+
+  useEffect(() => {
     deviceService.getDevice(slug).then(res => {
       const dev = res.data;
       setDevice(dev);
@@ -115,8 +179,25 @@ export default function ConditionQuizPage() {
       if (!supportsESIM(dev.modelName)) {
         seteSIMSupport('physical+esim');
       }
+
+      if (!quizRestoredRef.current) {
+        quizRestoredRef.current = true;
+        try {
+          const raw = sessionStorage.getItem(quizStorageKey);
+          if (raw) {
+            const saved = JSON.parse(raw);
+            applySavedQuizState(saved);
+            if (saved.pendingShowResult && isAuthenticated) {
+              persistQuizState({ ...saved, pendingShowResult: false });
+              autoShowResultRef.current = true;
+            }
+          }
+        } catch {
+          // ignore corrupt storage
+        }
+      }
     }).catch(() => setLoading(false));
-  }, [slug, storage]);
+  }, [slug, storage, quizStorageKey, isAuthenticated]);
 
   // Auto-set warranty to "No" (with no deduction) for devices older than 11 months
   useEffect(() => {
@@ -164,7 +245,47 @@ export default function ConditionQuizPage() {
     selectedAccessories
   ]);
 
+  useEffect(() => {
+    if (!autoShowResultRef.current || !breakdown || !isAuthenticated || !device) return;
+    autoShowResultRef.current = false;
+    const quoteValue = breakdown.finalPrice ?? currentPrice;
+    updateQuote({
+      device: {
+        brand: device.brand,
+        modelName: device.modelName,
+        slug: device.slug,
+        category: 'mobile',
+        imageUrl: device.imageUrl || '',
+        storage: storage || device.variants[0].storage,
+        deviceAge,
+        ableToMakeCalls,
+        isTouchScreenWorking,
+        isScreenOriginal,
+        underWarranty,
+        hasGSTBill: selectedAccessories.includes('Bill'),
+        eSIMSupport,
+        physicalIssues,
+        technicalIssues,
+        accessories: selectedAccessories,
+      },
+      priceBreakdown: breakdown,
+    });
+    if (!leadTrackedRef.current) {
+      leadTrackedRef.current = true;
+      trackPhoneLead({
+        brand: device.brand,
+        modelName: device.modelName,
+        value: quoteValue,
+      });
+    }
+    setShowResult(true);
+  }, [breakdown, isAuthenticated, device, currentPrice, storage, deviceAge, ableToMakeCalls, isTouchScreenWorking, isScreenOriginal, underWarranty, eSIMSupport, physicalIssues, technicalIssues, selectedAccessories, updateQuote]);
+
   const handleGetBestPrice = () => {
+    if (!isAuthenticated) {
+      redirectToLogin(true);
+      return;
+    }
     const quoteValue = breakdown?.finalPrice ?? currentPrice;
     updateQuote({
       device: { 
@@ -217,8 +338,18 @@ export default function ConditionQuizPage() {
     }
   };
 
+  useEffect(() => {
+    if (showResult && !isAuthenticated && device) {
+      redirectToLogin(true);
+    }
+  }, [showResult, isAuthenticated, device]);
+
   if (loading) return <Loader />;
   if (!device) return <div className="text-center py-20 text-gray-500">Device not found</div>;
+
+  if (showResult && !isAuthenticated) {
+    return <Loader />;
+  }
 
   // --- RESULT VIEW ---
   if (showResult) {
@@ -818,16 +949,34 @@ export default function ConditionQuizPage() {
             <h2 className="text-2xl font-black text-[#111827] mb-8">Device Evaluation</h2>
             
             {/* Price Box */}
-            <div className="bg-[#E8F1FF] rounded-3xl p-6 mb-8 flex items-center justify-between border border-[#0565E6]/10">
-              <div>
-                <p className="text-[#0565E6] text-xs font-bold uppercase tracking-widest mb-1">Estimated Value</p>
-                <p className={`text-3xl font-black text-[#111827] transition-all ${priceAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
-                  {formatCurrency(currentPrice)}
-                </p>
+            <div className="relative mb-8">
+              <div
+                className={`bg-[#E8F1FF] rounded-3xl p-6 flex items-center justify-between border border-[#0565E6]/10 transition-all ${
+                  !isAuthenticated ? 'blur-md select-none pointer-events-none' : ''
+                }`}
+              >
+                <div>
+                  <p className="text-[#0565E6] text-xs font-bold uppercase tracking-widest mb-1">Estimated Value</p>
+                  <p className={`text-3xl font-black text-[#111827] transition-all ${priceAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
+                    {isAuthenticated ? formatCurrency(currentPrice) : '₹•••••'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#0565E6] shadow-sm">
+                  <IconTrend />
+                </div>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#0565E6] shadow-sm">
-                <IconTrend />
-              </div>
+              {!isAuthenticated && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-3xl bg-white/60 backdrop-blur-[2px] px-4">
+                  <p className="text-xs font-bold text-gray-500 text-center">Login to unlock your offer price</p>
+                  <button
+                    type="button"
+                    onClick={() => redirectToLogin(false)}
+                    className="bg-[#0565E6] text-white font-black text-sm px-6 py-3 rounded-xl hover:bg-[#044BA8] transition-all shadow-lg shadow-blue-100"
+                  >
+                    Login to view price
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Summary List */}
