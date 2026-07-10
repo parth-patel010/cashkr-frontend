@@ -10,6 +10,7 @@ import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneLead, trackPhoneInitiateCheckout } from '../utils/metaPixel';
+import { setLoginContext } from '../utils/loginContext';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -138,6 +139,14 @@ export default function ConditionQuizPage() {
 
   const redirectToLogin = (pendingShowResult = false) => {
     persistQuizState({ pendingShowResult });
+    setLoginContext({
+      category: 'mobile',
+      brand: device?.brand || brand,
+      modelName: device?.modelName || '',
+      slug,
+      storage: storage || '',
+      quizPath: getQuizReturnPath(),
+    });
     const returnUrl = encodeURIComponent(getQuizReturnPath());
     navigate(`/login?returnUrl=${returnUrl}`);
   };
@@ -332,6 +341,14 @@ export default function ConditionQuizPage() {
       value: breakdown?.finalPrice ?? currentPrice,
     });
     if (!isAuthenticated) {
+      setLoginContext({
+        category: 'mobile',
+        brand: device.brand,
+        modelName: device.modelName,
+        slug: device.slug,
+        storage: storage || '',
+        quizPath: getQuizReturnPath(),
+      });
       navigate('/login?returnUrl=/schedule-pickup');
     } else {
       navigate('/schedule-pickup');

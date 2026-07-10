@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
-import { Search, ChevronLeft, ChevronRight, X, ClipboardList, Calendar, Phone, Mail, User } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, ClipboardList, Calendar, Phone, Mail, User, Smartphone } from 'lucide-react';
 import './admin.css';
 
 export default function AdminUsers() {
@@ -105,6 +105,7 @@ export default function AdminUsers() {
                   <th>User Details</th>
                   <th>Contact Info</th>
                   <th>Referral Code</th>
+                  <th>Last Quiz Device</th>
                   <th>Joined Date</th>
                   <th>Orders Count</th>
                   <th className="text-right">Actions</th>
@@ -132,6 +133,25 @@ export default function AdminUsers() {
                       <span className="font-mono text-xs bg-blue-50 border border-blue-200 text-blue-600 py-0.5 px-1.5 rounded">
                         {user.referralCode || 'N/A'}
                       </span>
+                    </td>
+                    <td>
+                      {user.lastQuizDevice?.modelName ? (
+                        <div>
+                          <div className="font-bold text-slate-900 text-xs">
+                            {user.lastQuizDevice.brand} {user.lastQuizDevice.modelName}
+                          </div>
+                          <div className="text-[10px] text-slate-400 capitalize">
+                            {user.lastQuizDevice.storage || '—'}
+                            {user.lastQuizDevice.loggedInAt && (
+                              <> · {new Date(user.lastQuizDevice.loggedInAt).toLocaleDateString('en-IN', {
+                                day: '2-digit', month: 'short', year: 'numeric'
+                              })}</>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">—</span>
+                      )}
                     </td>
                     <td>
                       <div className="text-xs">
@@ -254,6 +274,27 @@ export default function AdminUsers() {
                     </div>
                   </div>
                 </div>
+
+                {selectedUser.lastQuizDevice?.modelName && (
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2 md:col-span-2">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="text-amber-600 w-5 h-5" />
+                      <span className="text-[12px] font-800 text-amber-800 uppercase tracking-wider">
+                        Last Quiz Device (login context)
+                      </span>
+                    </div>
+                    <div className="text-sm font-bold text-slate-900">
+                      {selectedUser.lastQuizDevice.brand} {selectedUser.lastQuizDevice.modelName}
+                      {selectedUser.lastQuizDevice.storage ? ` · ${selectedUser.lastQuizDevice.storage}` : ''}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      Category: <span className="capitalize">{selectedUser.lastQuizDevice.category || 'mobile'}</span>
+                      {selectedUser.lastQuizDevice.loggedInAt && (
+                        <> · Logged in during quiz: {new Date(selectedUser.lastQuizDevice.loggedInAt).toLocaleString('en-IN')}</>
+                      )}
+                    </div>
+                  </div>
+                )}
 
               </div>
 

@@ -43,13 +43,21 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
-  const verifyOtp = useCallback(async (phone, otp, sessionId) => {
-    const { data } = await authService.verifyOtp(phone, otp, sessionId);
+  const verifyOtp = useCallback(async (phone, otp, sessionId, name, quizContext) => {
+    const { data } = await authService.verifyOtp(phone, otp, sessionId, name, quizContext);
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
+  }, []);
+
+  const updateProfile = useCallback(async (profileData) => {
+    const { data } = await userService.updateMe(profileData);
+    const userData = data.user || data;
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
   }, []);
 
   const logout = useCallback(async () => {
@@ -72,7 +80,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, sendOtp, verifyOtp, logout, refreshUser, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, signup, sendOtp, verifyOtp, updateProfile, logout, refreshUser, loading, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

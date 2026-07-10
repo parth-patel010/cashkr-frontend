@@ -430,7 +430,6 @@ export default function SchedulePickupPage() {
 function CreateAddressModal({ onClose }) {
   const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState('');
   const [pincodeError, setPincodeError] = useState('');
   const [pincodeChecking, setPincodeChecking] = useState(false);
   const pincodeDebounce = useRef(null);
@@ -442,7 +441,7 @@ function CreateAddressModal({ onClose }) {
     pincode: '',
     city: '',
     state: '',
-    name: user?.name || '',
+    name: user?.name && user.name !== 'User' ? user.name : '',
     phone: user?.phone || '',
   });
 
@@ -478,24 +477,6 @@ function CreateAddressModal({ onClose }) {
     setPincodeError('');
     if (pincodeDebounce.current) clearTimeout(pincodeDebounce.current);
     pincodeDebounce.current = setTimeout(() => checkPincode(val), 500);
-  };
-
-  const handleAutofill = () => {
-    // Demo autofill — checks a real pincode
-    handlePincodeChange('400067');
-    setForm(f => ({
-      ...f,
-      address: '1223, Orlem, Malad West',
-      landmark: 'Near Orlem Church',
-      pincode: '400067',
-    }));
-  };
-
-  const handleSearch = (text) => {
-    setSearchText(text);
-    if (text.length > 3) {
-       handleAutofill();
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -555,31 +536,6 @@ function CreateAddressModal({ onClose }) {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
-                Search Address
-              </label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  value={searchText}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Search here to autofill address" 
-                  className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6] transition-all pr-32"
-                />
-                <button 
-                  type="button" 
-                  onClick={handleAutofill}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white border border-gray-100 shadow-sm px-4 py-2 rounded-xl text-xs font-black text-[#111827] flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-all"
-                >
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
-                   Autofill
-                </button>
-              </div>
-              <p className="text-[10px] text-gray-400 font-bold mt-2 ml-1">Search here to autofill your address details</p>
             </div>
 
             <div className="md:col-span-2">

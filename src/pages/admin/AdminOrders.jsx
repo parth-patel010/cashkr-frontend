@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
-import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, Calendar, CreditCard } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, Calendar, CreditCard, Download } from 'lucide-react';
 import './admin.css';
 
 const ORDER_STATUSES = [
@@ -139,7 +139,10 @@ export default function AdminOrders() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -151,11 +154,18 @@ export default function AdminOrders() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchOrders = () => {
-    setLoading(true);
-    const params = { page, limit: 10 };
+  const buildFilterParams = () => {
+    const params = {};
     if (debouncedSearch) params.search = debouncedSearch;
     if (status) params.status = status;
+    if (fromDate) params.fromDate = fromDate;
+    if (toDate) params.toDate = toDate;
+    return params;
+  };
+
+  const fetchOrders = () => {
+    setLoading(true);
+    const params = { page, limit: 10, ...buildFilterParams() };
 
     adminService.getOrders(params)
       .then((res) => {
@@ -172,7 +182,26 @@ export default function AdminOrders() {
 
   useEffect(() => {
     fetchOrders();
-  }, [debouncedSearch, status, page]);
+  }, [debouncedSearch, status, fromDate, toDate, page]);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await adminService.exportOrders(buildFilterParams());
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to export orders');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdatingId(orderId);
@@ -225,6 +254,33 @@ export default function AdminOrders() {
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
+
+          <input
+            type="date"
+            className="admin-select"
+            value={fromDate}
+            onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+            title="From date"
+          />
+
+          <input
+            type="date"
+            className="admin-select"
+            value={toDate}
+            min={fromDate || undefined}
+            onChange={(e) => { setToDate(e.target.value); setPage(1); }}
+            title="To date"
+          />
+
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="admin-btn admin-btn-primary text-xs py-2 px-4 flex items-center gap-2"
+          >
+            <Download size={14} />
+            {exporting ? 'Exporting...' : 'Download Excel'}
+          </button>
         </div>
 
         <div className="text-sm font-semibold text-slate-500">

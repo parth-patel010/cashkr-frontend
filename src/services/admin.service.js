@@ -52,6 +52,7 @@ export const adminService = {
 
   // Orders
   getOrders: (params) => adminApi.get('/admin/orders', { params }),
+  exportOrders: (params) => adminApi.get('/admin/orders/export', { params, responseType: 'blob' }),
   updateOrderStatus: (id, status) => adminApi.patch(`/admin/orders/${id}/status`, { status }),
 
   // Pincodes

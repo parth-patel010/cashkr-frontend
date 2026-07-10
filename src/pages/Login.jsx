@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { getLoginContext, clearLoginContext } from "../utils/loginContext";
 import SEOHead from "../components/seo/SEOHead";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ const EditIcon = () => (
 
 // ─── Step 1: Phone Number ─────────────────────────────────────────────────────
 
-function PhoneStep({ onNext, loading, error }) {
+function PhoneStep({ onNext, loading, error, isSignup }) {
   const [phone, setPhone] = useState("");
 
   const handleSubmit = (e) => {
@@ -38,10 +39,12 @@ function PhoneStep({ onNext, loading, error }) {
     <>
       <div className="inline-flex items-center gap-2 bg-[#0565E6]/5 text-[#0565E6] text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-6 border border-gray-100">
         <div className="w-1.5 h-1.5 bg-[#0565E6] rounded-full" />
-        Welcome Back
+        {isSignup ? 'Get Started' : 'Welcome Back'}
       </div>
 
-      <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">Login</h1>
+      <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">
+        {isSignup ? 'Sign Up' : 'Login'}
+      </h1>
       <p className="text-sm text-text-muted mb-8">Enter your phone number to receive a one-time password.</p>
 
       {error && (
@@ -190,13 +193,72 @@ function OtpStep({ phone, onVerify, onBack, loading, error, onResend }) {
   );
 }
 
+// ─── Step 3: Name (new users) ─────────────────────────────────────────────────
+
+function NameStep({ onSubmit, loading, error, isSignup }) {
+  const [name, setName] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed.length >= 2) onSubmit(trimmed);
+  };
+
+  return (
+    <>
+      <div className="inline-flex items-center gap-2 bg-[#0565E6]/5 text-[#0565E6] text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-6 border border-gray-100">
+        <div className="w-1.5 h-1.5 bg-[#0565E6] rounded-full" />
+        {isSignup ? 'Almost there' : 'One more step'}
+      </div>
+
+      <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">
+        {isSignup ? 'Create your account' : 'What\'s your name?'}
+      </h1>
+      <p className="text-sm text-text-muted mb-8">
+        We need your name for pickup scheduling and order updates.
+      </p>
+
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-xs font-bold mb-6">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5 ml-1 block">Full Name</label>
+          <input
+            type="text"
+            placeholder="Enter your full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+            className="w-full px-4 py-3 border-[1.5px] border-gray-200 rounded-xl text-sm font-sans text-text-primary outline-none bg-gray-50 focus:border-[#0565E6] focus:ring-4 focus:ring-[#0565E6]/10 focus:bg-white transition-all"
+            required
+            minLength={2}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={name.trim().length < 2 || loading}
+          className="w-full bg-[#0565E6] hover:bg-[#0452B9] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-[#0565E6]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Saving...' : 'Continue'}
+          {!loading && <ArrowRightIcon />}
+        </button>
+      </form>
+    </>
+  );
+}
+
 // ─── Resend Timer ─────────────────────────────────────────────────────────────
 
 function ResendTimer({ onResend }) {
   const [seconds, setSeconds] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setSeconds((s) => {
         if (s <= 1) {
@@ -208,7 +270,7 @@ function ResendTimer({ onResend }) {
       });
     }, 1000);
     return () => clearInterval(interval);
-  });
+  }, []);
 
   const handleResend = () => {
     if (!canResend) return;
@@ -239,14 +301,21 @@ function ResendTimer({ onResend }) {
 // ─── Login Page ───────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const [step, setStep] = useState("phone"); // "phone" | "otp"
+  const [step, setStep] = useState("phone"); // "phone" | "otp" | "name"
   const [phone, setPhone] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { sendOtp, verifyOtp } = useAuth();
+  const [isSignupFlow, setIsSignupFlow] = useState(false);
+  const { sendOtp, verifyOtp, updateProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isSignupPage = location.pathname === '/signup';
+
+  const getReturnUrl = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("returnUrl") || "/dashboard";
+  };
 
   const handleSendOtp = async (phoneNumber) => {
     setLoading(true);
@@ -267,12 +336,30 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      await verifyOtp(phone, otp, sessionId);
-      const params = new URLSearchParams(location.search);
-      const returnUrl = params.get("returnUrl") || "/dashboard";
-      navigate(returnUrl);
+      const quizContext = getLoginContext();
+      const data = await verifyOtp(phone, otp, sessionId, undefined, quizContext);
+      if (quizContext) clearLoginContext();
+      if (data.needsName) {
+        setIsSignupFlow(data.isNewUser || isSignupPage);
+        setStep("name");
+      } else {
+        navigate(getReturnUrl());
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveName = async (name) => {
+    setLoading(true);
+    setError("");
+    try {
+      await updateProfile({ name });
+      navigate(getReturnUrl());
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save name. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -290,8 +377,9 @@ export default function LoginPage() {
 
         {/* Step indicators */}
         <div className="flex items-center gap-2 mb-8">
-          {["Phone", "OTP"].map((label, i) => {
-            const stepIndex = step === "phone" ? 0 : 1;
+          {["Phone", "OTP", ...(step === "name" || isSignupFlow ? ["Name"] : [])].map((label, i) => {
+            const steps = step === "name" ? ["phone", "otp", "name"] : ["phone", "otp"];
+            const stepIndex = steps.indexOf(step);
             const isActive = i === stepIndex;
             const isDone = i < stepIndex;
             return (
@@ -304,7 +392,7 @@ export default function LoginPage() {
                   </div>
                   {label}
                 </div>
-                {i < 1 && (
+                {i < (step === "name" ? 2 : 1) && (
                   <div className={`w-8 h-px transition-all ${isDone || isActive ? "bg-[#0565E6]/30" : "bg-gray-100"}`} />
                 )}
               </div>
@@ -317,6 +405,7 @@ export default function LoginPage() {
             onNext={handleSendOtp}
             loading={loading}
             error={error}
+            isSignup={isSignupPage}
           />
         )}
 
@@ -328,6 +417,15 @@ export default function LoginPage() {
             onResend={() => handleSendOtp(phone)}
             loading={loading}
             error={error}
+          />
+        )}
+
+        {step === "name" && (
+          <NameStep
+            onSubmit={handleSaveName}
+            loading={loading}
+            error={error}
+            isSignup={isSignupFlow}
           />
         )}
 
