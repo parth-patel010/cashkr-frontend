@@ -78,7 +78,7 @@ export default function ConditionQuizPage() {
 
   const [physicalIssues, setPhysicalIssues] = useState([]);
   const [technicalIssues, setTechnicalIssues] = useState([]);
-  const [selectedAccessories, setSelectedAccessories] = useState(['Bill', 'Box', 'Charger']);
+  const [selectedAccessories, setSelectedAccessories] = useState([]);
 
   // When device loads and is special, remove Bill from default selection
   useEffect(() => {
