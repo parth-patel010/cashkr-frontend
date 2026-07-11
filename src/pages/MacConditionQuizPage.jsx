@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
@@ -8,6 +8,7 @@ import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
 import Modal from '../components/ui/Modal';
+import { setLoginContext } from '../utils/loginContext';
 
 const STEPS = [
   { id: 'specs', label: 'Specs' },
@@ -37,6 +38,8 @@ export default function MacConditionQuizPage() {
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1); 
   const [showResult, setShowResult] = useState(false);
+  const autoShowResultRef = useRef(false);
+  const quizRestoredRef = useRef(false);
   
   // Modals
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
@@ -58,16 +61,99 @@ export default function MacConditionQuizPage() {
   const [currentPrice, setCurrentPrice] = useState(0);
   const [breakdown, setBreakdown] = useState(null);
 
+  const quizStorageKey = `devicekart_mac_quiz_${slug}`;
+
+  const getQuizReturnPath = () => `/sell-imac/${brand}/${slug}/quiz`;
+
+  const persistQuizState = (extra = {}) => {
+    try {
+      sessionStorage.setItem(quizStorageKey, JSON.stringify({
+        specs, age, functionalIssues, issuesList,
+        screenIssues, screenIssuesList, bodyIssues, bodyIssuesList,
+        accessories, currentStep,
+        ...extra,
+      }));
+    } catch { /* ignore */ }
+  };
+
+  const applySavedQuizState = (saved) => {
+    if (saved.specs) setSpecs(saved.specs);
+    if (saved.age) setAge(saved.age);
+    if (saved.functionalIssues) setFunctionalIssues(saved.functionalIssues);
+    if (saved.issuesList) setIssuesList(saved.issuesList);
+    if (saved.screenIssues) setScreenIssues(saved.screenIssues);
+    if (saved.screenIssuesList) setScreenIssuesList(saved.screenIssuesList);
+    if (saved.bodyIssues) setBodyIssues(saved.bodyIssues);
+    if (saved.bodyIssuesList) setBodyIssuesList(saved.bodyIssuesList);
+    if (saved.accessories) setAccessories(saved.accessories);
+    if (saved.currentStep != null) setCurrentStep(saved.currentStep);
+  };
+
+  const redirectToLogin = (pendingShowResult = false) => {
+    persistQuizState({ pendingShowResult });
+    setLoginContext({
+      category: 'mac',
+      brand: device?.brand || brand,
+      modelName: device?.modelName || '',
+      slug,
+      quizPath: getQuizReturnPath(),
+    });
+    const returnUrl = encodeURIComponent(getQuizReturnPath());
+    navigate(`/login?returnUrl=${returnUrl}`);
+  };
+
   useEffect(() => {
     if (!specs) {
+      // Try to restore specs from session storage before redirecting
+      try {
+        const raw = sessionStorage.getItem(quizStorageKey);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved.specs) {
+            setSpecs(saved.specs);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
       navigate(`/sell-imac/${brand}/${slug}`, { replace: true });
       return;
     }
     deviceService.getDevice(slug).then(res => {
-      setDevice(res.data);
+      const dev = res.data;
+      setDevice(dev);
       setLoading(false);
+
+      if (!quizRestoredRef.current) {
+        quizRestoredRef.current = true;
+        try {
+          const raw = sessionStorage.getItem(quizStorageKey);
+          if (raw) {
+            const saved = JSON.parse(raw);
+            applySavedQuizState(saved);
+            if (saved.pendingShowResult && isAuthenticated) {
+              persistQuizState({ ...saved, pendingShowResult: false });
+              autoShowResultRef.current = true;
+            }
+          }
+        } catch { /* ignore */ }
+      }
     }).catch(() => setLoading(false));
-  }, [slug, specs, navigate, brand]);
+  }, [slug, specs, navigate, brand, quizStorageKey, isAuthenticated]);
+
+  // Restore quiz state after login
+  useEffect(() => {
+    if (!isAuthenticated || !device) return;
+    try {
+      const raw = sessionStorage.getItem(quizStorageKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved.pendingShowResult) {
+        applySavedQuizState(saved);
+        persistQuizState({ ...saved, pendingShowResult: false });
+        autoShowResultRef.current = true;
+      }
+    } catch { /* ignore */ }
+  }, [isAuthenticated, device, quizStorageKey]);
 
   useEffect(() => {
     if (!device || !specs) return;
@@ -84,6 +170,31 @@ export default function MacConditionQuizPage() {
       setBreakdown(result);
     }
   }, [device, specs, age, issuesList, screenIssuesList, bodyIssuesList, accessories]);
+
+  // Auto-show result after login redirect
+  useEffect(() => {
+    if (!autoShowResultRef.current || !breakdown || !isAuthenticated || !device) return;
+    autoShowResultRef.current = false;
+    updateQuote({
+      device: {
+        ...device,
+        category: 'mac',
+        brand,
+        modelName: device.modelName,
+        slug,
+        ...specs,
+        deviceAge: AGE_OPTIONS.find(o => o.key === age)?.label || age,
+        yearBracket: age,
+        functionalIssues: issuesList,
+        screenIssues: screenIssuesList,
+        bodyIssues: bodyIssuesList,
+        accessories
+      },
+      priceBreakdown: breakdown,
+      price: currentPrice
+    });
+    setShowResult(true);
+  }, [breakdown, isAuthenticated, device, currentPrice, specs, age, issuesList, screenIssuesList, bodyIssuesList, accessories, updateQuote, brand, slug]);
 
   const handleSpecsUpdate = (newSpecs) => {
     setSpecs(newSpecs);
@@ -159,6 +270,11 @@ export default function MacConditionQuizPage() {
     setAccessories(list);
     setIsAccessoriesModalOpen(false);
     
+    if (!isAuthenticated) {
+      redirectToLogin(true);
+      return;
+    }
+
     const ageLabel = AGE_OPTIONS.find(o => o.key === age)?.label || age;
     
     updateQuote({
@@ -365,8 +481,31 @@ export default function MacConditionQuizPage() {
           </div>
           <div className="w-full lg:w-[450px]">
             <div className="sticky top-8 space-y-8">
-              <div className="bg-[#0565E6]/5 rounded-[32px] p-8 border border-[#0565E6]/20 shadow-sm flex items-center justify-between">
-                 <div><p className="text-[#0565E6] text-xs font-black uppercase tracking-widest mb-1">Estimated Value</p><p className="text-4xl font-black text-[#0452B9] tracking-tighter">{breakdown ? formatCurrency(currentPrice) : '₹ XX,XXX'}</p></div>
+              <div className="relative">
+                <div
+                  className={`bg-[#0565E6]/5 rounded-[32px] p-8 border border-[#0565E6]/20 shadow-sm flex items-center justify-between transition-all ${
+                    !isAuthenticated ? 'blur-md select-none pointer-events-none' : ''
+                  }`}
+                >
+                  <div>
+                    <p className="text-[#0565E6] text-xs font-black uppercase tracking-widest mb-1">Estimated Value</p>
+                    <p className="text-4xl font-black text-[#0452B9] tracking-tighter">
+                      {isAuthenticated ? (breakdown ? formatCurrency(currentPrice) : '₹ XX,XXX') : '₹•••••'}
+                    </p>
+                  </div>
+                </div>
+                {!isAuthenticated && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[32px] bg-white/60 backdrop-blur-[2px] px-4">
+                    <p className="text-xs font-bold text-gray-500 text-center">Login to unlock your offer price</p>
+                    <button
+                      type="button"
+                      onClick={() => redirectToLogin(false)}
+                      className="bg-[#0565E6] text-white font-black text-sm px-6 py-3 rounded-xl hover:bg-[#044BA8] transition-all shadow-lg shadow-blue-100"
+                    >
+                      Login to view price
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="bg-white rounded-[32px] p-10 border border-gray-100 shadow-sm space-y-8">
                 <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Summary</h4>
