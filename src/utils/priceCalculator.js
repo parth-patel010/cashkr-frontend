@@ -539,9 +539,8 @@ export function calculateLaptopPrice(device, selections) {
     };
     componentBase += getChassisPrice(screenSize);
 
-    if (device.componentBasePrice && device.componentBasePrice > 0) {
-      componentBase = device.componentBasePrice;
-    }
+    // Ensure strict bottom-up calculation per latest rule update
+    // No manual overrides allowed.
 
     // 2. Generation Factor
     const getGenFactor = (cpuStr, gen) => {
