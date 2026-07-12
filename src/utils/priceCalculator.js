@@ -453,7 +453,7 @@ export function calculateLaptopPrice(device, selections) {
       finalPrice,
     };
   } else {
-    // ── 1. Windows Laptop Bottom-Up valuation ──
+    // ── 1. Windows Laptop valuation (DB base price + spec increments) ──
     const deviceProcessor = device.generation 
       ? `${device.processorFamily || ''} - ${device.generation}` 
       : (device.processorFamily || '');
@@ -480,8 +480,31 @@ export function calculateLaptopPrice(device, selections) {
     // Get Brand Tier Multiplier
     const brandMultiplier = getBrandMultiplier(device);
     
-    // Brand Value (Branded Base Price)
-    const basePrice = Math.round(componentSum * brandMultiplier);
+    // ── Use DB basePrice as floor: take the higher of DB price and component sum ──
+    // This ensures curated database prices are always respected, while high-spec
+    // selections can still push the price higher than the DB base.
+    let dbBasePrice = 0;
+    if (device.variants && device.variants.length > 0) {
+      // Try to find matching variant by specs
+      const matchedVariant = device.variants.find(v =>
+        v.ram === ram &&
+        v.storage === storage &&
+        (!selections.processor || v.processor === selections.processor) &&
+        (!selections.generation || v.generation === selections.generation)
+      );
+      if (matchedVariant) {
+        dbBasePrice = matchedVariant.basePrice || 0;
+      } else {
+        // Fallback to first variant's basePrice
+        dbBasePrice = device.variants[0].basePrice || 0;
+      }
+    }
+    
+    // Effective base = whichever is higher: DB base price or computed component sum
+    const effectiveBase = Math.max(dbBasePrice, componentSum);
+    
+    // Brand Value (Branded Base Price) — multiplier applied to effective base
+    const basePrice = Math.round(effectiveBase * brandMultiplier);
     
     // ── 2. Age multiplier (applied to branded base price) ──
     const ageMultiplier = getAgeMultiplier(yearBracket);
