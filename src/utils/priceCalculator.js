@@ -453,39 +453,9 @@ export function calculateLaptopPrice(device, selections) {
       finalPrice,
     };
   } else {
-    // ── 1. Windows Laptop valuation (DB base price + spec increments) ──
-    const deviceProcessor = device.generation 
-      ? `${device.processorFamily || ''} - ${device.generation}` 
-      : (device.processorFamily || '');
-    const processor = selections.processor || deviceProcessor;
-    
-    // Shell Base Value dynamically computed based on generation
-    const { base: functionalBase, increment: cpuIncrement } = getProcessorValuation(processor);
-    
-    // RAM Increment
-    const ramIncrement = getRamIncrement(ram);
-    
-    // Storage Increment
-    const storageIncrement = getStorageIncrement(storage);
-    
-    // Screen Size Increment
-    const screenSizeIncrement = getScreenSizeIncrement(screenSize);
-    
-    // Dedicated GPU Increment
-    const gpuIncrement = getGpuIncrement(selections.hasGpu, selections.isGpuWorking);
-    
-    // Component Sum (Functional Base + CPU + RAM + Storage + GPU + Screen Size)
-    const componentSum = functionalBase + cpuIncrement + ramIncrement + storageIncrement + gpuIncrement + screenSizeIncrement;
-    
-    // Get Brand Tier Multiplier
-    const brandMultiplier = getBrandMultiplier(device);
-    
-    // ── Use DB basePrice as floor: take the higher of DB price and component sum ──
-    // This ensures curated database prices are always respected, while high-spec
-    // selections can still push the price higher than the DB base.
-    let dbBasePrice = 0;
+    // ── 1. Get base price from DB variant (same approach as Apple) ──
+    // Try to find matching variant by specs first, fallback to first variant
     if (device.variants && device.variants.length > 0) {
-      // Try to find matching variant by specs
       const matchedVariant = device.variants.find(v =>
         v.ram === ram &&
         v.storage === storage &&
@@ -493,22 +463,55 @@ export function calculateLaptopPrice(device, selections) {
         (!selections.generation || v.generation === selections.generation)
       );
       if (matchedVariant) {
-        dbBasePrice = matchedVariant.basePrice || 0;
+        basePrice = matchedVariant.basePrice;
+      } else if (device.variants.length === 1 && !device.variants[0].ram) {
+        // Single-variant device (flat price, most non-Apple laptops)
+        basePrice = device.variants[0].basePrice;
       } else {
-        // Fallback to first variant's basePrice
-        dbBasePrice = device.variants[0].basePrice || 0;
+        // Multiple variants but no exact match — use first variant and adjust
+        const baseline = device.variants[0];
+        basePrice = baseline.basePrice;
+
+        const ramVal = (r) => parseInt(r) || 8;
+        basePrice += (ramVal(ram) - ramVal(baseline.ram)) * 200;
+
+        const parseStorage = (s) => {
+          if (!s) return 0;
+          let totalGB = 0;
+          const parts = s.split('+');
+          parts.forEach(p => {
+            const val = parseInt(p.trim()) || 0;
+            const isTB = p.toUpperCase().includes('TB');
+            totalGB += isTB ? val * 1024 : val;
+          });
+          return totalGB;
+        };
+
+        const baselineGB = parseStorage(baseline.storage);
+        const selectedGB = parseStorage(storage);
+        basePrice += (selectedGB - baselineGB) * 5;
       }
     }
-    
-    // Effective base = whichever is higher: DB base price or computed component sum
-    const effectiveBase = Math.max(dbBasePrice, componentSum);
-    
-    // Brand Value (Branded Base Price) — multiplier applied to effective base
-    const basePrice = Math.round(effectiveBase * brandMultiplier);
-    
-    // ── 2. Age multiplier (applied to branded base price) ──
-    const ageMultiplier = getAgeMultiplier(yearBracket);
-    let currentPrice = Math.round(basePrice * ageMultiplier);
+
+    // Fallback: if no DB base price found, use bottom-up component calculation
+    if (!basePrice || basePrice <= 0) {
+      const deviceProcessor = device.generation 
+        ? `${device.processorFamily || ''} - ${device.generation}` 
+        : (device.processorFamily || '');
+      const processor = selections.processor || deviceProcessor;
+      const { base: functionalBase, increment: cpuIncrement } = getProcessorValuation(processor);
+      const ramIncrement = getRamIncrement(ram);
+      const storageIncrement = getStorageIncrement(storage);
+      const screenSizeIncrement = getScreenSizeIncrement(screenSize);
+      const gpuIncrement = getGpuIncrement(selections.hasGpu, selections.isGpuWorking);
+      const componentSum = functionalBase + cpuIncrement + ramIncrement + storageIncrement + gpuIncrement + screenSizeIncrement;
+      const brandMultiplier = getBrandMultiplier(device);
+      basePrice = Math.round(componentSum * brandMultiplier);
+    }
+
+    // ── 2. Age multiplier from DB (same as Apple — uses device.ageMultipliers) ──
+    const ageMult = device.ageMultipliers?.[yearBracket] || 1;
+    let currentPrice = Math.round(basePrice * ageMult);
     const ageAdjustment = currentPrice - basePrice;
     
     // ── 2.5 Power status deduction (if laptop is off, reduce 95% of base price) ──
