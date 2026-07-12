@@ -1,4 +1,5 @@
 import { isSpecialModel } from './specialModels';
+import { RAM_PRICES, STORAGE_PRICES, CPU_PRICES, CPU_GEN_FACTORS } from './laptopPricingData';
 
 // ─── ISSUE DEDUCTION PERCENTAGES ────────────────────────────────────────────
 export const ISSUE_DEDUCTIONS = {
@@ -470,130 +471,161 @@ export function calculateLaptopPrice(device, selections) {
       finalPrice,
     };
   } else {
-    // ── 1. Get base price from DB variant (same approach as Apple) ──
-    // Try to find matching variant by specs first, fallback to first variant
-    if (device.variants && device.variants.length > 0) {
-      const matchedVariant = device.variants.find(v =>
-        v.ram === ram &&
-        v.storage === storage &&
-        (!selections.processor || v.processor === selections.processor) &&
-        (!selections.generation || v.generation === selections.generation)
-      );
-      if (matchedVariant) {
-        basePrice = matchedVariant.basePrice;
-      } else {
-        // Multiple variants but no exact match, OR single variant where user chose different specs.
-        // We calculate the value of the user's upgrades and add it to the baseline price.
-        const baseline = device.variants[0];
-        basePrice = baseline.basePrice;
+    // ── UNIFIED ALGORITHM FOR NON-APPLE LAPTOPS (algorithm-prd.md) ──
 
-        // 1. Calculate component sum for user's selected specs
-        const userProcessor = selections.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
-        const { base: userFunc, increment: userCpu } = getProcessorValuation(userProcessor);
-        const userRam = getRamIncrement(ram);
-        const userStorage = getStorageIncrement(storage);
-        const userSum = userFunc + userCpu + userRam + userStorage;
-
-        // 2. Calculate component sum for baseline specs
-        const baseProcessor = baseline.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
-        const { base: baseFunc, increment: baseCpu } = getProcessorValuation(baseProcessor);
-        const baseRamVal = getRamIncrement(baseline.ram || '8GB'); // Assume 8GB baseline if not specified
-        const baseStorageVal = getStorageIncrement(baseline.storage || '256GB SSD'); // Assume 256GB baseline if not specified
-        const baseSum = baseFunc + baseCpu + baseRamVal + baseStorageVal;
-
-        // 3. Add the upgrade difference to the base price
-        // Cashify heavily discounts the resale value of hardware upgrades compared to raw component costs.
-        // We multiply the raw upgrade value by 0.5 to match the real-world market curve and avoid huge price jumps.
-        const upgradeValue = Math.max(0, userSum - baseSum) * 0.5;
-        basePrice += upgradeValue;
-      }
-    }
-
-    // Fallback: if no DB base price found at all, use full bottom-up calculation
-    if (!basePrice || basePrice <= 0) {
-      const deviceProcessor = device.generation 
-        ? `${device.processorFamily || ''} - ${device.generation}` 
-        : (device.processorFamily || '');
-      const processor = selections.processor || deviceProcessor;
-      const { base: functionalBase, increment: cpuIncrement } = getProcessorValuation(processor);
-      const ramIncrement = getRamIncrement(ram);
-      const storageIncrement = getStorageIncrement(storage);
-      const screenSizeIncrement = getScreenSizeIncrement(screenSize);
-      const gpuIncrement = getGpuIncrement(selections.hasGpu, selections.isGpuWorking);
-      const componentSum = functionalBase + cpuIncrement + ramIncrement + storageIncrement + gpuIncrement + screenSizeIncrement;
-      const brandMultiplier = getBrandMultiplier(device);
-      basePrice = Math.round(componentSum * brandMultiplier);
-    }
-
-    // Convert Retail Base Price to Buy-back Base Price
-    basePrice = Math.round(basePrice * 0.73);
-
-    // Age multiplier from DB + condition bonus (same as Apple)
-    const ageMult = device.ageMultipliers?.[yearBracket] || 1;
-    const conditionMultiplier = calculateConditionMultiplier(totalIssueCount);
-    let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
-    const ageAdjustment = currentPrice - basePrice;
+    // 1. Component Base Price
+    let componentBase = 0;
     
-    // ── 2.5 Power status deduction (if laptop is off, reduce 95% of base price) ──
-    let powerDeduction = 0;
+    // 1.1 CPU
+    const getCpuPrice = (cpu) => {
+      if (!cpu) return 3000;
+      // Exact lookup
+      if (CPU_PRICES[cpu]) return CPU_PRICES[cpu];
+      
+      // Fallback fuzz matching
+      const c = cpu.toLowerCase();
+      let base = 3000;
+      if (c.includes('i3')) base = 3500;
+      if (c.includes('i5') || c.includes('ryzen 5')) base = 6000;
+      if (c.includes('i7') || c.includes('ryzen 7')) base = 9000;
+      if (c.includes('i9') || c.includes('ryzen 9')) base = 12000;
+      if (c.includes('11th')) base += 500;
+      if (c.includes('12th')) base += 2000;
+      if (c.includes('13th')) base += 4000;
+      if (c.includes('14th')) base += 6000;
+      return base;
+    };
+    
+    const deviceProcessor = selections.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
+    componentBase += getCpuPrice(deviceProcessor);
+
+    // 1.2 RAM
+    const getRamPrice = (r) => {
+      if (!r) return 1500;
+      if (RAM_PRICES[r]) return RAM_PRICES[r];
+      
+      const num = parseInt(r);
+      if (num <= 4) return 800;
+      if (num <= 8) return 1500;
+      if (num <= 16) return 2800;
+      if (num <= 32) return 5000;
+      return 6000;
+    };
+    componentBase += getRamPrice(ram);
+
+    // 1.3 Storage
+    const getStoragePrice = (s) => {
+      if (!s) return 1500;
+      if (STORAGE_PRICES[s]) return STORAGE_PRICES[s];
+      
+      if (s.includes('512') && s.toLowerCase().includes('ssd')) return 2800;
+      if (s.includes('1 TB') || s.includes('1TB')) return 4000;
+      if (s.includes('256')) return 1500;
+      return 1500;
+    };
+    componentBase += getStoragePrice(storage);
+
+    // 1.4 GPU
+    const getGpuPrice = (hasGpu, isGpuWorking) => {
+      if (hasGpu && isGpuWorking) return 4000;
+      return 0;
+    };
+    componentBase += getGpuPrice(selections.hasGpu, selections.isGpuWorking);
+
+    // 1.5 Chassis (Screen Size)
+    const getChassisPrice = (size) => {
+      if (size === 'above15') return 6000;
+      return 5000; // 12-14 inches
+    };
+    componentBase += getChassisPrice(screenSize);
+
+    if (device.componentBasePrice && device.componentBasePrice > 0) {
+      componentBase = device.componentBasePrice;
+    }
+
+    // 2. Generation Factor
+    const getGenFactor = (cpuStr, gen) => {
+      if (CPU_GEN_FACTORS[cpuStr]) return CPU_GEN_FACTORS[cpuStr];
+      if (!gen) return 1.00;
+      const g = gen.toLowerCase();
+      if (g.includes('10th')) return 0.95;
+      if (g.includes('11th')) return 1.00;
+      if (g.includes('12th')) return 1.08;
+      if (g.includes('13th')) return 1.15;
+      if (g.includes('14th')) return 1.25;
+      return 1.00;
+    };
+    const genFactor = getGenFactor(deviceProcessor, device.generation || selections.generation);
+
+    // 3. Gaming Factor
+    const gamingFactor = device.isGamingLaptop ? 1.02 : 1.00;
+
+    // 4. Model Factor
+    const getModelFactor = (brand, series) => {
+      const b = (brand || '').toLowerCase();
+      const s = (series || '').toLowerCase();
+      if (b === 'hp' && s.includes('15')) return 1.000;
+      if (b === 'asus' && (s.includes('zenbook') || s.includes('vivobook s'))) return 1.000;
+      if (b === 'hp' && s.includes('victus')) return 1.000;
+      if (b === 'dell' && s.includes('vostro')) return 1.068;
+      if (b === 'dell' && s.includes('g15')) return 1.027;
+      if (b === 'lenovo' && s.includes('ideapad 5')) return 1.108;
+      if (b === 'dell' && s.includes('inspiron') && s.includes('gaming')) return 1.3804;
+      return 1.000;
+    };
+    const modelFactor = getModelFactor(device.brand, device.modelName);
+
+    // 5. Market Multiplier
+    const marketMultiplier = 1.72;
+    const marketValue = componentBase * modelFactor * genFactor * gamingFactor * marketMultiplier;
+
+    // 6. Age Factor
+    const getAgeFactor = (bracket) => {
+      if (bracket === 'lessThan1') return 0.90;
+      if (bracket === 'oneToTwo') return 0.80;
+      if (bracket === 'twoToThree') return 0.70;
+      return 0.60;
+    };
+    const ageFactor = getAgeFactor(yearBracket);
+
+    // 7. Condition Factor
+    const getConditionFactor = (issueCount) => {
+      if (issueCount === 0) return 0.95;
+      if (issueCount <= 2) return 0.80;
+      if (issueCount <= 4) return 0.65;
+      return 0.50;
+    };
+    const conditionFactor = getConditionFactor(totalIssueCount);
+
+    // 8. Screen Size Factor
+    const getScreenSizeFactor = (size) => {
+      if (size === 'above15' || size === '15') return 1.02;
+      return 1.00;
+    };
+    const screenFactor = getScreenSizeFactor(screenSize);
+
+    // 9. Depreciated Value
+    let depreciatedValue = marketValue * ageFactor * conditionFactor * screenFactor;
+
+    // 10. Power status deduction (dead laptop)
     if (powerStatus === 'off') {
-      powerDeduction = Math.round(basePrice * 0.95);
-      currentPrice = Math.max(currentPrice - powerDeduction, 0);
+      depreciatedValue = depreciatedValue * 0.05;
     }
-    
-    // ── 3. Functional issues ──
-    let functionalDeduction = 0;
-    const funcIssues = (functionalIssues || []).filter(i => i !== 'noIssues');
-    for (const issue of funcIssues) {
-      const pct = device.functionalDeductions?.[issue] || 0;
-      if (pct > 0) {
-        const deduction = Math.round(currentPrice * (pct / 100));
-        functionalDeduction += deduction;
-        currentPrice -= deduction;
-      }
-    }
-    
-    // ── 4. Screen issues ──
-    let screenDeduction = 0;
-    const scrIssues = (screenIssues || []).filter(i => i !== 'noIssue');
-    for (const issue of scrIssues) {
-      const pct = device.screenDeductions?.[issue] || 0;
-      if (pct > 0) {
-        const deduction = Math.round(currentPrice * (pct / 100));
-        screenDeduction += deduction;
-        currentPrice -= deduction;
-      }
-    }
-    
-    // ── 5. Body issues ──
-    let bodyDeduction = 0;
-    for (const issue of (bodyIssues || [])) {
-      const pct = device.bodyDeductions?.[issue] || 0;
-      if (pct > 0) {
-        const deduction = Math.round(currentPrice * (pct / 100));
-        bodyDeduction += deduction;
-        currentPrice -= deduction;
-      }
-    }
-    
-    // ── 6. Accessories bonus ──
+
+    // 11. Accessories Bonus
     const accList = Array.isArray(accessories) ? [...accessories] : [];
-    if (yearBracket && yearBracket !== 'lessThan1' && !accList.includes('bill')) {
-      accList.push('bill');
-    }
-    const accBonus = accList.reduce((sum, item) => sum + (device.accessoriesBonus?.[item] || 0), 0);
-    currentPrice += accBonus;
-    
-    const finalPrice = Math.max(Math.round(currentPrice / 100) * 100, 0);
-    
+    const accessoryBonus = accList.includes('charger') ? 300 : 0;
+
+    const finalPrice = Math.max(Math.round((depreciatedValue + accessoryBonus) / 10) * 10, 0);
+
     return {
-      basePrice,
-      ageAdjustment,
-      powerDeduction: -powerDeduction,
-      functionalDeduction: -functionalDeduction,
-      screenDeduction: -screenDeduction,
-      bodyDeduction: -bodyDeduction,
-      accessoriesBonus: accBonus,
+      basePrice: Math.round(marketValue),
+      ageAdjustment: Math.round(marketValue * (ageFactor - 1)),
+      powerDeduction: powerStatus === 'off' ? Math.round(depreciatedValue * -19) : 0,
+      functionalDeduction: 0,
+      screenDeduction: 0,
+      bodyDeduction: 0,
+      accessoriesBonus: accessoryBonus,
       finalPrice,
     };
   }
