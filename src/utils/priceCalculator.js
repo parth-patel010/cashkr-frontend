@@ -351,22 +351,23 @@ export function calculateLaptopPrice(device, selections) {
   
   let basePrice = 0;
 
-  // ── Condition bonus: reward devices in good/perfect condition ──
-  // Cashify applies a condition premium based on how many issues the device has.
-  // Zero issues = "like new" gets the highest multiplier.
+  // Condition multiplier will be calculated dynamically later based on basePrice
   const totalIssueCount = 
     (functionalIssues || []).filter(i => i !== 'noIssues').length +
     (screenIssues || []).filter(i => i !== 'noIssue').length +
     (bodyIssues || []).length;
-  
-  const getConditionMultiplier = (issueCount) => {
-    if (issueCount === 0) return 1.32;  // Like new — no issues at all
-    if (issueCount <= 2) return 1.15;   // Good — minor issues only
-    if (issueCount <= 4) return 1.0;    // Fair — several issues
-    return 1.0;                          // Poor — many issues, no bonus
+    
+  const calculateConditionMultiplier = (baseVal, issueCount) => {
+    let perfectMult = 1.22;
+    if (baseVal <= 15000) perfectMult = 1.48;
+    else if (baseVal <= 20000) perfectMult = 1.35;
+    else if (baseVal <= 30000) perfectMult = 1.25;
+    
+    if (issueCount === 0) return perfectMult;
+    if (issueCount <= 2) return perfectMult - 0.15;
+    if (issueCount <= 4) return 1.0;
+    return 1.0;
   };
-
-  const conditionMultiplier = getConditionMultiplier(totalIssueCount);
 
   if (device.brand === 'Apple') {
     // ── 1. Find base price from variant for Apple ──
@@ -409,6 +410,7 @@ export function calculateLaptopPrice(device, selections) {
 
     // Apple Age Multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
+    const conditionMultiplier = calculateConditionMultiplier(basePrice, totalIssueCount);
     let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
 
@@ -502,7 +504,9 @@ export function calculateLaptopPrice(device, selections) {
         const baseSum = baseFunc + baseCpu + baseRamVal + baseStorageVal;
 
         // 3. Add the upgrade difference to the base price
-        const upgradeValue = Math.max(0, userSum - baseSum);
+        // Cashify heavily discounts the resale value of hardware upgrades compared to raw component costs.
+        // We multiply the raw upgrade value by 0.5 to match the real-world market curve and avoid huge price jumps.
+        const upgradeValue = Math.max(0, userSum - baseSum) * 0.5;
         basePrice += upgradeValue;
       }
     }
@@ -525,6 +529,7 @@ export function calculateLaptopPrice(device, selections) {
 
     // ── 2. Age multiplier from DB + condition bonus (same as Apple) ──
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
+    const conditionMultiplier = calculateConditionMultiplier(basePrice, totalIssueCount);
     let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
     
