@@ -351,6 +351,23 @@ export function calculateLaptopPrice(device, selections) {
   
   let basePrice = 0;
 
+  // ── Condition bonus: reward devices in good/perfect condition ──
+  // Cashify applies a condition premium based on how many issues the device has.
+  // Zero issues = "like new" gets the highest multiplier.
+  const totalIssueCount = 
+    (functionalIssues || []).filter(i => i !== 'noIssues').length +
+    (screenIssues || []).filter(i => i !== 'noIssue').length +
+    (bodyIssues || []).length;
+  
+  const getConditionMultiplier = (issueCount) => {
+    if (issueCount === 0) return 1.54;  // Like new — no issues at all
+    if (issueCount <= 2) return 1.27;   // Good — minor issues only
+    if (issueCount <= 4) return 1.0;    // Fair — several issues
+    return 1.0;                          // Poor — many issues, no bonus
+  };
+
+  const conditionMultiplier = getConditionMultiplier(totalIssueCount);
+
   if (device.brand === 'Apple') {
     // ── 1. Find base price from variant for Apple ──
     let variant = device.variants.find(v => 
@@ -392,7 +409,7 @@ export function calculateLaptopPrice(device, selections) {
 
     // Apple Age Multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
-    let currentPrice = Math.round(basePrice * ageMult);
+    let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
 
     let powerDeduction = 0;
@@ -509,9 +526,9 @@ export function calculateLaptopPrice(device, selections) {
       basePrice = Math.round(componentSum * brandMultiplier);
     }
 
-    // ── 2. Age multiplier from DB (same as Apple — uses device.ageMultipliers) ──
+    // ── 2. Age multiplier from DB + condition bonus (same as Apple) ──
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
-    let currentPrice = Math.round(basePrice * ageMult);
+    let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
     
     // ── 2.5 Power status deduction (if laptop is off, reduce 95% of base price) ──
