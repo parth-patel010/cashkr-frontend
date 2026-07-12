@@ -360,9 +360,9 @@ export function calculateLaptopPrice(device, selections) {
     (bodyIssues || []).length;
   
   const getConditionMultiplier = (issueCount) => {
-    if (issueCount === 0) return 1.58;  // Like new — no issues at all
-    if (issueCount <= 2) return 1.32;   // Good — minor issues only
-    if (issueCount <= 4) return 1.05;   // Fair — several issues
+    if (issueCount === 0) return 1.32;  // Like new — no issues at all
+    if (issueCount <= 2) return 1.15;   // Good — minor issues only
+    if (issueCount <= 4) return 1.0;    // Fair — several issues
     return 1.0;                          // Poor — many issues, no bonus
   };
 
