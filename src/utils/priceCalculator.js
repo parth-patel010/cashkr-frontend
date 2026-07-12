@@ -481,36 +481,33 @@ export function calculateLaptopPrice(device, selections) {
       );
       if (matchedVariant) {
         basePrice = matchedVariant.basePrice;
-      } else if (device.variants.length === 1 && !device.variants[0].ram) {
-        // Single-variant device (flat price, most non-Apple laptops)
-        basePrice = device.variants[0].basePrice;
       } else {
-        // Multiple variants but no exact match — use first variant and adjust
+        // Multiple variants but no exact match, OR single variant where user chose different specs.
+        // We calculate the value of the user's upgrades and add it to the baseline price.
         const baseline = device.variants[0];
         basePrice = baseline.basePrice;
 
-        const ramVal = (r) => parseInt(r) || 8;
-        basePrice += (ramVal(ram) - ramVal(baseline.ram)) * 200;
+        // 1. Calculate component sum for user's selected specs
+        const userProcessor = selections.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
+        const { base: userFunc, increment: userCpu } = getProcessorValuation(userProcessor);
+        const userRam = getRamIncrement(ram);
+        const userStorage = getStorageIncrement(storage);
+        const userSum = userFunc + userCpu + userRam + userStorage;
 
-        const parseStorage = (s) => {
-          if (!s) return 0;
-          let totalGB = 0;
-          const parts = s.split('+');
-          parts.forEach(p => {
-            const val = parseInt(p.trim()) || 0;
-            const isTB = p.toUpperCase().includes('TB');
-            totalGB += isTB ? val * 1024 : val;
-          });
-          return totalGB;
-        };
+        // 2. Calculate component sum for baseline specs
+        const baseProcessor = baseline.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
+        const { base: baseFunc, increment: baseCpu } = getProcessorValuation(baseProcessor);
+        const baseRamVal = getRamIncrement(baseline.ram || '8GB'); // Assume 8GB baseline if not specified
+        const baseStorageVal = getStorageIncrement(baseline.storage || '256GB SSD'); // Assume 256GB baseline if not specified
+        const baseSum = baseFunc + baseCpu + baseRamVal + baseStorageVal;
 
-        const baselineGB = parseStorage(baseline.storage);
-        const selectedGB = parseStorage(storage);
-        basePrice += (selectedGB - baselineGB) * 5;
+        // 3. Add the upgrade difference to the base price
+        const upgradeValue = Math.max(0, userSum - baseSum);
+        basePrice += upgradeValue;
       }
     }
 
-    // Fallback: if no DB base price found, use bottom-up component calculation
+    // Fallback: if no DB base price found at all, use full bottom-up calculation
     if (!basePrice || basePrice <= 0) {
       const deviceProcessor = device.generation 
         ? `${device.processorFamily || ''} - ${device.generation}` 
