@@ -357,11 +357,8 @@ export function calculateLaptopPrice(device, selections) {
     (screenIssues || []).filter(i => i !== 'noIssue').length +
     (bodyIssues || []).length;
     
-  const calculateConditionMultiplier = (baseVal, issueCount) => {
-    let perfectMult = 1.22;
-    if (baseVal <= 15000) perfectMult = 1.48;
-    else if (baseVal <= 20000) perfectMult = 1.35;
-    else if (baseVal <= 30000) perfectMult = 1.25;
+  const calculateConditionMultiplier = (issueCount) => {
+    let perfectMult = 1.38;
     
     if (issueCount === 0) return perfectMult;
     if (issueCount <= 2) return perfectMult - 0.15;
@@ -410,7 +407,7 @@ export function calculateLaptopPrice(device, selections) {
 
     // Apple Age Multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
-    const conditionMultiplier = calculateConditionMultiplier(basePrice, totalIssueCount);
+    const conditionMultiplier = calculateConditionMultiplier(totalIssueCount);
     let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
 
@@ -529,7 +526,7 @@ export function calculateLaptopPrice(device, selections) {
 
     // ── 2. Age multiplier from DB + condition bonus (same as Apple) ──
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
-    const conditionMultiplier = calculateConditionMultiplier(basePrice, totalIssueCount);
+    const conditionMultiplier = calculateConditionMultiplier(totalIssueCount);
     let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
     
