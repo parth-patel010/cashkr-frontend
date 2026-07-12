@@ -358,12 +358,10 @@ export function calculateLaptopPrice(device, selections) {
     (bodyIssues || []).length;
     
   const calculateConditionMultiplier = (issueCount) => {
-    let perfectMult = 1.38;
-    
-    if (issueCount === 0) return perfectMult;
-    if (issueCount <= 2) return perfectMult - 0.15;
-    if (issueCount <= 4) return 1.0;
-    return 1.0;
+    if (issueCount === 0) return 0.95;
+    if (issueCount <= 2) return 0.85;
+    if (issueCount <= 4) return 0.75;
+    return 0.60;
   };
 
   if (device.brand === 'Apple') {
@@ -404,6 +402,9 @@ export function calculateLaptopPrice(device, selections) {
       const selectedGB = parseStorage(storage);
       basePrice += (selectedGB - baselineGB) * 5;
     }
+
+    // Convert Retail Base Price to Buy-back Base Price
+    basePrice = Math.round(basePrice * 0.73);
 
     // Apple Age Multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
@@ -524,7 +525,10 @@ export function calculateLaptopPrice(device, selections) {
       basePrice = Math.round(componentSum * brandMultiplier);
     }
 
-    // ── 2. Age multiplier from DB + condition bonus (same as Apple) ──
+    // Convert Retail Base Price to Buy-back Base Price
+    basePrice = Math.round(basePrice * 0.73);
+
+    // Age multiplier from DB + condition bonus (same as Apple)
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
     const conditionMultiplier = calculateConditionMultiplier(totalIssueCount);
     let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
