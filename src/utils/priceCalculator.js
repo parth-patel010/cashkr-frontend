@@ -27,7 +27,7 @@ export const ISSUE_DEDUCTIONS = {
 
 // ─── MOBILE PRICE CALCULATOR (Sequential / Cascading deduction model) ───────
 // Each deduction is applied to the already-reduced price, NOT the base price.
-// Order: Age → Dead → Touch → Screen Originality → Warranty → GST Bill → eSIM → Charger → Box → Issues
+// Order: Age → Dead → Touch → Screen Originality → Warranty → eSIM → Charger → Box → Issues
 export function calculatePrice({
   brand,
   modelName,
@@ -37,7 +37,6 @@ export function calculatePrice({
   isTouchScreenWorking,
   isScreenOriginal,
   underWarranty,
-  hasGSTBill,
   eSIMSupport,
   physicalIssues = [],
   technicalIssues = [],
@@ -81,28 +80,22 @@ export function calculatePrice({
     applyDeduction('outOfWarranty', 20);
   }
 
-  // 6. No GST bill — 21%
-  // If device is > 11 months old, we do not apply the no GST bill deduction separately
-  if (!isSpecial && hasGSTBill === false && deviceAge !== 'Above 11 Months') {
-    applyDeduction('noBill', 21);
-  }
-
-  // 7. eSIM only global variant — 6%
+  // 6. eSIM only global variant — 6%
   if (eSIMSupport === 'esim_only_global') {
     applyDeduction('eSIM', 6);
   }
 
-  // 8. No charger — 3%
+  // 7. No charger — 3%
   if (hasCharger === false) {
     applyDeduction('noCharger', 3);
   }
 
-  // 9. No box — 5%
+  // 8. No box — 5%
   if (hasBox === false) {
     applyDeduction('noBox', 5);
   }
 
-  // 10. Physical + technical issues (each issue applied sequentially)
+  // 9. Physical + technical issues (each issue applied sequentially)
   for (const id of [...physicalIssues, ...technicalIssues]) {
     const pct = ISSUE_DEDUCTIONS[id];
     if (pct > 0) {
