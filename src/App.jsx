@@ -138,7 +138,7 @@ function App() {
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}
-      <WhatsAppButton />
+      {!isAdminRoute && <WhatsAppButton />}
     </>
   );
 }
