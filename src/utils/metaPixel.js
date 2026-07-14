@@ -100,6 +100,18 @@ export function trackPhoneViewContent() {
  * Phone quote completed.
  * Fires standard Lead (for Meta Ads) + custom PhoneQuote (visible in Pixel Helper if Lead is filtered).
  */
+const GOOGLE_ADS_QUOTE_CONVERSION = 'AW-18298173248/8c7OCNnx588cEMDun5VE';
+
+function trackGoogleAdsQuoteConversion(value) {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  const payload = { send_to: GOOGLE_ADS_QUOTE_CONVERSION };
+  if (value != null && !Number.isNaN(Number(value))) {
+    payload.value = Number(value);
+    payload.currency = CURRENCY;
+  }
+  window.gtag('event', 'conversion', payload);
+}
+
 export function trackPhoneLead({ brand, modelName, value }) {
   const params = buildPhoneParams({ brand, modelName, value });
   const eventId = generateEventId();
@@ -114,6 +126,10 @@ export function trackPhoneLead({ brand, modelName, value }) {
       window.fbq('trackSingle', PIXEL_ID, 'Lead', params, { eventID: eventId });
       window.fbq('trackSingleCustom', PIXEL_ID, 'PhoneQuote', params);
     }
+
+    // Google Ads — Request quote conversion
+    trackGoogleAdsQuoteConversion(value);
+
     return true;
   };
 

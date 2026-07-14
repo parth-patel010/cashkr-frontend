@@ -60,6 +60,10 @@ export const adminService = {
   createPincode: (data) => adminApi.post('/admin/pincodes', data),
   updatePincode: (id, data) => adminApi.put(`/admin/pincodes/${id}`, data),
   deletePincode: (id) => adminApi.delete(`/admin/pincodes/${id}`),
+
+  // Analytics
+  getAnalytics: (params) => adminApi.get('/admin/analytics', { params }),
+  updateMetaSpend: (data) => adminApi.put('/admin/analytics/meta-spend', data),
 };
 
 export default adminApi;

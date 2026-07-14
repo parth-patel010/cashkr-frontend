@@ -6,7 +6,8 @@ import {
   Handshake, 
   ClipboardList, 
   LogOut,
-  MapPin
+  MapPin,
+  BarChart3
 } from 'lucide-react';
 import './admin.css';
 
@@ -23,6 +24,7 @@ export default function AdminLayout() {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path.includes('/dashboard')) return 'Dashboard Overview';
+    if (path.includes('/analytics')) return 'Analytics';
     if (path.includes('/users')) return 'User Directory';
     if (path.includes('/devices')) return 'Device Catalog Management';
     if (path.includes('/partners')) return 'Partner Applications';
@@ -47,6 +49,14 @@ export default function AdminLayout() {
           >
             <LayoutDashboard />
             <span>Dashboard</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/analytics" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <BarChart3 />
+            <span>Analytics</span>
           </NavLink>
 
           <NavLink 

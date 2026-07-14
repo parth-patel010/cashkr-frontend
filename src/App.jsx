@@ -61,6 +61,7 @@ import AdminDevices from './pages/admin/AdminDevices.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminPincodes from './pages/admin/AdminPincodes.jsx';
+import AdminAnalytics from './pages/admin/AdminAnalytics.jsx';
 
 function App() {
   const location = useLocation();
@@ -127,6 +128,7 @@ function App() {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="devices" element={<AdminDevices />} />
             <Route path="partners" element={<AdminPartners />} />
