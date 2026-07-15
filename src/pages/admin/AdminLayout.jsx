@@ -10,7 +10,8 @@ import {
   ClipboardList, 
   LogOut,
   MapPin,
-  BarChart3
+  BarChart3,
+  MessageCircle
 } from 'lucide-react';
 import './admin.css';
 
@@ -33,6 +34,7 @@ export default function AdminLayout() {
     if (path.includes('/brands')) return 'Brand Management';
     if (path.includes('/buy-devices')) return 'Buy Device Inventory';
     if (path.includes('/repair-services')) return 'Repair Services';
+    if (path.includes('/chat')) return 'Live Chat';
     if (path.includes('/partners')) return 'Partner Applications';
     if (path.includes('/orders')) return 'System Orders';
     if (path.includes('/pincodes')) return 'Serviceable Pincodes';
@@ -103,6 +105,14 @@ export default function AdminLayout() {
           >
             <Wrench />
             <span>Repair</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/chat" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <MessageCircle />
+            <span>Live Chat</span>
           </NavLink>
 
           <NavLink 

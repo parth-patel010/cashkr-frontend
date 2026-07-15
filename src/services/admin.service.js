@@ -100,6 +100,12 @@ export const adminService = {
   getRepairOrders: (params) => adminApi.get('/admin/repair-orders', { params }),
   updateRepairOrderStatus: (id, status) => adminApi.patch(`/admin/repair-orders/${id}/status`, { status }),
 
+  // Live chat
+  getChatConversations: (params) => adminApi.get('/admin/chat/conversations', { params }),
+  getChatMessages: (id) => adminApi.get(`/admin/chat/conversations/${id}/messages`),
+  sendChatMessage: (id, text) => adminApi.post(`/admin/chat/conversations/${id}/messages`, { text }),
+  closeChat: (id) => adminApi.patch(`/admin/chat/conversations/${id}/close`),
+
   // Pincodes
   getPincodes: (params) => adminApi.get('/admin/pincodes', { params }),
   createPincode: (data) => adminApi.post('/admin/pincodes', data),

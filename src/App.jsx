@@ -65,6 +65,7 @@ import AdminDevices from './pages/admin/AdminDevices.jsx';
 import AdminBrands from './pages/admin/AdminBrands.jsx';
 import AdminBuyDevices from './pages/admin/AdminBuyDevices.jsx';
 import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
+import AdminChat from './pages/admin/AdminChat.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminPincodes from './pages/admin/AdminPincodes.jsx';
@@ -145,6 +146,7 @@ function App() {
             <Route path="brands" element={<AdminBrands />} />
             <Route path="buy-devices" element={<AdminBuyDevices />} />
             <Route path="repair-services" element={<AdminRepairServices />} />
+            <Route path="chat" element={<AdminChat />} />
             <Route path="partners" element={<AdminPartners />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="pincodes" element={<AdminPincodes />} />
