@@ -32,12 +32,25 @@ export default function AdminDevices() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true);
+  const [brandOptions, setBrandOptions] = useState([]);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   // Form State
   const [showModal, setShowModal] = useState(false);
   const [modalTab, setModalTab] = useState('core'); // core | variants | multipliers | deductions
   const [selectedDevice, setSelectedDevice] = useState(null); // null if creating
   const [formData, setFormData] = useState({});
+
+  const loadBrandOptions = (cat) => {
+    if (!cat) {
+      setBrandOptions([]);
+      return;
+    }
+    adminService
+      .getBrands({ category: cat, offer: 'sell', active: 'true' })
+      .then((res) => setBrandOptions(res.data.brands || []))
+      .catch(() => setBrandOptions([]));
+  };
 
   // Debounce search input
   useEffect(() => {
@@ -72,6 +85,12 @@ export default function AdminDevices() {
     fetchDevices();
   }, [debouncedSearch, category, page]);
 
+  useEffect(() => {
+    if (showModal && formData.category) {
+      loadBrandOptions(formData.category);
+    }
+  }, [showModal, formData.category]);
+
   // Open modal for Create
   const handleCreateOpen = () => {
     setSelectedDevice(null);
@@ -81,6 +100,8 @@ export default function AdminDevices() {
       modelName: '',
       slug: '',
       imageUrl: '',
+      videoUrl: '',
+      description: '',
       processorFamily: '',
       generation: '',
       gpuType: '',
@@ -423,7 +444,10 @@ export default function AdminDevices() {
                       <label>Category</label>
                       <select
                         value={formData.category}
-                        onChange={(e) => handleInputChange('category', e.target.value)}
+                        onChange={(e) => {
+                          handleInputChange('category', e.target.value);
+                          handleInputChange('brand', '');
+                        }}
                       >
                         <option value="mobile">Mobile</option>
                         <option value="tablet">Tablet</option>
@@ -434,13 +458,23 @@ export default function AdminDevices() {
 
                     <div className="admin-field">
                       <label>Brand</label>
-                      <input
-                        type="text"
+                      <select
                         required
-                        placeholder="e.g. Apple, Samsung, MSI"
-                        value={formData.brand}
+                        value={formData.brand || ''}
                         onChange={(e) => handleInputChange('brand', e.target.value)}
-                      />
+                      >
+                        <option value="">Select brand</option>
+                        {brandOptions.map((b) => (
+                          <option key={b._id || b.name} value={b.name}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                      {!brandOptions.length ? (
+                        <p className="text-xs text-amber-500 mt-1">
+                          No sell brands for this category. Add them under Brands first.
+                        </p>
+                      ) : null}
                     </div>
                   </div>
 
@@ -485,6 +519,56 @@ export default function AdminDevices() {
                       value={formData.imageUrl}
                       onChange={(e) => handleInputChange('imageUrl', e.target.value)}
                     />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Description</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Short sell listing description"
+                      value={formData.description || ''}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Product video (max 500KB)</label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Video URL"
+                        value={formData.videoUrl || ''}
+                        onChange={(e) => handleInputChange('videoUrl', e.target.value)}
+                      />
+                      <label className="admin-btn admin-btn-ghost cursor-pointer">
+                        {uploadingVideo ? 'Uploading...' : 'Upload video'}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          disabled={uploadingVideo}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 500 * 1024) {
+                              alert('Video must be 500KB or less');
+                              e.target.value = '';
+                              return;
+                            }
+                            setUploadingVideo(true);
+                            try {
+                              const { data } = await adminService.uploadVideo(file);
+                              handleInputChange('videoUrl', data.videoUrl);
+                            } catch (err) {
+                              alert(err.response?.data?.message || 'Video upload failed');
+                            } finally {
+                              setUploadingVideo(false);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   {/* Laptop-specific configurations */}

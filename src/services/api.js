@@ -5,11 +5,15 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor — attach access token
+// Request interceptor — attach access token + optional mobile/app API key
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  const appKey = import.meta.env.VITE_MOBILE_APP_API_KEY;
+  if (appKey) {
+    config.headers['X-DeviceKart-App-Key'] = appKey;
   }
   return config;
 });

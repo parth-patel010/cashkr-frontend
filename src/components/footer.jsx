@@ -12,15 +12,19 @@ const FooterLogo = () => (
 const FOOTER_LINKS = {
   "Sell Device": ["Sell Mobile", "Sell Tablet", "Sell Laptop", "Sell Mac", "Corporate Sell"],
   "Quick Links": ["Become a Partner", "FAQs", "Cashify Alternatives"],
-  "Support": ["Help Center", "About Us", "Terms & Conditions", "Privacy Policy"],
+  "Support": ["Help Center", "About Us", "Contact Us", "Careers", "Terms & Conditions", "Privacy Policy", "Cookie Policy", "E-waste Policy"],
 };
 
 const getLinkRoute = (linkName) => {
   const routes = {
     "About Us": "/about-us",
     "Help Center": "/help-center",
+    "Contact Us": "/contact-us",
+    "Careers": "/careers",
     "Terms & Conditions": "/terms-and-conditions",
     "Privacy Policy": "/privacy-policy",
+    "Cookie Policy": "/cookie-policy",
+    "E-waste Policy": "/e-waste-policy",
     "Become a Partner": "/partner",
     "FAQs": "/faq",
     "Cashify Alternatives": "/alternatives/cashify-alternatives",

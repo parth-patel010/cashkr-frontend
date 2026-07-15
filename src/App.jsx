@@ -26,6 +26,10 @@ import HelpCenter from './pages/HelpCenter.jsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import TermsAndConditions from './pages/TermsAndConditions.jsx';
 import FAQPage from './pages/FAQPage.jsx';
+import CookiePolicy from './pages/CookiePolicy.jsx';
+import EWastePolicy from './pages/EWastePolicy.jsx';
+import ContactUs from './pages/ContactUs.jsx';
+import Careers from './pages/Careers.jsx';
 import CompareDeviceKartVsCashify from './pages/CompareDeviceKartVsCashify.jsx';
 import CashifyAlternatives from './pages/CashifyAlternatives.jsx';
 import BestPlaceToSellPhone from './pages/BestPlaceToSellPhone.jsx';
@@ -58,6 +62,9 @@ import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
 import AdminDevices from './pages/admin/AdminDevices.jsx';
+import AdminBrands from './pages/admin/AdminBrands.jsx';
+import AdminBuyDevices from './pages/admin/AdminBuyDevices.jsx';
+import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminPincodes from './pages/admin/AdminPincodes.jsx';
@@ -116,6 +123,10 @@ function App() {
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/e-waste-policy" element={<EWastePolicy />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/careers" element={<Careers />} />
           <Route path="/compare/devicekart-vs-cashify" element={<CompareDeviceKartVsCashify />} />
           <Route path="/alternatives/cashify-alternatives" element={<CashifyAlternatives />} />
           <Route path="/best-place-to-sell-old-phone-india" element={<BestPlaceToSellPhone />} />
@@ -131,6 +142,9 @@ function App() {
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="devices" element={<AdminDevices />} />
+            <Route path="brands" element={<AdminBrands />} />
+            <Route path="buy-devices" element={<AdminBuyDevices />} />
+            <Route path="repair-services" element={<AdminRepairServices />} />
             <Route path="partners" element={<AdminPartners />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="pincodes" element={<AdminPincodes />} />

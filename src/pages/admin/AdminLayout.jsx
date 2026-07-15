@@ -3,6 +3,9 @@ import {
   LayoutDashboard, 
   Users, 
   Smartphone, 
+  Tags,
+  ShoppingBag,
+  Wrench,
   Handshake, 
   ClipboardList, 
   LogOut,
@@ -27,6 +30,9 @@ export default function AdminLayout() {
     if (path.includes('/analytics')) return 'Analytics';
     if (path.includes('/users')) return 'User Directory';
     if (path.includes('/devices')) return 'Device Catalog Management';
+    if (path.includes('/brands')) return 'Brand Management';
+    if (path.includes('/buy-devices')) return 'Buy Device Inventory';
+    if (path.includes('/repair-services')) return 'Repair Services';
     if (path.includes('/partners')) return 'Partner Applications';
     if (path.includes('/orders')) return 'System Orders';
     if (path.includes('/pincodes')) return 'Serviceable Pincodes';
@@ -73,6 +79,30 @@ export default function AdminLayout() {
           >
             <Smartphone />
             <span>Devices</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/brands" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Tags />
+            <span>Brands</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/buy-devices" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <ShoppingBag />
+            <span>Buy Devices</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/repair-services" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Wrench />
+            <span>Repair</span>
           </NavLink>
 
           <NavLink 
