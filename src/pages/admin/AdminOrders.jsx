@@ -19,7 +19,7 @@ function OrderDetailModal({ order, orderType, onClose }) {
   if (!order) return null;
 
   const InfoRow = ({ label, value }) =>
-    value ? (
+    value != null && value !== '' ? (
       <div className="flex justify-between items-start gap-4 py-2 border-b border-slate-50 last:border-0">
         <span className="text-[11px] font-700 text-slate-400 uppercase tracking-wide shrink-0">{label}</span>
         <span className="text-[13px] font-semibold text-slate-800 text-right">{value}</span>
@@ -38,8 +38,15 @@ function OrderDetailModal({ order, orderType, onClose }) {
     </div>
   );
 
+  const formatList = (arr) =>
+    Array.isArray(arr) && arr.length > 0 ? arr.map((s) => String(s).replace(/_/g, ' ')).join(', ') : null;
+
+  const boolLabel = (value) => (value === true ? 'Yes' : value === false ? 'No' : null);
+
   const p = order.pickup || order.shipping || {};
-  const d = order.device || order.productSnapshot || order.snapshot || {};
+  const d = order.device || {};
+  const buy = order.productSnapshot || {};
+  const repair = order.snapshot || {};
   const pb = order.priceBreakdown || {};
 
   return (
@@ -52,37 +59,143 @@ function OrderDetailModal({ order, orderType, onClose }) {
               {order.orderId}
             </p>
           </div>
-          <button className="admin-modal-close" onClick={onClose}>
+          <button type="button" className="admin-modal-close" onClick={onClose}>
             <X size={16} />
           </button>
         </div>
+
         <div className="admin-modal-body">
-          <Section icon={User} title="Customer">
+          <Section icon={User} title="Customer Information">
             <InfoRow label="Name" value={order.userId?.name || p.name || 'N/A'} />
             <InfoRow label="Phone" value={order.userId?.phone || p.phone || 'N/A'} />
+            {orderType === 'sell' ? <InfoRow label="Alternative Number" value={p.alternatePhone || null} /> : null}
             <InfoRow label="Email" value={order.userId?.email || p.email || 'N/A'} />
           </Section>
-          <Section icon={MapPin} title={orderType === 'buy' ? 'Shipping' : 'Pickup'}>
+
+          <Section icon={MapPin} title={orderType === 'buy' ? 'Shipping Address' : 'Pickup Address'}>
             <InfoRow label="Address" value={p.address} />
+            {orderType === 'sell' ? <InfoRow label="Landmark" value={p.landmark} /> : null}
             <InfoRow label="City" value={p.city} />
             <InfoRow label="State" value={p.state} />
             <InfoRow label="Pincode" value={p.pincode} />
-            <InfoRow label="Date" value={p.date || p.preferredDate} />
-            <InfoRow label="Slot" value={p.timeSlot || p.preferredSlot} />
+            <InfoRow label="Pickup Date" value={p.date || p.preferredDate} />
+            <InfoRow label="Time Slot" value={p.timeSlot || p.preferredSlot} />
+            {orderType === 'sell' ? <InfoRow label="Payment Mode" value={p.paymentMethod} /> : null}
           </Section>
-          <Section icon={Smartphone} title="Item">
-            <InfoRow label="Brand" value={d.brand} />
-            <InfoRow label="Model / Title" value={d.modelName || d.title} />
-            <InfoRow label="Condition / Issue" value={d.conditionLabel || d.issueLabel} />
-            <InfoRow label="Storage" value={d.storage} />
-          </Section>
-          <Section icon={CreditCard} title="Amount">
-            <InfoRow
-              label="Amount"
-              value={`₹${d.price ?? pb.finalPrice ?? order.snapshot?.price ?? 0}`}
-            />
-            {order.customerNote ? <InfoRow label="Note" value={order.customerNote} /> : null}
-          </Section>
+
+          {orderType === 'sell' ? (
+            <>
+              <Section icon={Smartphone} title="Product Details">
+                <InfoRow label="Category" value={d.category} />
+                <InfoRow label="Brand" value={d.brand} />
+                <InfoRow label="Model" value={d.modelName} />
+                <InfoRow label="Storage" value={d.storage} />
+                {d.ram ? <InfoRow label="RAM" value={d.ram} /> : null}
+                {d.processor ? <InfoRow label="Processor" value={d.processor} /> : null}
+                {d.generation ? <InfoRow label="Generation" value={d.generation} /> : null}
+                {d.graphicsCard ? <InfoRow label="GPU" value={d.graphicsCard} /> : null}
+                {d.screenSize ? <InfoRow label="Screen Size" value={d.screenSize} /> : null}
+                {d.storageType ? <InfoRow label="Storage Type" value={d.storageType} /> : null}
+                {d.yearOfPurchase ? <InfoRow label="Year of Purchase" value={d.yearOfPurchase} /> : null}
+                {d.deviceAge ? <InfoRow label="Device Age" value={d.deviceAge} /> : null}
+                {d.batteryHealth ? <InfoRow label="Battery Health" value={d.batteryHealth} /> : null}
+                {d.screenCondition ? <InfoRow label="Screen Condition" value={d.screenCondition} /> : null}
+                {d.bodyCondition ? <InfoRow label="Body Condition" value={d.bodyCondition} /> : null}
+                <InfoRow label="Touchscreen Working" value={boolLabel(d.isTouchScreenWorking)} />
+                <InfoRow label="Screen Original" value={boolLabel(d.isScreenOriginal)} />
+                <InfoRow label="Under Warranty" value={boolLabel(d.underWarranty)} />
+                <InfoRow label="Has GST Bill" value={boolLabel(d.hasGSTBill)} />
+                <InfoRow label="Able to Make Calls" value={boolLabel(d.ableToMakeCalls)} />
+                {d.eSIMSupport ? <InfoRow label="eSIM Support" value={d.eSIMSupport} /> : null}
+                <InfoRow label="Physical Issues" value={formatList(d.physicalIssues)} />
+                <InfoRow label="Technical Issues" value={formatList(d.technicalIssues)} />
+                <InfoRow label="Functional Issues" value={formatList(d.functionalIssues)} />
+                <InfoRow
+                  label="Accessories"
+                  value={Array.isArray(d.accessories) ? formatList(d.accessories) : d.accessories}
+                />
+                <InfoRow label="Screen Issues" value={formatList(d.screenIssues)} />
+                {d.hasScreenIssue != null ? (
+                  <InfoRow label="Has Screen Issue" value={boolLabel(d.hasScreenIssue)} />
+                ) : null}
+                {d.hasBodyIssue != null ? (
+                  <InfoRow label="Has Body Issue" value={boolLabel(d.hasBodyIssue)} />
+                ) : null}
+                {d.hasOtherIssues != null ? (
+                  <InfoRow label="Has Other Issues" value={boolLabel(d.hasOtherIssues)} />
+                ) : null}
+              </Section>
+
+              <Section icon={CreditCard} title="Pricing Breakdown">
+                <InfoRow label="Base Price" value={pb.basePrice != null ? `₹${pb.basePrice}` : null} />
+                {pb.ageAdjustment ? <InfoRow label="Age Adjustment" value={`₹${pb.ageAdjustment}`} /> : null}
+                {pb.conditionAdjustment ? (
+                  <InfoRow label="Condition Adjustment" value={`₹${pb.conditionAdjustment}`} />
+                ) : null}
+                {pb.screenAdjustment ? (
+                  <InfoRow label="Screen Adjustment" value={`₹${pb.screenAdjustment}`} />
+                ) : null}
+                {pb.functionalDeduction ? (
+                  <InfoRow
+                    label="Functional Deduction"
+                    value={`-₹${Math.abs(pb.functionalDeduction)}`}
+                  />
+                ) : null}
+                {pb.batteryDeduction ? (
+                  <InfoRow label="Battery Deduction" value={`-₹${Math.abs(pb.batteryDeduction)}`} />
+                ) : null}
+                {pb.accessoriesBonus ? (
+                  <InfoRow label="Accessories Bonus" value={`+₹${pb.accessoriesBonus}`} />
+                ) : null}
+                <div className="flex justify-between items-center py-3 mt-1 border-t-2 border-blue-100">
+                  <span className="text-[12px] font-800 text-blue-700 uppercase tracking-wider">
+                    Final Price Offered
+                  </span>
+                  <span className="text-[18px] font-900 text-blue-700">₹{pb.finalPrice || 0}</span>
+                </div>
+              </Section>
+
+              {(order.partnerName || order.partnerPhone) && (
+                <Section icon={User} title="Assigned Partner">
+                  <InfoRow label="Partner Name" value={order.partnerName} />
+                  <InfoRow label="Partner Phone" value={order.partnerPhone} />
+                </Section>
+              )}
+            </>
+          ) : null}
+
+          {orderType === 'buy' ? (
+            <>
+              <Section icon={Smartphone} title="Product Details">
+                <InfoRow label="Brand" value={buy.brand} />
+                <InfoRow label="Model" value={buy.modelName} />
+                <InfoRow label="Title" value={buy.title} />
+                <InfoRow label="Condition" value={buy.conditionLabel} />
+                <InfoRow label="Price" value={buy.price != null ? `₹${buy.price}` : null} />
+              </Section>
+              <Section icon={CreditCard} title="Amount">
+                <InfoRow label="Order Amount" value={`₹${buy.price || 0}`} />
+                <InfoRow label="Status" value={order.status} />
+              </Section>
+            </>
+          ) : null}
+
+          {orderType === 'repair' ? (
+            <>
+              <Section icon={Smartphone} title="Repair Details">
+                <InfoRow label="Brand" value={repair.brand} />
+                <InfoRow label="Service" value={repair.title} />
+                <InfoRow label="Category" value={repair.category} />
+                <InfoRow label="Issue" value={repair.issueLabel} />
+                <InfoRow label="Price" value={repair.price != null ? `₹${repair.price}` : null} />
+              </Section>
+              <Section icon={CreditCard} title="Amount">
+                <InfoRow label="Repair Amount" value={`₹${repair.price || 0}`} />
+                <InfoRow label="Status" value={order.status} />
+                {order.customerNote ? <InfoRow label="Customer Note" value={order.customerNote} /> : null}
+              </Section>
+            </>
+          ) : null}
         </div>
       </div>
     </div>
