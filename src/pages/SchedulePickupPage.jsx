@@ -29,6 +29,7 @@ export default function SchedulePickupPage() {
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(null); // 'upi' or 'bank'
   const checkoutTracked = useRef(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     refreshUser();
@@ -70,6 +71,8 @@ export default function SchedulePickupPage() {
   const days = getNextDays(7);
 
   const handleCreateOrder = async () => {
+    if (submittingRef.current) return;
+
     if (!selectedAddressId || !selectedDate || !selectedSlot) {
       setError('Please complete all selections');
       return;
@@ -80,6 +83,7 @@ export default function SchedulePickupPage() {
       return;
     }
 
+    submittingRef.current = true;
     setSubmitting(true);
     setError('');
     try {
@@ -95,11 +99,14 @@ export default function SchedulePickupPage() {
         }
       }
 
+      const { _id, isDefault, ...addressFields } = selectedAddr || {};
       const { data } = await orderService.createOrder({
         device: quote.device || {},
         priceBreakdown: quote.priceBreakdown || {},
         pickup: { 
-          ...selectedAddr, 
+          ...addressFields,
+          phone: addressFields.phone || user.phone || '',
+          alternatePhone: addressFields.alternatePhone || '',
           date: formatDateISO(selectedDate), 
           timeSlot: selectedSlot, 
           paymentMethod: finalPaymentMethodStr 
@@ -107,8 +114,17 @@ export default function SchedulePickupPage() {
       });
       navigate(`/order-confirmation/${data.orderId}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create order');
+      const payload = err.response?.data;
+      if (err.response?.status === 409 && payload?.alreadyPlaced) {
+        setError(
+          payload.message ||
+            'An order with the same device details is already placed for you.'
+        );
+        return;
+      }
+      setError(payload?.message || 'Failed to create order');
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -187,6 +203,9 @@ export default function SchedulePickupPage() {
                       <div className="flex-1">
                         <p className="font-black text-[#111827] mb-1">{addr.label}</p>
                         <p className="text-xs text-gray-500 font-medium line-clamp-2 leading-relaxed">{addr.address}, {addr.city}, {addr.pincode}</p>
+                        {addr.alternatePhone && (
+                          <p className="text-xs text-[#0565E6] font-bold mt-2">Alt: +91 {addr.alternatePhone}</p>
+                        )}
                       </div>
                       {selectedAddressId === addr._id && (
                         <div className="ml-auto w-5 h-5 bg-[#0565E6] rounded-full flex items-center justify-center shrink-0">
@@ -443,6 +462,7 @@ function CreateAddressModal({ onClose }) {
     state: '',
     name: user?.name && user.name !== 'User' ? user.name : '',
     phone: user?.phone || '',
+    alternatePhone: '',
   });
 
   const checkPincode = async (code) => {
@@ -626,6 +646,24 @@ function CreateAddressModal({ onClose }) {
                 className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none"
                 required
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
+                Alternative Number <span className="normal-case tracking-normal font-bold text-gray-300">(optional)</span>
+              </label>
+              <input 
+                type="tel" 
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="Optional contact number for pickup"
+                value={form.alternatePhone}
+                onChange={(e) => setForm({ ...form, alternatePhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6] transition-all"
+              />
+              <p className="mt-2 text-xs font-medium text-gray-400">
+                Used as an extra contact when the agent calls for pickup.
+              </p>
             </div>
           </div>
 

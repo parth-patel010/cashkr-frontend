@@ -213,6 +213,9 @@ export default function OrderConfirmationPage() {
                     <div>
                       <p className="font-black text-[#111827] text-sm mb-1">{order.pickup?.label || 'Home'}</p>
                       <p className="text-xs font-medium text-gray-500 leading-relaxed">{order.pickup?.address}, {order.pickup?.city}, {order.pickup?.pincode}</p>
+                      {order.pickup?.alternatePhone && (
+                        <p className="text-xs font-bold text-[#0565E6] mt-2">Alt: +91 {order.pickup.alternatePhone}</p>
+                      )}
                     </div>
                   </div>
                 </div>

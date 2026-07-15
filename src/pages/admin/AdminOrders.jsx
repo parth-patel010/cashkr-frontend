@@ -66,6 +66,7 @@ function OrderDetailModal({ order, onClose }) {
           <Section icon={User} title="Customer Information">
             <InfoRow label="Name" value={order.userId?.name || p.name || 'N/A'} />
             <InfoRow label="Phone" value={order.userId?.phone || p.phone || 'N/A'} />
+            <InfoRow label="Alternative Number" value={p.alternatePhone || null} />
             <InfoRow label="Email" value={order.userId?.email || p.email || 'N/A'} />
           </Section>
 

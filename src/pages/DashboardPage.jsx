@@ -557,6 +557,7 @@ function AddressTab({ addresses, onAdd, onDelete }) {
     label: 'Home',
     name: '',
     phone: '',
+    alternatePhone: '',
     pincode: '',
     address: '',
     landmark: '',
@@ -568,7 +569,7 @@ function AddressTab({ addresses, onAdd, onDelete }) {
     e.preventDefault();
     onAdd(formData);
     setShowForm(false);
-    setFormData({ label: 'Home', name: '', phone: '', pincode: '', address: '', landmark: '', city: '', state: '' });
+    setFormData({ label: 'Home', name: '', phone: '', alternatePhone: '', pincode: '', address: '', landmark: '', city: '', state: '' });
   };
 
   return (
@@ -608,6 +609,14 @@ function AddressTab({ addresses, onAdd, onDelete }) {
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             required
+          />
+          <input
+            placeholder="Alternative Number (optional)"
+            className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0565E6]/50"
+            value={formData.alternatePhone}
+            onChange={(e) => setFormData({ ...formData, alternatePhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+            maxLength={10}
+            inputMode="numeric"
           />
           <input
             placeholder="Pincode"
@@ -672,6 +681,9 @@ function AddressTab({ addresses, onAdd, onDelete }) {
               <p className="text-sm text-gray-500 mt-1">{addr.address}</p>
               <p className="text-sm text-gray-500">{addr.city}, {addr.state} - {addr.pincode}</p>
               <p className="text-sm text-gray-500 mt-2 font-medium">📞 {addr.phone}</p>
+              {addr.alternatePhone && (
+                <p className="text-sm text-gray-500 mt-1 font-medium">📱 Alt: {addr.alternatePhone}</p>
+              )}
               {addr.isDefault && <p className="text-[10px] text-[#0565E6] font-bold mt-3 uppercase tracking-wider">Default Address</p>}
             </div>
           ))}
