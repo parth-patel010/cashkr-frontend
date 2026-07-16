@@ -41,6 +41,7 @@ import BuyBrandSelectionPage from './pages/BuyBrandSelectionPage.jsx';
 import BuyProductListPage from './pages/BuyProductListPage.jsx';
 import BuyProductPage from './pages/BuyProductPage.jsx';
 import BuyOrderConfirmationPage from './pages/BuyOrderConfirmationPage.jsx';
+import WhatsAppButton from './components/WhatsAppButton.jsx';
 
 // Laptop Pages
 import LaptopBrandSelectionPage from './pages/LaptopBrandSelectionPage.jsx';
