@@ -11,6 +11,7 @@ const FooterLogo = () => (
 
 const FOOTER_LINKS = {
   "Sell Device": ["Sell Mobile", "Sell Tablet", "Sell Laptop", "Sell Mac", "Corporate Sell"],
+  "Buy Device": ["Buy Phones", "Buy Laptops", "Buy Tablets", "Buy Smartwatches"],
   "Quick Links": ["Become a Partner", "FAQs", "Cashify Alternatives"],
   "Support": ["Help Center", "About Us", "Contact Us", "Careers", "Terms & Conditions", "Privacy Policy", "Cookie Policy", "E-waste Policy"],
 };
@@ -33,6 +34,10 @@ const getLinkRoute = (linkName) => {
     "Sell Laptop": "/sell-old-laptops/brand",
     "Sell Mac": "/sell-imac/brand",
     "Corporate Sell": "/corporate",
+    "Buy Phones": "/buy/mobile/brand",
+    "Buy Laptops": "/buy/laptop/brand",
+    "Buy Tablets": "/buy/tablet/brand",
+    "Buy Smartwatches": "/buy/smartwatch/brand",
   };
   return routes[linkName] || "#";
 };
@@ -82,7 +87,7 @@ const AppStoreIcon = () => (
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 pt-16 pb-8">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 mb-12">
         {/* Brand */}
         <div className="space-y-6">
           <FooterLogo />

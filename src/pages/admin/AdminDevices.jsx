@@ -532,7 +532,7 @@ export default function AdminDevices() {
                   </div>
 
                   <div className="admin-field">
-                    <label>Product video (max 500KB)</label>
+                    <label>Product video (max 10MB)</label>
                     <div className="flex flex-wrap items-center gap-2">
                       <input
                         type="text"
@@ -550,8 +550,8 @@ export default function AdminDevices() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            if (file.size > 500 * 1024) {
-                              alert('Video must be 500KB or less');
+                            if (file.size > 10 * 1024 * 1024) {
+                              alert('Video must be 10MB or less');
                               e.target.value = '';
                               return;
                             }

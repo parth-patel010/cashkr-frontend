@@ -320,7 +320,7 @@ export default function AdminBuyDevices() {
                 </div>
 
                 <div className="admin-field">
-                  <label>Video (max 500KB)</label>
+                  <label>Video (max 10MB)</label>
                   <div className="flex gap-2 items-center">
                     <input
                       value={form.videoUrl}
@@ -337,8 +337,8 @@ export default function AdminBuyDevices() {
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          if (file.size > 500 * 1024) {
-                            alert('Video must be 500KB or less');
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert('Video must be 10MB or less');
                             return;
                           }
                           setUploadingVideo(true);

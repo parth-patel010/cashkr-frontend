@@ -5,6 +5,7 @@ import { deviceService } from "../services/device.service";
 import logo from "../assets/logo.png";
 
 const NAV_ITEMS = [
+  { label: "Buy", hasDropdown: false, to: "/buy" },
   { label: "Mobile", hasDropdown: false, to: "/sell-old-mobile-phones/brand" },
   { label: "Tablet", hasDropdown: false, to: "/sell-tablet/brand" },
   { label: "Laptop", hasDropdown: false, to: "/sell-old-laptops/brand" },
