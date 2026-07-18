@@ -5,8 +5,8 @@ export const DEFAULT_TITLE = 'DeviceKart — Sell Old Devices for Instant Cash i
 export const DEFAULT_DESCRIPTION =
   "DeviceKart is India's trusted device buyback platform. Sell old mobile phones, tablets, laptops and iMac online with free doorstep pickup and instant payment across 2,000+ cities.";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.svg`;
-export const PHONE = '+91-8310732405';
-export const WHATSAPP = '918310732405';
+export const PHONE = '+91-9930224433';
+export const WHATSAPP = '919930224433';
 export const SUPPORT_EMAIL = 'support@devicekart.in';
 
 export const SOCIAL_LINKS = {
