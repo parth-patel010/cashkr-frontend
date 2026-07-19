@@ -49,8 +49,10 @@ export default function SchedulePickupPage() {
 
   // Sync selectedAddressId when user changes or first load
   useEffect(() => {
-    if (user?.addresses?.length > 0 && !selectedAddressId) {
-      setSelectedAddressId(user.addresses[0]._id);
+    if (!user?.addresses?.length) return;
+    const ids = user.addresses.map((a) => String(a._id));
+    if (!selectedAddressId || !ids.includes(String(selectedAddressId))) {
+      setSelectedAddressId(String(user.addresses[user.addresses.length - 1]._id));
     }
   }, [user, selectedAddressId]);
 
@@ -87,7 +89,10 @@ export default function SchedulePickupPage() {
     setSubmitting(true);
     setError('');
     try {
-      const selectedAddr = user.addresses.find(a => a._id === selectedAddressId);
+      const selectedAddr = user.addresses.find(a => String(a._id) === String(selectedAddressId));
+      if (!selectedAddr) {
+        throw new Error('Please select a pickup address');
+      }
       
       let finalPaymentMethodStr = 'Cash';
       if (paymentType !== 'cash') {
@@ -177,23 +182,26 @@ export default function SchedulePickupPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {user?.addresses?.length > 0 ? (
-                  user.addresses.map((addr) => (
+                  user.addresses.map((addr) => {
+                    const addrId = String(addr._id);
+                    const selected = String(selectedAddressId) === addrId;
+                    return (
                     <label 
-                      key={addr._id}
+                      key={addrId}
                       className={`p-6 rounded-[32px] border-2 cursor-pointer transition-all flex items-start gap-4
-                        ${selectedAddressId === addr._id 
+                        ${selected 
                           ? 'border-[#0565E6] bg-[#E8F1FF]' 
                           : 'border-gray-50 bg-gray-50/50 hover:border-gray-200'}`}
                     >
                       <input 
                         type="radio" 
                         name="address" 
-                        checked={selectedAddressId === addr._id}
-                        onChange={() => setSelectedAddressId(addr._id)}
+                        checked={selected}
+                        onChange={() => setSelectedAddressId(addrId)}
                         className="sr-only"
                       />
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0
-                        ${selectedAddressId === addr._id ? 'bg-[#0565E6] text-white' : 'bg-white text-gray-400'}`}>
+                        ${selected ? 'bg-[#0565E6] text-white' : 'bg-white text-gray-400'}`}>
                         {addr.label === 'Home' ? (
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                         ) : (
@@ -207,13 +215,14 @@ export default function SchedulePickupPage() {
                           <p className="text-xs text-[#0565E6] font-bold mt-2">Alt: +91 {addr.alternatePhone}</p>
                         )}
                       </div>
-                      {selectedAddressId === addr._id && (
+                      {selected && (
                         <div className="ml-auto w-5 h-5 bg-[#0565E6] rounded-full flex items-center justify-center shrink-0">
                           <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="3" strokeLinecap="round"/></svg>
                         </div>
                       )}
                     </label>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="col-span-full py-10 text-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200">
                     <p className="text-sm font-bold text-gray-400">No addresses saved. Please add one.</p>
@@ -435,7 +444,13 @@ export default function SchedulePickupPage() {
 
       {/* Address Modal */}
       {showAddressModal && (
-        <CreateAddressModal onClose={() => setShowAddressModal(false)} />
+        <CreateAddressModal
+          onClose={() => setShowAddressModal(false)}
+          onSaved={(addresses) => {
+            const latest = addresses?.[addresses.length - 1];
+            if (latest?._id) setSelectedAddressId(String(latest._id));
+          }}
+        />
       )}
 
       {/* Payment Modal */}
@@ -446,8 +461,8 @@ export default function SchedulePickupPage() {
   );
 }
 
-function CreateAddressModal({ onClose }) {
-  const { user, refreshUser } = useAuth();
+function CreateAddressModal({ onClose, onSaved }) {
+  const { user, refreshUser, setUserAddresses } = useAuth();
   const [loading, setLoading] = useState(false);
   const [pincodeError, setPincodeError] = useState('');
   const [pincodeChecking, setPincodeChecking] = useState(false);
@@ -478,22 +493,24 @@ function CreateAddressModal({ onClose }) {
     setPincodeServiceable(false);
     try {
       const res = await fetch(`${API_BASE}/pincodes/check/${code}`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.isServiceable) {
         setPincodeError('');
         setPincodeServiceable(true);
-        setForm(f => ({
+        setForm((f) => ({
           ...f,
           city: data.city || f.city,
           state: data.state || f.state,
         }));
       } else {
         setPincodeServiceable(false);
-        setPincodeError('Pincode not available — we do not service this area yet.');
+        setPincodeError(
+          data.message || 'Pincode not available — we do not service this area yet. You can still save, but pickup may not be available.'
+        );
       }
     } catch {
       setPincodeServiceable(false);
-      setPincodeError('Could not verify pincode. Please try again.');
+      setPincodeError('Could not verify pincode right now. You can still save the address.');
     } finally {
       setPincodeChecking(false);
     }
@@ -501,7 +518,7 @@ function CreateAddressModal({ onClose }) {
 
   const handlePincodeChange = (val) => {
     const cleaned = val.replace(/\D/g, '').slice(0, 6);
-    setForm(f => ({ ...f, pincode: cleaned }));
+    setForm((f) => ({ ...f, pincode: cleaned }));
     setPincodeError('');
     setPincodeServiceable(false);
     setFormError('');
@@ -513,16 +530,16 @@ function CreateAddressModal({ onClose }) {
     e.preventDefault();
     setFormError('');
 
-    if (!form.address || !form.pincode || !form.city) {
+    if (!form.address?.trim() || !form.pincode?.trim() || !form.city?.trim()) {
       setFormError('Please fill address, pincode, and city.');
       return;
     }
-    if (!form.state) {
-      setFormError('Please enter state (or use a serviceable pincode to auto-fill).');
+    if (form.pincode.trim().length !== 6) {
+      setFormError('Please enter a valid 6-digit pincode.');
       return;
     }
-    if (pincodeError || !pincodeServiceable) {
-      setFormError('Please enter a serviceable pincode before saving.');
+    if (form.alternatePhone && form.alternatePhone.length > 0 && form.alternatePhone.length !== 10) {
+      setFormError('Alternative number must be 10 digits.');
       return;
     }
 
@@ -531,24 +548,28 @@ function CreateAddressModal({ onClose }) {
       const payload = {
         label: form.label || 'Home',
         address: form.address.trim(),
-        landmark: form.landmark.trim(),
         pincode: form.pincode.trim(),
         city: form.city.trim(),
-        state: form.state.trim(),
+        state: (form.state || '').trim(),
         name: (form.name || user?.name || 'Customer').trim() || 'Customer',
         phone: (form.phone || user?.phone || '').trim(),
       };
-      if (form.alternatePhone?.trim()) {
-        payload.alternatePhone = form.alternatePhone.trim();
-      }
+      if (form.landmark?.trim()) payload.landmark = form.landmark.trim();
+      if (form.alternatePhone?.trim()) payload.alternatePhone = form.alternatePhone.trim();
 
-      await userService.addAddress(payload);
-      await refreshUser();
+      const { data: addresses } = await userService.addAddress(payload);
+      if (Array.isArray(addresses)) {
+        setUserAddresses?.(addresses);
+        onSaved?.(addresses);
+      } else {
+        await refreshUser();
+      }
       onClose();
     } catch (err) {
       const apiMessage =
         err.response?.data?.errors?.[0]?.msg ||
         err.response?.data?.message ||
+        err.message ||
         'Failed to add address';
       setFormError(apiMessage);
     } finally {
@@ -560,7 +581,7 @@ function CreateAddressModal({ onClose }) {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} />
       <div className="relative bg-white w-full max-w-2xl rounded-[40px] shadow-2xl p-10 max-h-[90vh] overflow-y-auto no-scrollbar">
-        <button onClick={onClose} className="absolute top-8 right-8 text-gray-400 hover:text-[#111827] transition-colors">
+        <button onClick={onClose} className="absolute top-8 right-8 text-gray-400 hover:text-[#111827] transition-colors" type="button">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
 
@@ -574,15 +595,12 @@ function CreateAddressModal({ onClose }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-                Address Type
-              </label>
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Address Type</label>
               <div className="flex gap-3">
-                {['Home', 'Office', 'Other'].map(type => (
-                  <button 
-                    key={type} 
-                    type="button" 
+                {['Home', 'Office', 'Other'].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
                     onClick={() => setForm({ ...form, label: type })}
                     className={`flex-1 py-4 rounded-2xl border-2 font-black text-sm transition-all
                       ${form.label === type ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 text-gray-400 hover:border-gray-200'}`}
@@ -594,13 +612,10 @@ function CreateAddressModal({ onClose }) {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                Flat No / Building / Colony
-              </label>
-              <input 
-                type="text" 
-                placeholder="Enter building details" 
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Flat No / Building / Colony</label>
+              <input
+                type="text"
+                placeholder="Enter building details"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6] transition-all"
@@ -609,20 +624,17 @@ function CreateAddressModal({ onClose }) {
             </div>
 
             <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M2 12h20M12 2v20"/><circle cx="12" cy="12" r="10"/></svg>
-                Pincode
-              </label>
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Pincode</label>
               <div className="relative">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   inputMode="numeric"
-                  placeholder="Enter Pincode" 
+                  placeholder="Enter Pincode"
                   value={form.pincode}
                   onChange={(e) => handlePincodeChange(e.target.value)}
                   maxLength={6}
                   className={`w-full bg-white border-2 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none transition-all ${
-                    pincodeError ? 'border-red-400 focus:border-red-400' : 'border-gray-100 focus:border-[#0565E6]'
+                    pincodeError && !pincodeServiceable ? 'border-amber-400 focus:border-amber-400' : 'border-gray-100 focus:border-[#0565E6]'
                   }`}
                   required
                 />
@@ -633,27 +645,18 @@ function CreateAddressModal({ onClose }) {
                 )}
               </div>
               {pincodeError && (
-                <p className="mt-2 text-xs font-bold text-red-500 flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                  {pincodeError}
-                </p>
+                <p className="mt-2 text-xs font-bold text-amber-600">{pincodeError}</p>
               )}
               {pincodeServiceable && !pincodeChecking && (
-                <p className="mt-2 text-xs font-bold text-green-500 flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                  Pincode is serviceable!
-                </p>
+                <p className="mt-2 text-xs font-bold text-green-500">Pincode is serviceable!</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                Landmark
-              </label>
-              <input 
-                type="text" 
-                placeholder="Enter landmark details" 
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Landmark</label>
+              <input
+                type="text"
+                placeholder="Enter landmark details"
                 value={form.landmark}
                 onChange={(e) => setForm({ ...form, landmark: e.target.value })}
                 className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6] transition-all"
@@ -662,25 +665,24 @@ function CreateAddressModal({ onClose }) {
 
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">City</label>
-              <input 
-                type="text" 
-                placeholder="City" 
+              <input
+                type="text"
+                placeholder="City"
                 value={form.city}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none"
+                className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6]"
                 required
               />
             </div>
 
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">State</label>
-              <input 
-                type="text" 
-                placeholder="State" 
+              <input
+                type="text"
+                placeholder="State"
                 value={form.state}
                 onChange={(e) => setForm({ ...form, state: e.target.value })}
-                className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none"
-                required
+                className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6]"
               />
             </div>
 
@@ -688,8 +690,8 @@ function CreateAddressModal({ onClose }) {
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
                 Alternative Number <span className="normal-case tracking-normal font-bold text-gray-300">(optional)</span>
               </label>
-              <input 
-                type="tel" 
+              <input
+                type="tel"
                 inputMode="numeric"
                 maxLength={10}
                 placeholder="Optional contact number for pickup"
@@ -697,9 +699,6 @@ function CreateAddressModal({ onClose }) {
                 onChange={(e) => setForm({ ...form, alternatePhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                 className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#0565E6] transition-all"
               />
-              <p className="mt-2 text-xs font-medium text-gray-400">
-                Used as an extra contact when the agent calls for pickup.
-              </p>
             </div>
           </div>
 
@@ -709,9 +708,9 @@ function CreateAddressModal({ onClose }) {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            disabled={loading || !!pincodeError || pincodeChecking || !pincodeServiceable}
+          <button
+            type="submit"
+            disabled={loading || pincodeChecking}
             className="w-full mt-6 bg-[#0565E6] text-white font-black py-5 rounded-[24px] hover:bg-[#044ab8] transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {loading ? 'Saving...' : pincodeChecking ? 'Checking pincode...' : 'Save Address'}

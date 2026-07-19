@@ -74,13 +74,24 @@ export function AuthProvider({ children }) {
       const userData = data.user || data;
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
+      return userData;
     } catch (err) {
       console.error('Failed to refresh user:', err);
+      return null;
     }
   }, []);
 
+  const setUserAddresses = useCallback((addresses) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, addresses: addresses || [] };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, sendOtp, verifyOtp, updateProfile, logout, refreshUser, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, signup, sendOtp, verifyOtp, updateProfile, logout, refreshUser, setUserAddresses, loading, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
