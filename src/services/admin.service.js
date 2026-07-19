@@ -90,6 +90,16 @@ export const adminService = {
 
   // Partners
   getPartners: (params) => adminApi.get('/admin/partners', { params }),
+  approvePartnerAsVendor: (id) => adminApi.post(`/admin/partners/${id}/approve-vendor`),
+
+  // Vendors
+  getVendors: (params) => adminApi.get('/admin/vendors', { params }),
+  getVendor: (id) => adminApi.get(`/admin/vendors/${id}`),
+  createVendor: (data) => adminApi.post('/admin/vendors', data),
+  updateVendor: (id, data) => adminApi.put(`/admin/vendors/${id}`, data),
+  adjustVendorWallet: (id, data) => adminApi.post(`/admin/vendors/${id}/adjust-wallet`, data),
+  assignOrderVendor: (orderId, vendorId) =>
+    adminApi.patch(`/admin/orders/${orderId}/assign-vendor`, { vendorId }),
 
   // Orders
   getOrders: (params) => adminApi.get('/admin/orders', { params }),

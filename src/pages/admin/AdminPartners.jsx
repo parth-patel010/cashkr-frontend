@@ -117,6 +117,7 @@ export default function AdminPartners() {
                   <th>Business Category</th>
                   <th>Submitted At</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,6 +165,27 @@ export default function AdminPartners() {
                       <span className={getStatusBadgeClass(partner.status)}>
                         {partner.status}
                       </span>
+                    </td>
+                    <td>
+                      {partner.status !== 'approved' ? (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-primary text-xs"
+                          onClick={async () => {
+                            try {
+                              await adminService.approvePartnerAsVendor(partner._id);
+                              alert('Vendor account created. They can login with OTP.');
+                              setPage(1);
+                              setStatus('');
+                            } catch (err) {
+                              alert(err?.response?.data?.message || 'Failed to create vendor');
+                            }
+                          }}>
+                          Create Vendor
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

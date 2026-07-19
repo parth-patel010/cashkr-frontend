@@ -33,6 +33,7 @@ export default function AdminLayout() {
     if (path.includes('/devices')) return 'Device Catalog Management';
     if (path.includes('/brands')) return 'Brand Management';
     if (path.includes('/buy-devices')) return 'Buy Device Inventory';
+    if (path.includes('/vendors')) return 'Vendor Management';
     if (path.includes('/repair-services')) return 'Repair Services';
     if (path.includes('/chat')) return 'Live Chat';
     if (path.includes('/partners')) return 'Partner Applications';
@@ -121,6 +122,14 @@ export default function AdminLayout() {
           >
             <Handshake />
             <span>Partners</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/vendors" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Users />
+            <span>Vendors</span>
           </NavLink>
 
           <NavLink 

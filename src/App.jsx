@@ -69,6 +69,7 @@ import AdminUsers from './pages/admin/AdminUsers.jsx';
 import AdminDevices from './pages/admin/AdminDevices.jsx';
 import AdminBrands from './pages/admin/AdminBrands.jsx';
 import AdminBuyDevices from './pages/admin/AdminBuyDevices.jsx';
+import AdminVendors from './pages/admin/AdminVendors.jsx';
 import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
 import AdminChat from './pages/admin/AdminChat.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
@@ -156,6 +157,7 @@ function App() {
             <Route path="devices" element={<AdminDevices />} />
             <Route path="brands" element={<AdminBrands />} />
             <Route path="buy-devices" element={<AdminBuyDevices />} />
+            <Route path="vendors" element={<AdminVendors />} />
             <Route path="repair-services" element={<AdminRepairServices />} />
             <Route path="chat" element={<AdminChat />} />
             <Route path="partners" element={<AdminPartners />} />
