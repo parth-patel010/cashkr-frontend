@@ -6,18 +6,41 @@ export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const saved = localStorage.getItem('user');
+      if (!token || !saved) {
+        localStorage.removeItem('user');
+        return null;
+      }
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (token && !user) {
-      const saved = localStorage.getItem('user');
-      if (saved) setUser(JSON.parse(saved));
+    if (!token) {
+      localStorage.removeItem('user');
+      setUser(null);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Re-hydrate full profile (addresses/payments) after reload
+    userService
+      .getMe()
+      .then(({ data }) => {
+        const userData = data.user || data;
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      })
+      .catch(() => {
+        // Interceptor handles redirect on hard auth failure
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -90,8 +113,24 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, sendOtp, verifyOtp, updateProfile, logout, refreshUser, setUserAddresses, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        signup,
+        sendOtp,
+        verifyOtp,
+        updateProfile,
+        logout,
+        refreshUser,
+        setUserAddresses,
+        loading,
+        isAuthenticated: !!user && hasToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

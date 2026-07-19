@@ -566,11 +566,14 @@ function CreateAddressModal({ onClose, onSaved }) {
       }
       onClose();
     } catch (err) {
+      const status = err.response?.status;
       const apiMessage =
-        err.response?.data?.errors?.[0]?.msg ||
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to add address';
+        status === 401
+          ? 'Your session expired. Please login again and then add the address.'
+          : err.response?.data?.errors?.[0]?.msg ||
+            err.response?.data?.message ||
+            err.message ||
+            'Failed to add address';
       setFormError(apiMessage);
     } finally {
       setLoading(false);

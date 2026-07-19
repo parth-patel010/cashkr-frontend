@@ -5,6 +5,46 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+let refreshPromise = null;
+
+function clearAuthStorage() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+}
+
+async function refreshAccessToken() {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('No refresh token');
+    }
+
+    const { data } = await axios.post(
+      `${api.defaults.baseURL}/auth/refresh`,
+      { refreshToken },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(import.meta.env.VITE_MOBILE_APP_API_KEY
+            ? { 'X-DeviceKart-App-Key': import.meta.env.VITE_MOBILE_APP_API_KEY }
+            : {}),
+        },
+      }
+    );
+
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    return data.accessToken;
+  })().finally(() => {
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
+}
+
 // Request interceptor — attach access token + optional mobile/app API key
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
@@ -18,32 +58,35 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — auto-refresh on 401
+// Response interceptor — auto-refresh on 401 (single-flight, no parallel refresh races)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (!originalRequest) return Promise.reject(error);
+
+    const status = error.response?.status;
+    const url = String(originalRequest.url || '');
+    const isAuthRefresh = url.includes('/auth/refresh');
+    const isAuthLogin = url.includes('/auth/send-otp') || url.includes('/auth/verify-otp');
+
+    if (status === 401 && !originalRequest._retry && !isAuthRefresh && !isAuthLogin) {
       originalRequest._retry = true;
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
-        const { data } = await axios.post(
-          `${api.defaults.baseURL}/auth/refresh`,
-          { refreshToken }
-        );
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        const accessToken = await refreshAccessToken();
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        clearAuthStorage();
+        const returnUrl = encodeURIComponent(
+          `${window.location.pathname}${window.location.search}`
+        );
+        window.location.href = `/login?returnUrl=${returnUrl}`;
         return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );
