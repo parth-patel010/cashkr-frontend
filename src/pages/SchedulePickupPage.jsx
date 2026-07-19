@@ -451,6 +451,8 @@ function CreateAddressModal({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [pincodeError, setPincodeError] = useState('');
   const [pincodeChecking, setPincodeChecking] = useState(false);
+  const [pincodeServiceable, setPincodeServiceable] = useState(false);
+  const [formError, setFormError] = useState('');
   const pincodeDebounce = useRef(null);
 
   const [form, setForm] = useState({
@@ -468,24 +470,29 @@ function CreateAddressModal({ onClose }) {
   const checkPincode = async (code) => {
     if (code.length !== 6) {
       setPincodeError('');
+      setPincodeServiceable(false);
       return;
     }
     setPincodeChecking(true);
     setPincodeError('');
+    setPincodeServiceable(false);
     try {
       const res = await fetch(`${API_BASE}/pincodes/check/${code}`);
       const data = await res.json();
       if (res.ok && data.isServiceable) {
         setPincodeError('');
+        setPincodeServiceable(true);
         setForm(f => ({
           ...f,
           city: data.city || f.city,
           state: data.state || f.state,
         }));
       } else {
+        setPincodeServiceable(false);
         setPincodeError('Pincode not available — we do not service this area yet.');
       }
     } catch {
+      setPincodeServiceable(false);
       setPincodeError('Could not verify pincode. Please try again.');
     } finally {
       setPincodeChecking(false);
@@ -493,29 +500,57 @@ function CreateAddressModal({ onClose }) {
   };
 
   const handlePincodeChange = (val) => {
-    setForm(f => ({ ...f, pincode: val }));
+    const cleaned = val.replace(/\D/g, '').slice(0, 6);
+    setForm(f => ({ ...f, pincode: cleaned }));
     setPincodeError('');
+    setPincodeServiceable(false);
+    setFormError('');
     if (pincodeDebounce.current) clearTimeout(pincodeDebounce.current);
-    pincodeDebounce.current = setTimeout(() => checkPincode(val), 500);
+    pincodeDebounce.current = setTimeout(() => checkPincode(cleaned), 500);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError('');
+
     if (!form.address || !form.pincode || !form.city) {
-      alert('Please fill all required fields');
+      setFormError('Please fill address, pincode, and city.');
       return;
     }
-    if (pincodeError) {
-      alert('Please enter a serviceable pincode');
+    if (!form.state) {
+      setFormError('Please enter state (or use a serviceable pincode to auto-fill).');
       return;
     }
+    if (pincodeError || !pincodeServiceable) {
+      setFormError('Please enter a serviceable pincode before saving.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await userService.addAddress(form);
+      const payload = {
+        label: form.label || 'Home',
+        address: form.address.trim(),
+        landmark: form.landmark.trim(),
+        pincode: form.pincode.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        name: (form.name || user?.name || 'Customer').trim() || 'Customer',
+        phone: (form.phone || user?.phone || '').trim(),
+      };
+      if (form.alternatePhone?.trim()) {
+        payload.alternatePhone = form.alternatePhone.trim();
+      }
+
+      await userService.addAddress(payload);
       await refreshUser();
       onClose();
     } catch (err) {
-      alert('Failed to add address');
+      const apiMessage =
+        err.response?.data?.errors?.[0]?.msg ||
+        err.response?.data?.message ||
+        'Failed to add address';
+      setFormError(apiMessage);
     } finally {
       setLoading(false);
     }
@@ -581,6 +616,7 @@ function CreateAddressModal({ onClose }) {
               <div className="relative">
                 <input 
                   type="text" 
+                  inputMode="numeric"
                   placeholder="Enter Pincode" 
                   value={form.pincode}
                   onChange={(e) => handlePincodeChange(e.target.value)}
@@ -602,7 +638,7 @@ function CreateAddressModal({ onClose }) {
                   {pincodeError}
                 </p>
               )}
-              {!pincodeError && form.pincode.length === 6 && !pincodeChecking && (
+              {pincodeServiceable && !pincodeChecking && (
                 <p className="mt-2 text-xs font-bold text-green-500 flex items-center gap-1">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                   Pincode is serviceable!
@@ -667,9 +703,15 @@ function CreateAddressModal({ onClose }) {
             </div>
           </div>
 
+          {formError && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-2xl px-4 py-3">
+              {formError}
+            </div>
+          )}
+
           <button 
             type="submit" 
-            disabled={loading || !!pincodeError || pincodeChecking}
+            disabled={loading || !!pincodeError || pincodeChecking || !pincodeServiceable}
             className="w-full mt-6 bg-[#0565E6] text-white font-black py-5 rounded-[24px] hover:bg-[#044ab8] transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {loading ? 'Saving...' : pincodeChecking ? 'Checking pincode...' : 'Save Address'}
