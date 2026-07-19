@@ -101,6 +101,9 @@ export const adminService = {
   assignOrderVendor: (orderId, vendorId) =>
     adminApi.patch(`/admin/orders/${orderId}/assign-vendor`, { vendorId }),
 
+  getCustomPricing: () => adminApi.get('/admin/custom-pricing'),
+  saveCustomPricing: (data) => adminApi.put('/admin/custom-pricing', data),
+
   // Orders
   getOrders: (params) => adminApi.get('/admin/orders', { params }),
   exportOrders: (params) => adminApi.get('/admin/orders/export', { params, responseType: 'blob' }),

@@ -10,12 +10,12 @@ const ORDER_TYPES = [
 ];
 
 const STATUS_BY_TYPE = {
-  sell: ['placed', 'scheduled', 'assigned', 'picked', 'verified', 'payment_initiated', 'completed', 'cancelled'],
+  sell: ['placed', 'scheduled', 'assigned', 'picked', 'verified', 'payment_initiated', 'completed', 'failed', 'cancelled'],
   buy: ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'],
   repair: ['booked', 'assigned', 'picked', 'repairing', 'quality_check', 'delivered', 'cancelled'],
 };
 
-function OrderDetailModal({ order, orderType, onClose }) {
+function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAssignVendor }) {
   if (!order) return null;
 
   const InfoRow = ({ label, value }) =>
@@ -155,12 +155,27 @@ function OrderDetailModal({ order, orderType, onClose }) {
                 </div>
               </Section>
 
-              {(order.partnerName || order.partnerPhone) && (
-                <Section icon={User} title="Assigned Partner">
-                  <InfoRow label="Partner Name" value={order.partnerName} />
-                  <InfoRow label="Partner Phone" value={order.partnerPhone} />
-                </Section>
-              )}
+              <Section icon={User} title="Assigned Vendor">
+                <InfoRow label="Vendor Name" value={order.partnerName || 'Unassigned'} />
+                <InfoRow label="Vendor Phone" value={order.partnerPhone || '—'} />
+                <div className="py-3 flex flex-col gap-2">
+                  <span className="text-[11px] font-700 text-slate-400 uppercase tracking-wide">
+                    Reassign / Unassign
+                  </span>
+                  <select
+                    className="admin-select text-xs"
+                    disabled={assigning}
+                    value={order.vendorId ? String(order.vendorId) : ''}
+                    onChange={(e) => onAssignVendor?.(order, e.target.value || null)}>
+                    <option value="">Unassigned</option>
+                    {(vendors || []).map((v) => (
+                      <option key={v._id} value={v._id}>
+                        {v.name} ({v.phone}){v.isActive ? '' : ' — inactive'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </Section>
             </>
           ) : null}
 
@@ -217,8 +232,17 @@ export default function AdminOrders() {
   const [exporting, setExporting] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [assigning, setAssigning] = useState(false);
 
   const statuses = STATUS_BY_TYPE[orderType];
+
+  useEffect(() => {
+    adminService
+      .getVendors({ limit: 200 })
+      .then((res) => setVendors(res.data.vendors || []))
+      .catch(() => setVendors([]));
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -306,6 +330,20 @@ export default function AdminOrders() {
       alert(err.response?.data?.message || 'Failed to update order status');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleAssignVendor = async (order, vendorId) => {
+    setAssigning(true);
+    try {
+      const res = await adminService.assignOrderVendor(order.orderId || order._id, vendorId);
+      const updated = res.data.order;
+      setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...updated } : o)));
+      setSelectedOrder((prev) => (prev && prev._id === order._id ? { ...prev, ...updated } : prev));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to assign vendor');
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -442,6 +480,7 @@ export default function AdminOrders() {
                   <th>Details</th>
                   <th>Ordered At</th>
                   <th>Current Status</th>
+                  {orderType === 'sell' ? <th>Vendor</th> : null}
                   <th>View Details</th>
                   <th className="text-right">Change Status</th>
                 </tr>
@@ -480,6 +519,18 @@ export default function AdminOrders() {
                     <td>
                       <span className={getStatusBadgeClass(order.status)}>{order.status}</span>
                     </td>
+                    {orderType === 'sell' ? (
+                      <td className="text-xs">
+                        {order.partnerName ? (
+                          <div>
+                            <div className="font-bold text-slate-900">{order.partnerName}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{order.partnerPhone}</div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">Unassigned</span>
+                        )}
+                      </td>
+                    ) : null}
                     <td>
                       <button
                         type="button"
@@ -527,7 +578,14 @@ export default function AdminOrders() {
       </div>
 
       {selectedOrder ? (
-        <OrderDetailModal order={selectedOrder} orderType={orderType} onClose={() => setSelectedOrder(null)} />
+        <OrderDetailModal
+          order={selectedOrder}
+          orderType={orderType}
+          vendors={vendors}
+          assigning={assigning}
+          onAssignVendor={handleAssignVendor}
+          onClose={() => setSelectedOrder(null)}
+        />
       ) : null}
     </div>
   );

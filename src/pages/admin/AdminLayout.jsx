@@ -11,7 +11,8 @@ import {
   LogOut,
   MapPin,
   BarChart3,
-  MessageCircle
+  MessageCircle,
+  IndianRupee
 } from 'lucide-react';
 import './admin.css';
 
@@ -34,6 +35,7 @@ export default function AdminLayout() {
     if (path.includes('/brands')) return 'Brand Management';
     if (path.includes('/buy-devices')) return 'Buy Device Inventory';
     if (path.includes('/vendors')) return 'Vendor Management';
+    if (path.includes('/custom-pricing')) return 'Custom Pricing';
     if (path.includes('/repair-services')) return 'Repair Services';
     if (path.includes('/chat')) return 'Live Chat';
     if (path.includes('/partners')) return 'Partner Applications';
@@ -130,6 +132,14 @@ export default function AdminLayout() {
           >
             <Users />
             <span>Vendors</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/custom-pricing" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <IndianRupee />
+            <span>Custom Pricing</span>
           </NavLink>
 
           <NavLink 

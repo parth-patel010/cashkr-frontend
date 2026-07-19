@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
-import { Plus, Search, Edit, X } from 'lucide-react';
+import { Plus, Search, Edit } from 'lucide-react';
 import './admin.css';
 
 const emptyForm = {
   name: '',
   phone: '',
   city: '',
-  servicePincodes: '',
+  servicePincodes: [],
   managerPhone: '',
   photoUrl: '',
+  orderCreditCost: 0,
   isActive: true,
   walletBalance: 0,
   credits: 0,
@@ -23,6 +24,7 @@ export default function AdminVendors() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [pinInput, setPinInput] = useState('');
   const [adjust, setAdjust] = useState({ walletDelta: 0, creditsDelta: 0, note: '' });
   const [saving, setSaving] = useState(false);
 
@@ -42,6 +44,7 @@ export default function AdminVendors() {
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setPinInput('');
     setAdjust({ walletDelta: 0, creditsDelta: 0, note: '' });
     setShowModal(true);
   };
@@ -52,16 +55,40 @@ export default function AdminVendors() {
       name: v.name || '',
       phone: v.phone || '',
       city: v.city || '',
-      servicePincodes: (v.servicePincodes || []).join(', '),
+      servicePincodes: [...(v.servicePincodes || [])],
       managerPhone: v.managerPhone || '',
       photoUrl: v.photoUrl || '',
+      orderCreditCost: v.orderCreditCost || 0,
       isActive: v.isActive !== false,
       walletBalance: v.walletBalance || 0,
       credits: v.credits || 0,
-      virtualAccount: v.virtualAccount || emptyForm.virtualAccount,
+      virtualAccount: {
+        number: v.virtualAccount?.number || '',
+        ifsc: v.virtualAccount?.ifsc || '',
+        bankName: v.virtualAccount?.bankName || 'ICICI',
+        type: v.virtualAccount?.type || 'Commission Account',
+      },
     });
+    setPinInput('');
     setAdjust({ walletDelta: 0, creditsDelta: 0, note: '' });
     setShowModal(true);
+  };
+
+  const addPincode = () => {
+    const code = String(pinInput).replace(/\D/g, '').slice(0, 6);
+    if (code.length !== 6) return;
+    setForm((p) => {
+      if (p.servicePincodes.includes(code)) return p;
+      return { ...p, servicePincodes: [...p.servicePincodes, code] };
+    });
+    setPinInput('');
+  };
+
+  const removePincode = (code) => {
+    setForm((p) => ({
+      ...p,
+      servicePincodes: p.servicePincodes.filter((x) => x !== code),
+    }));
   };
 
   const onSave = async (e) => {
@@ -135,7 +162,24 @@ export default function AdminVendors() {
                   <td>{v.name}</td>
                   <td>{v.phone}</td>
                   <td>{v.city || '—'}</td>
-                  <td>{(v.servicePincodes || []).join(', ') || '—'}</td>
+                  <td>
+                    {(v.servicePincodes || []).length ? (
+                      <div className="flex flex-wrap gap-1">
+                        {(v.servicePincodes || []).slice(0, 4).map((pin) => (
+                          <span key={pin} className="admin-badge admin-badge-blue">
+                            {pin}
+                          </span>
+                        ))}
+                        {(v.servicePincodes || []).length > 4 ? (
+                          <span className="text-xs text-slate-500">
+                            +{(v.servicePincodes || []).length - 4}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                   <td>₹{v.walletBalance || 0}</td>
                   <td>{v.credits || 0}</td>
                   <td>
@@ -163,119 +207,233 @@ export default function AdminVendors() {
       )}
 
       {showModal ? (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal" style={{ maxWidth: 560 }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="m-0">{editingId ? 'Edit Vendor' : 'Add Vendor'}</h3>
-              <button type="button" className="admin-icon-btn" onClick={() => setShowModal(false)}>
-                <X size={18} />
+        <div className="admin-modal-backdrop" onClick={() => setShowModal(false)}>
+          <div className="admin-modal" style={{ maxWidth: 640 }} onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h3>{editingId ? 'Edit Vendor' : 'Add Vendor'}</h3>
+              <button type="button" className="admin-modal-close" onClick={() => setShowModal(false)}>
+                ×
               </button>
             </div>
-            <form onSubmit={onSave} className="space-y-3">
-              <label className="block text-xs font-bold">Name</label>
-              <input
-                className="admin-input w-full"
-                required
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-              />
-              <label className="block text-xs font-bold">Phone</label>
-              <input
-                className="admin-input w-full"
-                required
-                value={form.phone}
-                onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-              />
-              <label className="block text-xs font-bold">City</label>
-              <input
-                className="admin-input w-full"
-                value={form.city}
-                onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-              />
-              <label className="block text-xs font-bold">Service pincodes (comma separated)</label>
-              <input
-                className="admin-input w-full"
-                value={form.servicePincodes}
-                onChange={(e) => setForm((p) => ({ ...p, servicePincodes: e.target.value }))}
-              />
-              <label className="block text-xs font-bold">Manager phone</label>
-              <input
-                className="admin-input w-full"
-                value={form.managerPhone}
-                onChange={(e) => setForm((p) => ({ ...p, managerPhone: e.target.value }))}
-              />
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
-                />
-                Active (can login)
-              </label>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold">VA Number</label>
-                  <input
-                    className="admin-input w-full"
-                    value={form.virtualAccount?.number || ''}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        virtualAccount: { ...p.virtualAccount, number: e.target.value },
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold">IFSC</label>
-                  <input
-                    className="admin-input w-full"
-                    value={form.virtualAccount?.ifsc || ''}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        virtualAccount: { ...p.virtualAccount, ifsc: e.target.value },
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              {editingId ? (
-                <div className="border rounded-xl p-3 bg-slate-50">
-                  <p className="text-xs font-bold mb-2">
-                    Adjust wallet/credits (current ₹{form.walletBalance} / {form.credits} credits)
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
+            <div className="admin-modal-body">
+              <form id="vendorForm" onSubmit={onSave}>
+                <div className="admin-field-row">
+                  <div className="admin-field">
+                    <label>Name</label>
                     <input
-                      className="admin-input"
-                      type="number"
-                      placeholder="Wallet Δ"
-                      value={adjust.walletDelta}
-                      onChange={(e) => setAdjust((p) => ({ ...p, walletDelta: e.target.value }))}
-                    />
-                    <input
-                      className="admin-input"
-                      type="number"
-                      placeholder="Credits Δ"
-                      value={adjust.creditsDelta}
-                      onChange={(e) => setAdjust((p) => ({ ...p, creditsDelta: e.target.value }))}
+                      required
+                      value={form.name}
+                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                      placeholder="Partner full name"
                     />
                   </div>
+                  <div className="admin-field">
+                    <label>Phone</label>
+                    <input
+                      required
+                      value={form.phone}
+                      onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                      placeholder="10-digit mobile"
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-field-row">
+                  <div className="admin-field">
+                    <label>City</label>
+                    <input
+                      value={form.city}
+                      onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+                      placeholder="e.g. Ahmedabad"
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Manager phone</label>
+                    <input
+                      value={form.managerPhone}
+                      onChange={(e) => setForm((p) => ({ ...p, managerPhone: e.target.value }))}
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-field">
+                  <label>Photo URL</label>
                   <input
-                    className="admin-input w-full mt-2"
-                    placeholder="Note"
-                    value={adjust.note}
-                    onChange={(e) => setAdjust((p) => ({ ...p, note: e.target.value }))}
+                    value={form.photoUrl}
+                    onChange={(e) => setForm((p) => ({ ...p, photoUrl: e.target.value }))}
+                    placeholder="https://..."
                   />
                 </div>
-              ) : null}
 
-              <button type="submit" className="admin-btn admin-btn-primary w-full" disabled={saving}>
+                <div className="admin-field">
+                  <label>Service pincodes (multiple)</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      value={pinInput}
+                      onChange={(e) => setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addPincode();
+                        }
+                      }}
+                      placeholder="Enter 6-digit pincode"
+                      maxLength={6}
+                    />
+                    <button type="button" className="admin-btn admin-btn-ghost" onClick={addPincode}>
+                      Add
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {form.servicePincodes.map((pin) => (
+                      <span
+                        key={pin}
+                        className="admin-badge admin-badge-blue"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {pin}
+                        <button
+                          type="button"
+                          onClick={() => removePincode(pin)}
+                          style={{
+                            border: 0,
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            color: 'inherit',
+                            fontSize: 14,
+                            lineHeight: 1,
+                            padding: 0,
+                          }}
+                          aria-label={`Remove ${pin}`}>
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    {!form.servicePincodes.length ? (
+                      <span className="text-xs text-slate-500">No pincodes assigned yet</span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="admin-field">
+                  <label>Order credit cost (deducted on accept)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.orderCreditCost}
+                    onChange={(e) => setForm((p) => ({ ...p, orderCreditCost: e.target.value }))}
+                    placeholder="e.g. 1"
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.isActive}
+                      onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
+                      className="w-4 h-4 accent-blue-500"
+                    />
+                    <span>Active (can login to Partner app)</span>
+                  </label>
+                </div>
+
+                <div className="admin-field-row">
+                  <div className="admin-field">
+                    <label>VA Number</label>
+                    <input
+                      value={form.virtualAccount?.number || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          virtualAccount: { ...p.virtualAccount, number: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>IFSC</label>
+                    <input
+                      value={form.virtualAccount?.ifsc || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          virtualAccount: { ...p.virtualAccount, ifsc: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-field-row">
+                  <div className="admin-field">
+                    <label>Bank name</label>
+                    <input
+                      value={form.virtualAccount?.bankName || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          virtualAccount: { ...p.virtualAccount, bankName: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Account type</label>
+                    <input
+                      value={form.virtualAccount?.type || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          virtualAccount: { ...p.virtualAccount, type: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {editingId ? (
+                  <div className="admin-field" style={{ marginTop: 8 }}>
+                    <label>
+                      Adjust wallet / credits (current ₹{form.walletBalance} / {form.credits} credits)
+                    </label>
+                    <div className="admin-field-row">
+                      <div className="admin-field">
+                        <input
+                          type="number"
+                          placeholder="Wallet Δ"
+                          value={adjust.walletDelta}
+                          onChange={(e) => setAdjust((p) => ({ ...p, walletDelta: e.target.value }))}
+                        />
+                      </div>
+                      <div className="admin-field">
+                        <input
+                          type="number"
+                          placeholder="Credits Δ"
+                          value={adjust.creditsDelta}
+                          onChange={(e) => setAdjust((p) => ({ ...p, creditsDelta: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <input
+                      placeholder="Note"
+                      value={adjust.note}
+                      onChange={(e) => setAdjust((p) => ({ ...p, note: e.target.value }))}
+                    />
+                  </div>
+                ) : null}
+              </form>
+            </div>
+
+            <div className="admin-modal-footer">
+              <button type="button" className="admin-btn admin-btn-ghost" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              <button type="submit" form="vendorForm" disabled={saving} className="admin-btn admin-btn-primary">
                 {saving ? 'Saving...' : 'Save Vendor'}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       ) : null}
