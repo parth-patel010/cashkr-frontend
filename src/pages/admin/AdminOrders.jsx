@@ -216,7 +216,24 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                     }
                   />
                   <InfoRow
-                    label="Adjustment"
+                    label="Checklist adjustment"
+                    value={
+                      order.deviceReport.vendorVerification.checklistAdjustment != null
+                        ? `${Number(order.deviceReport.vendorVerification.checklistAdjustment) >= 0 ? '+' : ''}₹${order.deviceReport.vendorVerification.checklistAdjustment}`
+                        : null
+                    }
+                  />
+                  <InfoRow
+                    label="Negotiation"
+                    value={
+                      order.deviceReport.vendorVerification.negotiationAmount != null &&
+                      Number(order.deviceReport.vendorVerification.negotiationAmount) !== 0
+                        ? `${Number(order.deviceReport.vendorVerification.negotiationAmount) >= 0 ? '+' : ''}₹${order.deviceReport.vendorVerification.negotiationAmount}`
+                        : null
+                    }
+                  />
+                  <InfoRow
+                    label="Total adjustment"
                     value={
                       order.deviceReport.vendorVerification.adjustment != null
                         ? `${Number(order.deviceReport.vendorVerification.adjustment) >= 0 ? '+' : ''}₹${order.deviceReport.vendorVerification.adjustment}`

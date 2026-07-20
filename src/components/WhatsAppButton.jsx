@@ -2,15 +2,7 @@
 // Floating WhatsApp button — place this component once in your root layout
 // (e.g. App.jsx, alongside <Navbar /> / <Footer />) so it appears on every page.
 
-// ── CONFIG ──────────────────────────────────────────────────────────────
-// Number format: country code + number, NO "+", spaces, or dashes.
-// e.g. +91 70301 53666  ->  "917030153666"
-const WHATSAPP_NUMBER = "918310732405";
-
-// Pre-filled message shown when the chat opens
-const DEFAULT_MESSAGE =
-  "Hi, I'm interested in selling my device on DeviceKart.";
-// ─────────────────────────────────────────────────────────────────────────
+const WHATSAPP_LINK = 'https://wa.link/4fr8mh';
 
 const WhatsAppIcon = () => (
   <svg
@@ -26,11 +18,9 @@ const WhatsAppIcon = () => (
 );
 
 export default function WhatsAppButton() {
-  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(DEFAULT_MESSAGE)}`;
-
   return (
     <a
-      href={whatsappLink}
+      href={WHATSAPP_LINK}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
