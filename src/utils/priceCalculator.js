@@ -55,7 +55,7 @@ export function calculatePrice({
   };
 
   // 1. Age deduction (applied first to base price)
-  const ageDeductions = { '0 - 3 Months': 0, '3 - 6 Months': 7, '6 - 11 Months': 10, 'Above 11 Months': 21 };
+  const ageDeductions = { '0 - 3 Months': 0, '3 - 6 Months': 7, '6 - 11 Months': 10, 'Above 11 Months': 15 };
   const agePct = isSpecial ? 0 : (ageDeductions[deviceAge] ?? 7);
   if (agePct > 0) applyDeduction('age', agePct);
 
@@ -74,7 +74,7 @@ export function calculatePrice({
     applyDeduction('copyScreen', 50);
   }
 
-  // 5. Out of warranty — 20%
+  // 5. Out of warranty — 15%
   // NOTE: If device is >11 months old, warranty is automatically "No" with NO deduction
   if (!isSpecial && underWarranty === false && deviceAge !== 'Above 11 Months') {
     applyDeduction('outOfWarranty', 15);
@@ -121,12 +121,12 @@ export function calculatePrice({
 function getProcessorValuation(processorStr) {
   if (!processorStr) return { base: 2500, increment: 0 };
   const p = processorStr.toLowerCase();
-  
+
   const isRyzen = p.includes('ryzen');
   const isLatest = p.includes('12th') || p.includes('13th') || p.includes('14th') || p.includes('ultra') || p.includes('elite') || p.includes('plus') || p.includes('ryzen 3 6th') || p.includes('ryzen 3 7th') || p.includes('ryzen 3 8th') || p.includes('ryzen 5 6th') || p.includes('ryzen 5 7th') || p.includes('ryzen 5 8th') || p.includes('ryzen 7 6th') || p.includes('ryzen 7 7th') || p.includes('ryzen 7 8th') || p.includes('ryzen 9 6th') || p.includes('ryzen AI') || p.includes('series 1') || p.includes('series 2') || p.includes('series 3');
-  
+
   const isOlderModern = p.includes('8th') || p.includes('9th') || p.includes('10th') || p.includes('11th') || p.includes('2nd gen') || p.includes('3rd gen') || p.includes('4th gen') || p.includes('5th gen') || (isRyzen && !isLatest);
-  
+
   // Core i9 / Ryzen 9 / Core Ultra 9 / Snapdragon X Elite
   if (p.includes('i9') || p.includes('ryzen 9') || p.includes('ultra 9') || p.includes('elite')) {
     if (isLatest) return { base: 5000, increment: 20000 };
@@ -178,7 +178,7 @@ function getRamIncrement(ramStr) {
 function getStorageIncrement(storageStr) {
   if (!storageStr) return 0;
   const s = storageStr.toLowerCase();
-  
+
   let ssdPart = '';
   if (s.includes('+')) {
     const parts = s.split('+');
@@ -186,18 +186,18 @@ function getStorageIncrement(storageStr) {
   } else if (s.includes('ssd')) {
     ssdPart = s;
   }
-  
+
   if (!ssdPart) return 0;
-  
+
   const match = ssdPart.match(/(\d+)\s*(gb|tb)/);
   if (!match) return 0;
-  
+
   let val = parseInt(match[1]);
   const unit = match[2];
   if (unit === 'tb') {
     val = val * 1024;
   }
-  
+
   if (val >= 1024) return 4500;
   if (val >= 512) return 2200;
   if (val >= 256) return 1000;
@@ -221,10 +221,10 @@ function getScreenSizeIncrement(sizeKey) {
 
 function getBrandMultiplier(device) {
   if (!device) return 1.0;
-  
+
   const brand = (device.brand || '').toLowerCase();
   const m = (device.modelName || '').toLowerCase();
-  
+
   // Dell
   if (brand === 'dell') {
     if (m.includes('precision') || m.includes('latitude 3000')) {
@@ -238,7 +238,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // HP
   if (brand === 'hp') {
     if (m.includes('zbook') || m.includes('specre') || m.includes('spectre')) {
@@ -252,7 +252,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // Lenovo
   if (brand === 'lenovo') {
     if (m.includes('legion') || m.includes('loq') || m.includes('gaming') || m.includes('edge')) {
@@ -263,7 +263,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // Asus
   if (brand === 'asus') {
     if (m.includes('proart') || m.includes('zenbook pro') || m.includes('studiobook')) {
@@ -274,7 +274,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // Acer
   if (brand === 'acer') {
     if (m.includes('conceptd') || m.includes('swift 3x') || m.includes('travelmate p6') || m.includes('swift 7') || m.includes('swift x') || m.includes('spin 7') || m.includes('aspire 7') || m.includes('travelmate p4')) {
@@ -285,7 +285,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // Microsoft
   if (brand === 'microsoft') {
     if (m.includes('pro x') || m.includes('pro 7') || m.includes('surface 4') || m.includes('laptop 3') || m.includes('pro 6')) {
@@ -293,7 +293,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // MSI
   if (brand === 'msi') {
     if (m.includes('summit') || m.includes('modern') || m.includes('creator')) {
@@ -304,7 +304,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // Samsung
   if (brand === 'samsung') {
     if (m.includes('ultra') || m.includes('pro') || m.includes('book3') || m.includes('book4') || m.includes('book5') || m.includes('book2') || m.includes('360')) {
@@ -315,7 +315,7 @@ function getBrandMultiplier(device) {
     }
     return 1.0; // Budget
   }
-  
+
   // Fallback to database tier
   const tier = (device.tier || '').toLowerCase();
   if (tier === 'gaming' || tier.includes('gaming')) {
@@ -327,7 +327,7 @@ function getBrandMultiplier(device) {
   if (tier === 'mid-range' || tier.includes('mid') || tier.includes('business')) {
     return 1.15;
   }
-  
+
   return 1.0;
 }
 
@@ -340,17 +340,17 @@ function getAgeMultiplier(yearBracket) {
 
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
-          functionalIssues = [], screenIssues = [], bodyIssues = [],
-          accessories, powerStatus, screenSize } = selections;
-  
+    functionalIssues = [], screenIssues = [], bodyIssues = [],
+    accessories, powerStatus, screenSize } = selections;
+
   let basePrice = 0;
 
   // Condition multiplier will be calculated dynamically later based on basePrice
-  const totalIssueCount = 
+  const totalIssueCount =
     (functionalIssues || []).filter(i => i !== 'noIssues').length +
     (screenIssues || []).filter(i => i !== 'noIssue').length +
     (bodyIssues || []).length;
-    
+
   const calculateConditionMultiplier = (issueCount) => {
     if (issueCount === 0) return 0.95;
     if (issueCount <= 2) return 0.85;
@@ -360,8 +360,8 @@ export function calculateLaptopPrice(device, selections) {
 
   if (device.brand === 'Apple') {
     // ── 1. Find base price from variant for Apple ──
-    let variant = device.variants.find(v => 
-      v.ram === ram && 
+    let variant = device.variants.find(v =>
+      v.ram === ram &&
       v.storage === storage &&
       (!selections.processor || v.processor === selections.processor) &&
       (!selections.generation || v.generation === selections.generation)
@@ -376,7 +376,7 @@ export function calculateLaptopPrice(device, selections) {
       // Fallback: Use the first variant as baseline and adjust
       const baseline = device.variants[0];
       basePrice = baseline.basePrice;
-      
+
       const ramVal = (r) => parseInt(r) || 8;
       basePrice += (ramVal(ram) - ramVal(baseline.ram)) * 200;
 
@@ -468,13 +468,13 @@ export function calculateLaptopPrice(device, selections) {
 
     // 1. Component Base Price
     let componentBase = 0;
-    
+
     // 1.1 CPU
     const getCpuPrice = (cpu) => {
       if (!cpu) return 3000;
       // Exact lookup
       if (CPU_PRICES[cpu]) return CPU_PRICES[cpu];
-      
+
       // Fallback fuzz matching
       const c = cpu.toLowerCase();
       let base = 3000;
@@ -488,7 +488,7 @@ export function calculateLaptopPrice(device, selections) {
       if (c.includes('14th')) base += 6000;
       return base;
     };
-    
+
     const deviceProcessor = selections.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
     componentBase += getCpuPrice(deviceProcessor);
 
@@ -496,7 +496,7 @@ export function calculateLaptopPrice(device, selections) {
     const getRamPrice = (r) => {
       if (!r) return 1500;
       if (RAM_PRICES[r]) return RAM_PRICES[r];
-      
+
       const num = parseInt(r);
       if (num <= 4) return 800;
       if (num <= 8) return 1500;
@@ -510,7 +510,7 @@ export function calculateLaptopPrice(device, selections) {
     const getStoragePrice = (s) => {
       if (!s) return 1500;
       if (STORAGE_PRICES[s]) return STORAGE_PRICES[s];
-      
+
       if (s.includes('512') && s.toLowerCase().includes('ssd')) return 2800;
       if (s.includes('1 TB') || s.includes('1TB')) return 4000;
       if (s.includes('256')) return 1500;
