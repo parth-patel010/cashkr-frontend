@@ -967,33 +967,18 @@ export default function ConditionQuizPage() {
             
             {/* Price Box */}
             <div className="relative mb-8">
-              <div
-                className={`bg-[#E8F1FF] rounded-3xl p-6 flex items-center justify-between border border-[#0565E6]/10 transition-all ${
-                  !isAuthenticated ? 'blur-md select-none pointer-events-none' : ''
-                }`}
-              >
+              <div className="bg-[#E8F1FF] rounded-3xl p-6 flex items-center justify-between border border-[#0565E6]/10 transition-all">
                 <div>
                   <p className="text-[#0565E6] text-xs font-bold uppercase tracking-widest mb-1">Estimated Value</p>
                   <p className={`text-3xl font-black text-[#111827] transition-all ${priceAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
-                    {isAuthenticated ? formatCurrency(currentPrice) : '₹•••••'}
+                    {formatCurrency(currentPrice)}
                   </p>
+                  <p className="text-[11px] text-gray-400 font-medium mt-1">Updates as you answer</p>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#0565E6] shadow-sm">
                   <IconTrend />
                 </div>
               </div>
-              {!isAuthenticated && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-3xl bg-white/60 backdrop-blur-[2px] px-4">
-                  <p className="text-xs font-bold text-gray-500 text-center">Login to unlock your offer price</p>
-                  <button
-                    type="button"
-                    onClick={() => redirectToLogin(false)}
-                    className="bg-[#0565E6] text-white font-black text-sm px-6 py-3 rounded-xl hover:bg-[#044BA8] transition-all shadow-lg shadow-blue-100"
-                  >
-                    Login to view price
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Summary List */}

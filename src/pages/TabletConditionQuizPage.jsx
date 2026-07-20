@@ -692,6 +692,7 @@ export default function TabletConditionQuizPage() {
                 <p className={`text-3xl font-black text-[#111827] transition-all ${priceAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
                   {formatCurrency(currentPrice)}
                 </p>
+                <p className="text-[11px] text-gray-400 font-medium mt-1">Updates as you answer</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#0565E6] shadow-sm">
                 <IconTrend />
