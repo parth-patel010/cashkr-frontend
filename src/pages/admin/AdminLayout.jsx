@@ -12,7 +12,7 @@ import {
   MapPin,
   BarChart3,
   MessageCircle,
-  IndianRupee
+  Settings
 } from 'lucide-react';
 import './admin.css';
 
@@ -35,13 +35,13 @@ export default function AdminLayout() {
     if (path.includes('/brands')) return 'Brand Management';
     if (path.includes('/buy-devices')) return 'Buy Device Inventory';
     if (path.includes('/vendors')) return 'Vendor Management';
-    if (path.includes('/custom-pricing')) return 'Custom Pricing';
+    if (path.includes('/app-settings')) return 'App Settings';
     if (path.includes('/repair-services')) return 'Repair Services';
     if (path.includes('/chat')) return 'Live Chat';
-    if (path.includes('/partners')) return 'Partner Applications';
-    if (path.includes('/orders')) return 'System Orders';
-    if (path.includes('/pincodes')) return 'Serviceable Pincodes';
-    return 'Admin Panel';
+    if (path.includes('/partners')) return 'Partners';
+    if (path.includes('/orders')) return 'Orders';
+    if (path.includes('/pincodes')) return 'Pincodes';
+    return 'Admin';
   };
 
   return (
@@ -135,11 +135,11 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink 
-            to="/admin/custom-pricing" 
+            to="/admin/app-settings" 
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
           >
-            <IndianRupee />
-            <span>Custom Pricing</span>
+            <Settings />
+            <span>App Settings</span>
           </NavLink>
 
           <NavLink 

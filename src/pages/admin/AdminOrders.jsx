@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
-import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, CreditCard, Download } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, CreditCard, Download, Camera, ClipboardCheck } from 'lucide-react';
 import './admin.css';
 
 const ORDER_TYPES = [
@@ -51,7 +51,7 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
 
   return (
     <div className="admin-modal-backdrop" onClick={onClose}>
-      <div className="admin-modal" style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
+      <div className="admin-modal" style={{ maxWidth: 720 }} onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
           <div>
             <h3>{orderType.toUpperCase()} Order Details</h3>
@@ -147,13 +147,110 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 {pb.accessoriesBonus ? (
                   <InfoRow label="Accessories Bonus" value={`+₹${pb.accessoriesBonus}`} />
                 ) : null}
+                {pb.quotedFinalPrice != null ? (
+                  <InfoRow label="Quoted to customer" value={`₹${pb.quotedFinalPrice}`} />
+                ) : null}
+                {(order.vendorPriceAdjustment != null && Number(order.vendorPriceAdjustment) !== 0) ||
+                pb.vendorAdjustment != null ? (
+                  <InfoRow
+                    label="Vendor adjustment"
+                    value={`${Number(order.vendorPriceAdjustment || pb.vendorAdjustment || 0) >= 0 ? '+' : ''}₹${order.vendorPriceAdjustment ?? pb.vendorAdjustment}`}
+                  />
+                ) : null}
                 <div className="flex justify-between items-center py-3 mt-1 border-t-2 border-blue-100">
                   <span className="text-[12px] font-800 text-blue-700 uppercase tracking-wider">
-                    Final Price Offered
+                    {order.status === 'completed' ? 'Final paid / completed' : 'Final Price Offered'}
                   </span>
                   <span className="text-[18px] font-900 text-blue-700">₹{pb.finalPrice || 0}</span>
                 </div>
               </Section>
+
+              {order.deviceReport?.vendorVerification ? (
+                <Section icon={ClipboardCheck} title="Vendor verified checklist">
+                  <InfoRow
+                    label="Able to make calls"
+                    value={boolLabel(order.deviceReport.vendorVerification.ableToMakeCalls)}
+                  />
+                  <InfoRow
+                    label="Touchscreen working"
+                    value={boolLabel(order.deviceReport.vendorVerification.isTouchScreenWorking)}
+                  />
+                  <InfoRow
+                    label="Screen original"
+                    value={boolLabel(order.deviceReport.vendorVerification.isScreenOriginal)}
+                  />
+                  <InfoRow
+                    label="Under warranty"
+                    value={boolLabel(order.deviceReport.vendorVerification.underWarranty)}
+                  />
+                  <InfoRow
+                    label="Has charger"
+                    value={boolLabel(order.deviceReport.vendorVerification.hasCharger)}
+                  />
+                  <InfoRow
+                    label="Has box"
+                    value={boolLabel(order.deviceReport.vendorVerification.hasBox)}
+                  />
+                  <InfoRow
+                    label="Physical issues"
+                    value={formatList(order.deviceReport.vendorVerification.physicalIssues)}
+                  />
+                  <InfoRow
+                    label="Technical issues"
+                    value={formatList(order.deviceReport.vendorVerification.technicalIssues)}
+                  />
+                  <InfoRow
+                    label="Quoted final"
+                    value={
+                      order.deviceReport.vendorVerification.quotedFinalPrice != null
+                        ? `₹${order.deviceReport.vendorVerification.quotedFinalPrice}`
+                        : null
+                    }
+                  />
+                  <InfoRow
+                    label="Verified final"
+                    value={
+                      order.deviceReport.vendorVerification.verifiedFinalPrice != null
+                        ? `₹${order.deviceReport.vendorVerification.verifiedFinalPrice}`
+                        : null
+                    }
+                  />
+                  <InfoRow
+                    label="Adjustment"
+                    value={
+                      order.deviceReport.vendorVerification.adjustment != null
+                        ? `${Number(order.deviceReport.vendorVerification.adjustment) >= 0 ? '+' : ''}₹${order.deviceReport.vendorVerification.adjustment}`
+                        : null
+                    }
+                  />
+                </Section>
+              ) : null}
+
+              {Array.isArray(order.pickupPhotos) && order.pickupPhotos.length > 0 ? (
+                <Section icon={Camera} title="Vendor pickup photos (6 angles)">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-3">
+                    {order.pickupPhotos.map((photo) => (
+                      <a
+                        key={`${photo.angle}-${photo.url}`}
+                        href={photo.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-xl overflow-hidden border border-slate-200 bg-white">
+                        <img
+                          src={photo.url}
+                          alt={photo.angle || 'pickup'}
+                          className="w-full h-28 object-cover"
+                        />
+                        <p className="text-[11px] font-700 text-slate-500 uppercase text-center py-1.5">
+                          {photo.angle || 'photo'}
+                        </p>
+                      </a>
+                    ))}
+                  </div>
+                  <InfoRow label="IMEI 1" value={order.imei1} />
+                  <InfoRow label="IMEI 2" value={order.imei2} />
+                </Section>
+              ) : null}
 
               <Section icon={User} title="Assigned Vendor">
                 <InfoRow label="Vendor Name" value={order.partnerName || 'Unassigned'} />

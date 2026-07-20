@@ -31,6 +31,14 @@ export default function OrderTrackingPage() {
     refreshUser();
   }, [orderId]);
 
+  // Poll while order is active so Pickup OTP appears after partner taps "I Have Reached"
+  useEffect(() => {
+    if (!orderId || !order) return undefined;
+    if (['completed', 'cancelled', 'failed'].includes(order.status)) return undefined;
+    const id = setInterval(fetchOrder, 8000);
+    return () => clearInterval(id);
+  }, [orderId, order?.status]);
+
   const handleCancel = async () => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
     try {
@@ -95,7 +103,16 @@ export default function OrderTrackingPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
               <h1 className="text-2xl font-black text-[#111827] mb-1">Order #: <span className="uppercase">{orderId}</span></h1>
-              <p className="text-[#EF4444] font-black text-sm uppercase tracking-wider">PIN : 7803</p>
+              {order.pickupOtp ? (
+                <p className="text-[#0565E6] font-black text-sm uppercase tracking-wider">
+                  Pickup OTP ready — share with partner
+                </p>
+              ) : order.partnerName ? (
+                <p className="text-gray-400 font-bold text-sm">
+                  Partner: <span className="text-[#111827]">{order.partnerName}</span>
+                  {order.partnerPhone ? ` · ${order.partnerPhone}` : ''}
+                </p>
+              ) : null}
             </div>
             <button 
               onClick={() => setShowReport(true)}
@@ -110,6 +127,39 @@ export default function OrderTrackingPage() {
              <p className="text-gray-400">Order date: <span className="text-[#111827]">{orderDate}</span></p>
              <p className="text-[#0565E6]">Pickup Date: <span className="font-black">{pickupDateStr} - {order.pickup?.timeSlot}</span></p>
           </div>
+
+          {order.pickupOtp ? (
+            <div className="rounded-[28px] border-2 border-[#0565E6] bg-[#E8F1FF] p-8 text-center space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-[#0565E6]">Pickup OTP</p>
+              <p className="text-sm font-bold text-gray-500">
+                Your DeviceKart partner has arrived. Share this OTP with them to start pickup.
+              </p>
+              <p className="text-5xl font-black tracking-[0.35em] text-[#0565E6] pl-[0.35em]">
+                {order.pickupOtp}
+              </p>
+              {order.pickupOtpExpiresAt ? (
+                <p className="text-xs font-bold text-gray-400">
+                  Valid until{' '}
+                  {new Date(order.pickupOtpExpiresAt).toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {order.status === 'completed' ? (
+            <div className="rounded-[28px] border border-green-100 bg-green-50 p-6 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p className="font-black text-[#111827]">Pickup successful</p>
+                <p className="text-sm font-bold text-gray-500">Your device has been collected by the partner.</p>
+              </div>
+            </div>
+          ) : null}
 
           <div className="border-t border-gray-50 pt-10">
             <h3 className="text-lg font-black text-[#111827] mb-10">Order Status: <span className="text-[#0565E6]">Generated</span></h3>
