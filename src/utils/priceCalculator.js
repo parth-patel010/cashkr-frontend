@@ -77,7 +77,7 @@ export function calculatePrice({
   // 5. Out of warranty — 20%
   // NOTE: If device is >11 months old, warranty is automatically "No" with NO deduction
   if (!isSpecial && underWarranty === false && deviceAge !== 'Above 11 Months') {
-    applyDeduction('outOfWarranty', 20);
+    applyDeduction('outOfWarranty', 15);
   }
 
   // 6. eSIM only global variant — 6%
