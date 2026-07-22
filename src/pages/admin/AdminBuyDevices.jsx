@@ -18,6 +18,7 @@ const EMPTY_FORM = {
   title: '',
   description: '',
   imageUrl: '',
+  descriptionImages: [],
   videoUrl: '',
   warrantyMonths: 12,
   isActive: true,
@@ -35,6 +36,7 @@ export default function AdminBuyDevices() {
   const [submitting, setSubmitting] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingDescImages, setUploadingDescImages] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -86,6 +88,7 @@ export default function AdminBuyDevices() {
       title: product.title || '',
       description: product.description || '',
       imageUrl: product.imageUrl || '',
+      descriptionImages: product.descriptionImages || [],
       videoUrl: product.videoUrl || '',
       warrantyMonths: product.warrantyMonths ?? 12,
       isActive: product.isActive !== false,
@@ -302,17 +305,17 @@ export default function AdminBuyDevices() {
 
                 <div className="admin-field-row">
                   <div className="admin-field">
-                    <label>Product image (max 3MB)</label>
+                    <label>Cover image (max 3MB)</label>
                     <div className="flex flex-wrap items-center gap-3">
                       {form.imageUrl ? (
                         <img
                           src={form.imageUrl}
-                          alt="Preview"
+                          alt="Cover"
                           className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-white"
                         />
                       ) : null}
                       <label className="admin-btn admin-btn-ghost cursor-pointer">
-                        {uploadingImage ? 'Uploading...' : form.imageUrl ? 'Change image' : 'Upload image'}
+                        {uploadingImage ? 'Uploading...' : form.imageUrl ? 'Change cover' : 'Upload cover'}
                         <input
                           type="file"
                           accept="image/*"
@@ -360,6 +363,70 @@ export default function AdminBuyDevices() {
                       }
                     />
                   </div>
+                </div>
+
+                <div className="admin-field">
+                  <label>Images in product description (multiple)</label>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {(form.descriptionImages || []).map((url, idx) => (
+                      <div key={`${url}-${idx}`} className="relative">
+                        <img
+                          src={url}
+                          alt={`Description ${idx + 1}`}
+                          className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-white"
+                        />
+                        <button
+                          type="button"
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              descriptionImages: (prev.descriptionImages || []).filter((_, i) => i !== idx),
+                            }))
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="admin-btn admin-btn-ghost cursor-pointer inline-flex">
+                    {uploadingDescImages ? 'Uploading...' : 'Upload description images'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      disabled={uploadingDescImages}
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (!files.length) return;
+                        const tooBig = files.find((f) => f.size > 3 * 1024 * 1024);
+                        if (tooBig) {
+                          alert('Each image must be 3MB or less');
+                          e.target.value = '';
+                          return;
+                        }
+                        setUploadingDescImages(true);
+                        try {
+                          const uploaded = [];
+                          for (const file of files) {
+                            const { data } = await adminService.uploadImage(file);
+                            if (data.imageUrl) uploaded.push(data.imageUrl);
+                          }
+                          setForm((prev) => ({
+                            ...prev,
+                            descriptionImages: [...(prev.descriptionImages || []), ...uploaded],
+                          }));
+                        } catch (err) {
+                          alert(err.response?.data?.message || 'Image upload failed');
+                        } finally {
+                          setUploadingDescImages(false);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
 
                 <div className="admin-field">

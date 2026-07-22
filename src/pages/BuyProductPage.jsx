@@ -174,6 +174,22 @@ export default function BuyProductPage() {
           {product.description ? (
             <p className="text-sm text-text-muted leading-relaxed mb-3">{product.description}</p>
           ) : null}
+          {(product.descriptionImages || []).length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              {product.descriptionImages.map((url, idx) => (
+                <div
+                  key={`${url}-${idx}`}
+                  className="bg-gray-50 rounded-xl border border-border overflow-hidden aspect-square flex items-center justify-center"
+                >
+                  <img
+                    src={url}
+                    alt={`${title} detail ${idx + 1}`}
+                    className="w-full h-full object-contain p-2"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
           <p className="text-sm font-semibold text-text-muted mb-6">
             {product.warrantyMonths || 12} months warranty
           </p>
