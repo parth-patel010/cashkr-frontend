@@ -44,10 +44,10 @@ export default function AdminWebsiteSettings() {
       ...list,
       {
         id: newBannerId(),
-        title: 'New banner',
+        title: '',
         subtitle: '',
-        ctaText: 'Sell Now',
-        ctaLink: '/sell-old-mobile-phones/brand',
+        ctaText: '',
+        ctaLink: '/',
         imageUrl: '',
         enabled: true,
         sortOrder: list.length + 1,
@@ -125,8 +125,8 @@ export default function AdminWebsiteSettings() {
             Website Settings
           </h2>
           <p className="text-sm text-slate-500 font-semibold mt-1 max-w-2xl">
-            Manage homepage banners and sell/buy categories. Upload banner images for the home
-            carousel, and toggle category visibility.
+            Manage homepage banners (image only) and sell/buy categories. Upload banner images for
+            the home carousel, and toggle category visibility.
           </p>
         </div>
         <button type="button" className="admin-btn admin-btn-primary" disabled={saving} onClick={onSave}>
@@ -154,32 +154,33 @@ export default function AdminWebsiteSettings() {
           </button>
         </div>
         <p className="text-xs text-slate-500 font-semibold">
-          Upload a wide banner image (recommended ~1400×400). Title and CTA show over the image when
-          set. Disable a slide to hide it on the homepage.
+          Image-only banners. Upload a wide image (recommended ~1400×400). Optional link opens when
+          the banner is clicked. Toggle Off to hide a slide. If no admin images are set, the site
+          uses the default app banners.
         </p>
 
         <div className="space-y-4">
           {banners.map((banner) => (
             <div
               key={banner.id}
-              className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-1 lg:grid-cols-[140px_1fr_auto] gap-4 items-start"
+              className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-4 items-center"
             >
               <div className="space-y-2">
                 {banner.imageUrl ? (
                   <img
                     src={banner.imageUrl}
-                    alt={banner.title}
-                    className="w-full h-20 object-cover rounded-lg border border-slate-200"
+                    alt="Banner"
+                    className="w-full h-24 object-contain rounded-lg border border-slate-200 bg-slate-50"
                   />
                 ) : (
-                  <div className="w-full h-20 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400 font-bold">
+                  <div className="w-full h-24 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400 font-bold">
                     No image
                   </div>
                 )}
                 <label className="admin-btn admin-btn-ghost text-xs cursor-pointer w-full justify-center">
                   {uploadingKey === `banner-${banner.id}` ? 'Uploading…' : (
                     <>
-                      <Upload size={14} /> Upload
+                      <Upload size={14} /> Upload image
                     </>
                   )}
                   <input
@@ -204,40 +205,14 @@ export default function AdminWebsiteSettings() {
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="admin-field mb-0">
-                  <label>Title</label>
-                  <input
-                    type="text"
-                    value={banner.title}
-                    onChange={(e) => updateBanner(banner.id, { title: e.target.value })}
-                  />
-                </div>
-                <div className="admin-field mb-0">
-                  <label>CTA text</label>
-                  <input
-                    type="text"
-                    value={banner.ctaText}
-                    onChange={(e) => updateBanner(banner.id, { ctaText: e.target.value })}
-                  />
-                </div>
-                <div className="admin-field mb-0 sm:col-span-2">
-                  <label>Subtitle</label>
-                  <input
-                    type="text"
-                    value={banner.subtitle}
-                    onChange={(e) => updateBanner(banner.id, { subtitle: e.target.value })}
-                  />
-                </div>
-                <div className="admin-field mb-0 sm:col-span-2">
-                  <label>CTA link</label>
-                  <input
-                    type="text"
-                    value={banner.ctaLink}
-                    onChange={(e) => updateBanner(banner.id, { ctaLink: e.target.value })}
-                    placeholder="/sell-old-mobile-phones/brand"
-                  />
-                </div>
+              <div className="admin-field mb-0">
+                <label>Click link (optional)</label>
+                <input
+                  type="text"
+                  value={banner.ctaLink || ''}
+                  onChange={(e) => updateBanner(banner.id, { ctaLink: e.target.value })}
+                  placeholder="/sell-old-mobile-phones/brand"
+                />
               </div>
 
               <div className="flex flex-col items-end gap-3">

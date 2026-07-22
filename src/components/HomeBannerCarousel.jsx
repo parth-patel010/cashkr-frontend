@@ -73,20 +73,20 @@ export default function HomeBannerCarousel() {
     <img
       src={banner.imageUrl}
       alt={banner.title || 'DeviceKart banner'}
-      className="w-full h-auto object-contain block"
+      className="w-full h-full object-contain"
     />
   );
 
   return (
     <section className="w-full pt-3 sm:pt-4">
       <div className="relative w-full">
-        <div className="relative w-full bg-[#F2F4F7]">
+        <div className="relative overflow-hidden bg-[#F2F4F7] w-full aspect-[100/44] sm:aspect-[21/9] max-h-[380px] sm:max-h-[420px]">
           {banner.ctaLink ? (
-            <Link to={banner.ctaLink} className="block w-full no-underline leading-none">
+            <Link to={banner.ctaLink} className="absolute inset-0 block no-underline">
               {slide}
             </Link>
           ) : (
-            slide
+            <div className="absolute inset-0">{slide}</div>
           )}
 
           {count > 1 ? (
