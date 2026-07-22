@@ -345,21 +345,8 @@ export function calculateLaptopPrice(device, selections) {
 
   let basePrice = 0;
 
-  // Condition multiplier will be calculated dynamically later based on basePrice
-  const totalIssueCount =
-    (functionalIssues || []).filter(i => i !== 'noIssues').length +
-    (screenIssues || []).filter(i => i !== 'noIssue').length +
-    (bodyIssues || []).length;
-
-  const calculateConditionMultiplier = (issueCount) => {
-    if (issueCount === 0) return 0.95;
-    if (issueCount <= 2) return 0.85;
-    if (issueCount <= 4) return 0.75;
-    return 0.60;
-  };
-
   if (device.brand === 'Apple') {
-    // ── 1. Find base price from variant for Apple ──
+    // ── MacBook / Apple logic (variant base → age → cascading deductions) ──
     let variant = device.variants.find(v =>
       v.ram === ram &&
       v.storage === storage &&
@@ -397,32 +384,9 @@ export function calculateLaptopPrice(device, selections) {
       basePrice += (selectedGB - baselineGB) * 5;
     }
 
-    // Convert Retail Base Price to Buy-back Base Price
-    const APPLE_BUYBACK_FACTOR = 0.90;
-    basePrice = Math.round(basePrice * APPLE_BUYBACK_FACTOR);
-
-    // Apple / Mac age curve
-    const APPLE_AGE_MULT = {
-      lessThan1: 0.96, // in warranty (< 1 yr)
-      oneToTwo: 0.84, // 1–3 years
-      twoToThree: 0.74, // 3+ years
-      lessThan3: 0.96,
-      threeToEleven: 0.86,
-      aboveEleven: 0.76,
-      threeToFour: 0.70,
-      fourToFive: 0.60,
-      moreThan5: 0.50,
-    };
-
-    const ageMult =
-      APPLE_AGE_MULT[yearBracket] ??
-      device.ageMultipliers?.[yearBracket] ??
-      1;
-    // No silent cut when device has zero issues
-    const appleConditionMult = totalIssueCount === 0
-      ? 1
-      : calculateConditionMultiplier(totalIssueCount);
-    let currentPrice = Math.round(basePrice * ageMult * appleConditionMult);
+    // Apple age multipliers & deductions
+    const ageMult = device.ageMultipliers?.[yearBracket] || 1;
+    let currentPrice = Math.round(basePrice * ageMult);
     const ageAdjustment = currentPrice - basePrice;
 
     let powerDeduction = 0;
@@ -470,16 +434,11 @@ export function calculateLaptopPrice(device, selections) {
     const accBonus = accList.reduce((sum, item) => sum + (device.accessoriesBonus?.[item] || 0), 0);
     currentPrice += accBonus;
 
-    // Extra Mac/Apple uplift (~₹3.5k) on top of the restored curve
-    const APPLE_QUOTE_BOOST = 3500;
-    currentPrice += APPLE_QUOTE_BOOST;
-
     const finalPrice = Math.max(Math.round(currentPrice / 100) * 100, 0);
 
     return {
       basePrice,
       ageAdjustment,
-      agingDeduction: 0,
       powerDeduction: -powerDeduction,
       functionalDeduction: -functionalDeduction,
       screenDeduction: -screenDeduction,
@@ -489,6 +448,11 @@ export function calculateLaptopPrice(device, selections) {
     };
   } else {
     // ── UNIFIED ALGORITHM FOR NON-APPLE LAPTOPS (algorithm-prd.md) ──
+
+    const totalIssueCount =
+      (functionalIssues || []).filter(i => i !== 'noIssues').length +
+      (screenIssues || []).filter(i => i !== 'noIssue').length +
+      (bodyIssues || []).length;
 
     // 1. Component Base Price
     let componentBase = 0;
