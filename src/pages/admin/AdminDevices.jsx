@@ -34,6 +34,7 @@ export default function AdminDevices() {
   const [loading, setLoading] = useState(true);
   const [brandOptions, setBrandOptions] = useState([]);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Form State
   const [showModal, setShowModal] = useState(false);
@@ -512,13 +513,53 @@ export default function AdminDevices() {
                   </div>
 
                   <div className="admin-field">
-                    <label>Image URL</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
-                      value={formData.imageUrl}
-                      onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                    />
+                    <label>Product image (max 3MB)</label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {formData.imageUrl ? (
+                        <img
+                          src={formData.imageUrl}
+                          alt="Preview"
+                          className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-white"
+                        />
+                      ) : null}
+                      <label className="admin-btn admin-btn-ghost cursor-pointer">
+                        {uploadingImage ? 'Uploading...' : formData.imageUrl ? 'Change image' : 'Upload image'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingImage}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 3 * 1024 * 1024) {
+                              alert('Image must be 3MB or less');
+                              e.target.value = '';
+                              return;
+                            }
+                            setUploadingImage(true);
+                            try {
+                              const { data } = await adminService.uploadImage(file);
+                              handleInputChange('imageUrl', data.imageUrl);
+                            } catch (err) {
+                              alert(err.response?.data?.message || 'Image upload failed');
+                            } finally {
+                              setUploadingImage(false);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </label>
+                      {formData.imageUrl ? (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-ghost text-xs text-red-500"
+                          onClick={() => handleInputChange('imageUrl', '')}
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div className="admin-field">

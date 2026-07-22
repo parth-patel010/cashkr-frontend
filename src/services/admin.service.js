@@ -68,6 +68,13 @@ export const adminService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return adminApi.post('/admin/media/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 
   // Buy inventory products
   getBuyProducts: (params) => adminApi.get('/admin/buy-products', { params }),

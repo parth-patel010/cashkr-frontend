@@ -34,6 +34,7 @@ export default function AdminBuyDevices() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -301,11 +302,53 @@ export default function AdminBuyDevices() {
 
                 <div className="admin-field-row">
                   <div className="admin-field">
-                    <label>Image URL</label>
-                    <input
-                      value={form.imageUrl}
-                      onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                    />
+                    <label>Product image (max 3MB)</label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.imageUrl ? (
+                        <img
+                          src={form.imageUrl}
+                          alt="Preview"
+                          className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-white"
+                        />
+                      ) : null}
+                      <label className="admin-btn admin-btn-ghost cursor-pointer">
+                        {uploadingImage ? 'Uploading...' : form.imageUrl ? 'Change image' : 'Upload image'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingImage}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 3 * 1024 * 1024) {
+                              alert('Image must be 3MB or less');
+                              e.target.value = '';
+                              return;
+                            }
+                            setUploadingImage(true);
+                            try {
+                              const { data } = await adminService.uploadImage(file);
+                              setForm((prev) => ({ ...prev, imageUrl: data.imageUrl }));
+                            } catch (err) {
+                              alert(err.response?.data?.message || 'Image upload failed');
+                            } finally {
+                              setUploadingImage(false);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </label>
+                      {form.imageUrl ? (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-ghost text-xs text-red-500"
+                          onClick={() => setForm((prev) => ({ ...prev, imageUrl: '' }))}
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="admin-field">
                     <label>Warranty (months)</label>
