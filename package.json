@@ -7,7 +7,10 @@
     "start": "react-scripts start",
     "dev": "vite",
     "seo:routes": "node scripts/seo-routes.js",
-    "build": "node scripts/seo-routes.js && vite build && node scripts/prerender.js",
+    "seo:routes:full": "node scripts/seo-routes.js --full",
+    "build": "vite build",
+    "build:seo": "node scripts/seo-routes.js && vite build && node scripts/prerender.js --run",
+    "prerender": "node scripts/prerender.js --run",
     "lint": "eslint .",
     "preview": "vite preview"
   },

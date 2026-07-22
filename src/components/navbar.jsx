@@ -5,14 +5,24 @@ import { deviceService } from "../services/device.service";
 import logo from "../assets/logo.png";
 
 const NAV_ITEMS = [
-  { label: "Buy", hasDropdown: false, to: "/buy" },
-  { label: "Mobile", hasDropdown: false, to: "/sell-old-mobile-phones/brand" },
-  { label: "Tablet", hasDropdown: false, to: "/sell-tablet/brand" },
-  { label: "Laptop", hasDropdown: false, to: "/sell-old-laptops/brand" },
-  { label: "IMac", hasDropdown: false, to: "/sell-imac/brand" },
-  { label: "Corporate", hasDropdown: false, to: "/corporate" },
-  { label: "About Us", hasDropdown: false, to: "/about-us" },
-  { label: "Become a Partner", hasDropdown: false, to: "/partner" },
+  { label: 'All', hasDropdown: false, to: '/#our-services' },
+  { label: 'Sell Phone', hasDropdown: false, to: '/sell-old-mobile-phones/brand' },
+  {
+    label: 'Sell Gadgets',
+    hasDropdown: true,
+    items: [
+      { label: 'Tablet', to: '/sell-tablet/brand' },
+      { label: 'Laptop', to: '/sell-old-laptops/brand' },
+      { label: 'Mac', to: '/sell-imac/brand' },
+      { label: 'TV', to: '/sell/tv/brand' },
+      { label: 'Earbuds', to: '/sell/earbuds/brand' },
+      { label: 'Refrigerator', to: '/sell/refrigerator/brand' },
+      { label: 'Smartwatch', to: '/sell/smartwatch/brand' },
+    ],
+  },
+  { label: 'Buy Refurbished Devices', hasDropdown: false, to: '/buy' },
+  { label: 'Find New Gadget', hasDropdown: false, to: '/buy' },
+  { label: 'Buy Laptop', hasDropdown: false, to: '/buy/laptop/brand' },
 ];
 
 const CATEGORY_ROUTE_MAP = {
@@ -68,7 +78,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(null);
-  const [activeItem, setActiveItem] = useState("Corporate");
+  const [activeItem, setActiveItem] = useState("Sell Phone");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -210,7 +220,7 @@ export default function Navbar() {
         <div className="hidden md:block flex-1 max-w-md relative" ref={searchRef}>
           <input
             type="text"
-            placeholder="Search devices by name or brand..."
+            placeholder="Search for mobiles, accessories & more"
             className="w-full pl-4 pr-10 py-2.5 border-1.5 border-gray-300 rounded-xl text-sm font-sans text-gray-800 outline-none bg-gray-200 focus:border-primary focus:bg-white transition-all"
             value={searchQuery}
             onChange={handleSearchChange}
@@ -271,7 +281,19 @@ export default function Navbar() {
                 ${activeItem === item.label ? "text-text-primary font-bold bg-gray-50" : "text-gray-500 hover:text-primary hover:bg-primary-light"}`}
               onClick={() => {
                 setActiveItem(item.label);
-                if (item.to) navigate(item.to);
+                if (!item.to) return;
+                if (item.to.includes('#')) {
+                  const [path, hash] = item.to.split('#');
+                  if (path && path !== '/' && window.location.pathname !== path) {
+                    navigate(item.to);
+                  } else {
+                    navigate({ pathname: path || '/', hash: hash || undefined });
+                    const el = document.getElementById(hash);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                } else {
+                  navigate(item.to);
+                }
               }}
             >
               {item.label}
@@ -283,10 +305,18 @@ export default function Navbar() {
             </button>
 
             {item.hasDropdown && openDropdown === item.label && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl min-w-[180px] py-2 z-[2000] animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl min-w-[200px] py-2 z-[2000] animate-in fade-in slide-in-from-top-2 duration-150">
                 {item.items.map((sub) => (
-                  <button key={sub} className="block w-full text-left px-5 py-2.5 text-sm text-gray-600 hover:bg-primary-light hover:text-primary transition-colors font-sans">
-                    {sub}
+                  <button
+                    key={sub.label || sub}
+                    className="block w-full text-left px-5 py-2.5 text-sm text-gray-600 hover:bg-primary-light hover:text-primary transition-colors font-sans"
+                    onClick={() => {
+                      setActiveItem(item.label);
+                      setOpenDropdown(null);
+                      if (sub.to) navigate(sub.to);
+                    }}
+                  >
+                    {sub.label || sub}
                   </button>
                 ))}
               </div>
@@ -301,7 +331,7 @@ export default function Navbar() {
           <div className="mb-6 relative" ref={mobileSearchRef}>
             <input
               type="text"
-              placeholder="Search devices by name or brand..."
+              placeholder="Search for mobiles, accessories & more"
               className="w-full px-4 py-3 border-1.5 border-gray-300 rounded-xl text-sm font-sans bg-gray-200 outline-none focus:border-primary focus:bg-white"
               value={searchQuery}
               onChange={handleSearchChange}
@@ -339,8 +369,15 @@ export default function Navbar() {
                 {item.hasDropdown && mobileExpanded === item.label && (
                   <div className="bg-gray-50 px-8 py-2 border-b border-gray-100">
                     {item.items.map((sub) => (
-                      <button key={sub} className="block w-full text-left py-3 text-sm text-gray-500 hover:text-primary transition-colors">
-                        {sub}
+                      <button
+                        key={sub.label || sub}
+                        className="block w-full text-left py-3 text-sm text-gray-500 hover:text-primary transition-colors"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          if (sub.to) navigate(sub.to);
+                        }}
+                      >
+                        {sub.label || sub}
                       </button>
                     ))}
                   </div>

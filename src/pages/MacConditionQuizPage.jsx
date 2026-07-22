@@ -481,17 +481,6 @@ export default function MacConditionQuizPage() {
           </div>
           <div className="w-full lg:w-[450px]">
             <div className="sticky top-8 space-y-8">
-              <div className="relative">
-                <div className="bg-[#0565E6]/5 rounded-[32px] p-8 border border-[#0565E6]/20 shadow-sm flex items-center justify-between transition-all">
-                  <div>
-                    <p className="text-[#0565E6] text-xs font-black uppercase tracking-widest mb-1">Estimated Value</p>
-                    <p className="text-4xl font-black text-[#0452B9] tracking-tighter">
-                      {breakdown ? formatCurrency(currentPrice) : '₹ XX,XXX'}
-                    </p>
-                    <p className="text-[11px] text-gray-400 font-medium mt-1">Updates as you answer</p>
-                  </div>
-                </div>
-              </div>
               <div className="bg-white rounded-[32px] p-10 border border-gray-100 shadow-sm space-y-8">
                 <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Summary</h4>
                 <div className="space-y-5">

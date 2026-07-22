@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
-  Smartphone, Tablet, Laptop, Monitor,
   Shield, Tag, Zap, Truck, ArrowRight,
-  ChevronDown, Star, BadgeCheck, Users
+  ChevronDown, Star, Users
 } from "lucide-react";
-// Note: Smartphone, Tablet, Laptop, Monitor still used in mini pills & trust features
-import phoneMockupImage from "../assets/image.png";
 import SEOHead from "../components/seo/SEOHead";
+import HomeBannerCarousel from "../components/HomeBannerCarousel";
 import { ENTITY_SUMMARY } from "../config/seo";
 import { HOME_FAQS, HOW_TO_STEPS } from "../data/faqs";
 import { CITIES as CITY_DATA } from "../data/cities";
@@ -15,23 +13,10 @@ import { buildSchemaGraph, faqPageSchema, howToSchema, organizationSchema, websi
 import {
   fetchWebsiteCategories,
   sellCategories,
+  buyCategories,
   categoryImage,
   FALLBACK_WEBSITE_CATEGORIES,
 } from "../utils/websiteCategories";
-
-// ─── Icons (Play/App Store) ───────────────────────────────────────────────────
-
-const PlayStoreIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5M16.81,15.12L6.05,21.34L13.98,13.41L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L14.89,11.5L17.89,8.5L20.16,10.81M6.05,2.66L16.81,8.88L13.98,11.59L6.05,2.66Z" />
-  </svg>
-);
-
-const AppStoreIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z" />
-  </svg>
-);
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -213,12 +198,14 @@ function FAQItem({ q, a }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const [allCategories, setAllCategories] = useState(FALLBACK_WEBSITE_CATEGORIES);
   const [deviceCategories, setDeviceCategories] = useState(
     () => sellCategories(FALLBACK_WEBSITE_CATEGORIES),
   );
 
   useEffect(() => {
     fetchWebsiteCategories().then((list) => {
+      setAllCategories(list);
       setDeviceCategories(sellCategories(list));
     });
   }, []);
@@ -230,129 +217,155 @@ export default function HomePage() {
     howToSchema(HOW_TO_STEPS),
   ]);
 
+  const buyCats = buyCategories(allCategories).slice(0, 4);
+
+  const serviceTiles = [
+    { key: 'sell-phone', label: 'Sell Phone', to: '/sell-old-mobile-phones/brand', emoji: '📱' },
+    { key: 'sell-gadgets', label: 'Sell Gadgets', to: '/sell-tablet/brand', emoji: '💻' },
+    { key: 'buy-refurb', label: 'Buy Refurbished', to: '/buy', emoji: '📦' },
+    { key: 'buy-laptop', label: 'Buy Laptop', to: '/buy/laptop/brand', emoji: '🖥️' },
+    { key: 'sell-tv', label: 'Sell TV', to: '/sell/tv/brand', emoji: '📺' },
+    { key: 'sell-earbuds', label: 'Sell Earbuds', to: '/sell/earbuds/brand', emoji: '🎧' },
+    { key: 'sell-fridge', label: 'Sell Refrigerator', to: '/sell/refrigerator/brand', emoji: '🧊' },
+    { key: 'sell-watch', label: 'Sell Smartwatch', to: '/sell/smartwatch/brand', emoji: '⌚' },
+    { key: 'repair', label: 'Repair', to: '/contact-us', emoji: '🛠️' },
+  ].filter((tile) => {
+    // Hide sell tiles if that category is disabled in website settings
+    const sellKeyMap = {
+      'sell-tv': 'tv',
+      'sell-earbuds': 'earbuds',
+      'sell-fridge': 'refrigerator',
+      'sell-watch': 'smartwatch',
+    };
+    const catKey = sellKeyMap[tile.key];
+    if (!catKey) return true;
+    const cat = allCategories.find((c) => c.key === catKey);
+    return !cat || cat.enabledSell !== false;
+  });
+
   return (
-    <div className="w-full">
+    <div className="w-full bg-[#F7F9FC]">
       <SEOHead
         title="DeviceKart — Sell Old Phones, Laptops & Tablets for Instant Cash in India"
         description="DeviceKart is India's trusted device buyback platform. Sell old mobile phones, tablets, laptops and iMac online with free doorstep pickup and instant payment across 2,000+ cities."
         path="/"
         schema={schema}
       />
-      {/* ══════════════════════════════════════════════════════
-          ── HERO SECTION ──
-      ══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#EEF4FF] via-white to-white pt-0 pb-12 sm:pb-16 px-4">
 
-        {/* Background decoration blobs */}
-        <div className="pointer-events-none absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#0565E6]/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-[#0565E6]/5 blur-3xl" />
+      {/* ── Banner carousel (managed in Website Settings) ── */}
+      <HomeBannerCarousel />
 
-        <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-center">
-
-          {/* ── Left Column ── */}
-          <div className="relative z-10 pt-8 sm:pt-10">
-
-            {/* Top badge */}
-            <div className="inline-flex items-center gap-2 bg-white border border-[#0565E6]/20 rounded-full pl-2 pr-4 py-1.5 text-[11px] sm:text-xs font-bold text-[#0565E6] mb-5 shadow-sm shadow-[#0565E6]/10">
-              <div className="w-5 h-5 rounded-full bg-[#0565E6] flex items-center justify-center">
-                <BadgeCheck size={11} className="text-white" />
+      {/* ── Our Services ── */}
+      <section id="our-services" className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-6 scroll-mt-28">
+        <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-5">Our Services</h2>
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-3 no-scrollbar snap-x">
+          {serviceTiles.map((tile) => (
+            <Link
+              key={tile.key}
+              to={tile.to}
+              className="snap-start shrink-0 w-[100px] sm:w-[112px] flex flex-col items-center gap-2.5 no-underline group"
+            >
+              <div className="w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] rounded-2xl bg-[#E8F4F3] flex items-center justify-center group-hover:bg-[#D7EEEC] transition-colors">
+                <span className="text-4xl sm:text-5xl leading-none select-none group-hover:scale-110 transition-transform">
+                  {tile.emoji}
+                </span>
               </div>
-              India's #1 Device Buyback Platform
-            </div>
-
-            {/* Main heading */}
-            <h1 className="text-[1.75rem] sm:text-[2.4rem] lg:text-[2.85rem] font-black text-gray-900 leading-[1.08] tracking-tight mb-4">
-              India's Trusted Buyback<br />
-              Platform to{" "}
-              <span className="text-[#0565E6]">Sell Old Devices</span>
-            </h1>
-
-            {/* Subtext */}
-            <p className="text-sm sm:text-base lg:text-[1rem] text-gray-500 leading-relaxed mb-7 max-w-[500px]">
-              DeviceKart is India's premier online device buyback platform helping you sell old electronics with fair pricing, free doorstep pickup and instant payment.
-            </p>
-
-            {/* ── Category Cards Grid ── */}
-            <div className="border border-gray-200 rounded-3xl p-3 mb-8 bg-white/60">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {deviceCategories.map((cat) => (
-                  <Link
-                    to={cat.sellPath || '/'}
-                    key={cat.key}
-                    className="group flex flex-col bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden hover:border-[#0565E6]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
-                  >
-                    {/* Image area */}
-                    <div className="flex items-center justify-center bg-gray-50 h-[110px] sm:h-[130px] px-4 pt-4 pb-2">
-                      <img
-                        src={categoryImage(cat)}
-                        alt={cat.label}
-                        className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    {/* Label */}
-                    <div className="px-3 py-2.5 text-center">
-                      <span className="text-sm sm:text-base font-bold text-gray-700 group-hover:text-[#0565E6] transition-colors duration-200">
-                        {cat.label}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Icon Stats Row ── */}
-            <div className="flex items-center gap-8 sm:gap-10 flex-wrap">
-              {HERO_STATS.map((stat, i) => (
-                <div key={stat.label} className="flex items-center gap-3">
-                  {/* Divider */}
-                  {i > 0 && (
-                    <div className="w-px h-10 bg-gray-200 mr-2 hidden sm:block" />
-                  )}
-                  <div className="shrink-0">{stat.icon}</div>
-                  <div>
-                    <div className="text-xl sm:text-2xl font-black text-gray-900 leading-none">{stat.value}</div>
-                    <div className="text-xs sm:text-sm font-semibold text-gray-400 mt-0.5">{stat.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── Mini stat pills row ── */}
-            <div className="flex flex-wrap gap-2 mt-6">
-              {[
-                { icon: <Smartphone size={12} />, label: "50,000+ Devices Sold" },
-                { icon: <Zap size={12} />, label: "Instant UPI Payment" },
-                { icon: <Truck size={12} />, label: "Free Doorstep Pickup" },
-                { icon: <Shield size={12} />, label: "100% Safe Data Wipe" },
-              ].map((p) => (
-                <div
-                  key={p.label}
-                  className="inline-flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm"
-                >
-                  <span className="text-[#0565E6]">{p.icon}</span>
-                  {p.label}
-                </div>
-              ))}
-            </div>
-
-          </div>
-
-          {/* ── Right Column: Phone Image (Desktop Only) ── */}
-          <img
-            src={phoneMockupImage}
-            alt="DeviceKart App"
-            fetchPriority="high"
-            width={600}
-            height={600}
-            className="hidden lg:block w-full h-auto max-w-none scale-110"
-          />
-
+              <span className="text-[11px] sm:text-xs font-bold text-gray-800 text-center leading-snug group-hover:text-[#0565E6] transition-colors">
+                {tile.label}
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
-      {/* ══════════════════════════════ END HERO ══════════════════════════════ */}
+
+      {/* ── Sell categories strip ── */}
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex items-end justify-between gap-4 mb-5">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900">Sell for Instant Cash</h2>
+            <p className="text-sm text-gray-500 mt-1">Pick a category and get a fair buyback quote in minutes.</p>
+          </div>
+          <Link to="/sell-old-mobile-phones/brand" className="hidden sm:inline text-sm font-bold text-[#0565E6] no-underline hover:underline">
+            Sell phone →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {deviceCategories.map((cat) => (
+            <Link
+              to={cat.sellPath || '/'}
+              key={cat.key}
+              className="group flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-[#0565E6]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
+            >
+              <div className="flex items-center justify-center bg-[#F8FAFF] h-[110px] sm:h-[130px] px-4 pt-4 pb-2">
+                <img
+                  src={categoryImage(cat)}
+                  alt={cat.label}
+                  className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div className="px-3 py-3 text-center">
+                <span className="text-sm sm:text-base font-bold text-gray-700 group-hover:text-[#0565E6] transition-colors">
+                  Sell {cat.label}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Buy refurbished ── */}
+      {buyCats.length > 0 ? (
+        <section className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex items-end justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900">Buy Refurbished Devices</h2>
+              <p className="text-sm text-gray-500 mt-1">Quality-checked devices with warranty at great prices.</p>
+            </div>
+            <Link to="/buy" className="hidden sm:inline text-sm font-bold text-[#0565E6] no-underline hover:underline">
+              View all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {buyCats.map((cat) => (
+              <Link
+                key={cat.key}
+                to={cat.buyPath || `/buy/${cat.key}/brand`}
+                className="group bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 no-underline hover:border-[#0565E6]/40 hover:shadow-md transition-all"
+              >
+                <div className="h-20 flex items-center justify-center mb-3">
+                  <img src={categoryImage(cat)} alt={cat.label} className="max-h-full object-contain" />
+                </div>
+                <p className="text-sm font-bold text-gray-800 text-center group-hover:text-[#0565E6]">{cat.label}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* ── Trust strip ── */}
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {HERO_STATS.map((stat) => (
+            <div key={stat.label} className="bg-white rounded-2xl border border-gray-100 px-4 py-5 flex items-center gap-3">
+              <div className="shrink-0">{stat.icon}</div>
+              <div>
+                <div className="text-xl font-black text-gray-900 leading-none">{stat.value}</div>
+                <div className="text-xs font-semibold text-gray-400 mt-1">{stat.label}</div>
+              </div>
+            </div>
+          ))}
+          <div className="bg-white rounded-2xl border border-gray-100 px-4 py-5 flex items-center gap-3">
+            <Truck size={28} strokeWidth={1.8} className="text-[#0565E6]" />
+            <div>
+              <div className="text-xl font-black text-gray-900 leading-none">Free</div>
+              <div className="text-xs font-semibold text-gray-400 mt-1">Doorstep Pickup</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── How It Works ── */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-14 sm:py-20 bg-white mt-4">
         <div className="max-w-[1200px] mx-auto px-4">
           <SectionTitle
             tag="Simple Process"

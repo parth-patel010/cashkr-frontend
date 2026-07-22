@@ -398,15 +398,37 @@ export function calculateLaptopPrice(device, selections) {
     }
 
     // Convert Retail Base Price to Buy-back Base Price
-    // 0.84 ≈ previous 0.73 + ~15% (target 10–20% higher MacBook quotes)
-    const APPLE_BUYBACK_FACTOR = 0.84;
+    const APPLE_BUYBACK_FACTOR = 0.73;
     basePrice = Math.round(basePrice * APPLE_BUYBACK_FACTOR);
 
-    // Apple Age Multipliers & deductions
-    const ageMult = device.ageMultipliers?.[yearBracket] || 1;
+    // Stricter Apple age curve so aged / out-of-warranty quotes stay ~₹11k under competitors
+    const APPLE_AGE_MULT = {
+      lessThan1: 0.88, // in warranty (< 1 yr)
+      oneToTwo: 0.65, // 1–3 years (typically out of warranty)
+      twoToThree: 0.48, // 3+ years
+      lessThan3: 0.88,
+      threeToEleven: 0.70,
+      aboveEleven: 0.52,
+      threeToFour: 0.40,
+      fourToFive: 0.30,
+      moreThan5: 0.18,
+    };
+    const APPLE_AGING_FLAT_DEDUCTION = 11000; // competitive gap vs market on aged units
+
+    const ageMult =
+      APPLE_AGE_MULT[yearBracket] ??
+      device.ageMultipliers?.[yearBracket] ??
+      1;
     const conditionMultiplier = calculateConditionMultiplier(totalIssueCount);
     let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
     const ageAdjustment = currentPrice - basePrice;
+
+    // Extra aging cut for out-of-warranty / older brackets
+    let agingDeduction = 0;
+    if (yearBracket && yearBracket !== 'lessThan1' && yearBracket !== 'lessThan3') {
+      agingDeduction = APPLE_AGING_FLAT_DEDUCTION;
+      currentPrice = Math.max(currentPrice - agingDeduction, 0);
+    }
 
     let powerDeduction = 0;
     if (powerStatus === 'off') {
@@ -458,6 +480,7 @@ export function calculateLaptopPrice(device, selections) {
     return {
       basePrice,
       ageAdjustment,
+      agingDeduction: agingDeduction ? -agingDeduction : 0,
       powerDeduction: -powerDeduction,
       functionalDeduction: -functionalDeduction,
       screenDeduction: -screenDeduction,
