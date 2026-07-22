@@ -393,6 +393,20 @@ function isIntelMacProcessor(processorStr) {
 /** Align Intel Mac catalog quotes with Cashify (~₹30k listed i5 path → ~₹20k). */
 const MAC_INTEL_MARKET_FACTOR = 20 / 30;
 
+/**
+ * MacBook Pro 2020 quotes much higher on Cashify (~₹32k vs our ~₹19k with the
+ * general Intel cut). Use a Pro-2020 factor so i5 lands near ~₹32k; other Intel
+ * Macs keep the general 20/30 cut.
+ */
+function getMacIntelMarketFactor(device) {
+  const m = (device?.modelName || '').toLowerCase();
+  if (m.includes('macbook pro') && m.includes('2020')) {
+    // 19k → 32k vs previous path that used 20/30:  (32/19)*(20/30) ≈ 1.12
+    return (32 / 19) * (20 / 30);
+  }
+  return MAC_INTEL_MARKET_FACTOR;
+}
+
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
     functionalIssues = [], screenIssues = [], bodyIssues = [],
@@ -458,7 +472,8 @@ export function calculateLaptopPrice(device, selections) {
     if (isIntelMacProcessor(selectedCpu) || isIntelMacProcessor(catalogCpu)) {
       // Always scale vs i5=1.0 so selecting i7/i3 actually changes price
       const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
-      basePrice = Math.round(basePrice * MAC_INTEL_MARKET_FACTOR * selectedFactor);
+      const marketFactor = getMacIntelMarketFactor(device);
+      basePrice = Math.round(basePrice * marketFactor * selectedFactor);
     } else {
       const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
       const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
