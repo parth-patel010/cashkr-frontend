@@ -7,15 +7,17 @@ import {
 } from "lucide-react";
 // Note: Smartphone, Tablet, Laptop, Monitor still used in mini pills & trust features
 import phoneMockupImage from "../assets/image.png";
-import mobileDeviceImg from "../assets/devices/mobile.png";
-import tabletDeviceImg from "../assets/devices/tablet.png";
-import laptopDeviceImg from "../assets/devices/laptop.png";
-import macDeviceImg from "../assets/devices/mac.png";
 import SEOHead from "../components/seo/SEOHead";
 import { ENTITY_SUMMARY } from "../config/seo";
 import { HOME_FAQS, HOW_TO_STEPS } from "../data/faqs";
 import { CITIES as CITY_DATA } from "../data/cities";
 import { buildSchemaGraph, faqPageSchema, howToSchema, organizationSchema, websiteSchema } from "../utils/schema";
+import {
+  fetchWebsiteCategories,
+  sellCategories,
+  categoryImage,
+  FALLBACK_WEBSITE_CATEGORIES,
+} from "../utils/websiteCategories";
 
 // ─── Icons (Play/App Store) ───────────────────────────────────────────────────
 
@@ -32,29 +34,6 @@ const AppStoreIcon = () => (
 );
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-
-const DEVICE_CATEGORIES = [
-  {
-    label: "Mobile",
-    to: "/sell-old-mobile-phones/brand",
-    img: mobileDeviceImg,
-  },
-  {
-    label: "Tablet",
-    to: "/sell-tablet/brand",
-    img: tabletDeviceImg,
-  },
-  {
-    label: "Laptop",
-    to: "/sell-old-laptops/brand",
-    img: laptopDeviceImg,
-  },
-  {
-    label: "Mac",
-    to: "/sell-imac/brand",
-    img: macDeviceImg,
-  },
-];
 
 const HOW_STEPS = HOW_TO_STEPS.map((step, i) => ({ ...step, num: String(i + 1).padStart(2, '0') }));
 
@@ -234,6 +213,16 @@ function FAQItem({ q, a }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const [deviceCategories, setDeviceCategories] = useState(
+    () => sellCategories(FALLBACK_WEBSITE_CATEGORIES),
+  );
+
+  useEffect(() => {
+    fetchWebsiteCategories().then((list) => {
+      setDeviceCategories(sellCategories(list));
+    });
+  }, []);
+
   const schema = buildSchemaGraph([
     organizationSchema(),
     websiteSchema(),
@@ -285,24 +274,24 @@ export default function HomePage() {
 
             {/* ── Category Cards Grid ── */}
             <div className="border border-gray-200 rounded-3xl p-3 mb-8 bg-white/60">
-              <div className="grid grid-cols-2 gap-3">
-                {DEVICE_CATEGORIES.map((cat) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {deviceCategories.map((cat) => (
                   <Link
-                    to={cat.to}
-                    key={cat.label}
+                    to={cat.sellPath || '/'}
+                    key={cat.key}
                     className="group flex flex-col bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden hover:border-[#0565E6]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
                   >
                     {/* Image area */}
-                    <div className="flex items-center justify-center bg-gray-50 h-[130px] px-5 pt-5 pb-2">
+                    <div className="flex items-center justify-center bg-gray-50 h-[110px] sm:h-[130px] px-4 pt-4 pb-2">
                       <img
-                        src={cat.img}
+                        src={categoryImage(cat)}
                         alt={cat.label}
                         className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                     {/* Label */}
-                    <div className="px-4 py-3 text-center">
-                      <span className="text-base font-bold text-gray-700 group-hover:text-[#0565E6] transition-colors duration-200">
+                    <div className="px-3 py-2.5 text-center">
+                      <span className="text-sm sm:text-base font-bold text-gray-700 group-hover:text-[#0565E6] transition-colors duration-200">
                         {cat.label}
                       </span>
                     </div>

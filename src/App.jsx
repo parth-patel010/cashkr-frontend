@@ -71,12 +71,16 @@ import AdminBrands from './pages/admin/AdminBrands.jsx';
 import AdminBuyDevices from './pages/admin/AdminBuyDevices.jsx';
 import AdminVendors from './pages/admin/AdminVendors.jsx';
 import AdminAppSettings from './pages/admin/AdminAppSettings.jsx';
+import AdminWebsiteSettings from './pages/admin/AdminWebsiteSettings.jsx';
 import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
 import AdminChat from './pages/admin/AdminChat.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminPincodes from './pages/admin/AdminPincodes.jsx';
 import AdminAnalytics from './pages/admin/AdminAnalytics.jsx';
+import SellCategoryBrandPage from './pages/SellCategoryBrandPage.jsx';
+import SellCategoryModelPage from './pages/SellCategoryModelPage.jsx';
+import SellCategoryVariantPage from './pages/SellCategoryVariantPage.jsx';
 
 function App() {
   const location = useLocation();
@@ -124,6 +128,11 @@ function App() {
           <Route path="/sell-tablet/:brand" element={<TabletModelSelectionPage />} />
           <Route path="/sell-tablet/:brand/:slug" element={<TabletVariantSelectionPage />} />
           <Route path="/sell-tablet/:brand/:slug/quiz" element={<TabletConditionQuizPage />} />
+          {/* Generic sell flow (TV, earbuds, refrigerator, smartwatch) */}
+          <Route path="/sell/:category/brand" element={<SellCategoryBrandPage />} />
+          <Route path="/sell/:category/:brand/:slug/quiz" element={<TabletConditionQuizPage />} />
+          <Route path="/sell/:category/:brand/:slug" element={<SellCategoryVariantPage />} />
+          <Route path="/sell/:category/:brand" element={<SellCategoryModelPage />} />
           {/* Shared */}
 
           <Route path="/schedule-pickup" element={<ProtectedRoute><SchedulePickupPage /></ProtectedRoute>} />
@@ -160,6 +169,7 @@ function App() {
             <Route path="buy-devices" element={<AdminBuyDevices />} />
             <Route path="vendors" element={<AdminVendors />} />
             <Route path="app-settings" element={<AdminAppSettings />} />
+            <Route path="website-settings" element={<AdminWebsiteSettings />} />
             <Route path="repair-services" element={<AdminRepairServices />} />
             <Route path="chat" element={<AdminChat />} />
             <Route path="partners" element={<AdminPartners />} />

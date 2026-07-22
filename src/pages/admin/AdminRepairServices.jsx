@@ -307,7 +307,7 @@ export default function AdminRepairServices() {
                     />
                   </div>
                   <div className="admin-field">
-                    <label>Image (max 3MB)</label>
+                    <label>Image (max 10MB)</label>
                     <div className="flex flex-wrap items-center gap-3">
                       {form.imageUrl ? (
                         <img
@@ -326,8 +326,8 @@ export default function AdminRepairServices() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            if (file.size > 3 * 1024 * 1024) {
-                              alert('Image must be 3MB or less');
+                            if (file.size > 10 * 1024 * 1024) {
+                              alert('Image must be 10MB or less');
                               e.target.value = '';
                               return;
                             }

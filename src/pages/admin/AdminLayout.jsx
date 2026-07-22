@@ -12,6 +12,7 @@ import {
   MapPin,
   BarChart3,
   MessageCircle,
+  Globe,
   Settings
 } from 'lucide-react';
 import './admin.css';
@@ -35,6 +36,7 @@ export default function AdminLayout() {
     if (path.includes('/brands')) return 'Brand Management';
     if (path.includes('/buy-devices')) return 'Buy Device Inventory';
     if (path.includes('/vendors')) return 'Vendor Management';
+    if (path.includes('/website-settings')) return 'Website Settings';
     if (path.includes('/app-settings')) return 'App Settings';
     if (path.includes('/repair-services')) return 'Repair Services';
     if (path.includes('/chat')) return 'Live Chat';
@@ -132,6 +134,14 @@ export default function AdminLayout() {
           >
             <Users />
             <span>Vendors</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/website-settings" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Globe />
+            <span>Website Settings</span>
           </NavLink>
 
           <NavLink 

@@ -268,6 +268,10 @@ export default function AdminDevices() {
             <option value="tablet">Tablets</option>
             <option value="laptop">Laptops</option>
             <option value="mac">Macs</option>
+            <option value="tv">TV</option>
+            <option value="earbuds">Earbuds</option>
+            <option value="refrigerator">Refrigerator</option>
+            <option value="smartwatch">Smartwatch</option>
           </select>
         </div>
 
@@ -456,6 +460,10 @@ export default function AdminDevices() {
                         <option value="tablet">Tablet</option>
                         <option value="laptop">Laptop</option>
                         <option value="mac">Mac</option>
+                        <option value="tv">TV</option>
+                        <option value="earbuds">Earbuds</option>
+                        <option value="refrigerator">Refrigerator</option>
+                        <option value="smartwatch">Smartwatch</option>
                       </select>
                     </div>
 
@@ -515,7 +523,7 @@ export default function AdminDevices() {
                   </div>
 
                   <div className="admin-field">
-                    <label>Cover image (max 3MB)</label>
+                    <label>Cover image (max 10MB)</label>
                     <div className="flex flex-wrap items-center gap-3">
                       {formData.imageUrl ? (
                         <img
@@ -534,8 +542,8 @@ export default function AdminDevices() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            if (file.size > 3 * 1024 * 1024) {
-                              alert('Image must be 3MB or less');
+                            if (file.size > 10 * 1024 * 1024) {
+                              alert('Image must be 10MB or less');
                               e.target.value = '';
                               return;
                             }
@@ -610,9 +618,9 @@ export default function AdminDevices() {
                         onChange={async (e) => {
                           const files = Array.from(e.target.files || []);
                           if (!files.length) return;
-                          const tooBig = files.find((f) => f.size > 3 * 1024 * 1024);
+                          const tooBig = files.find((f) => f.size > 10 * 1024 * 1024);
                           if (tooBig) {
-                            alert('Each image must be 3MB or less');
+                            alert('Each image must be 10MB or less');
                             e.target.value = '';
                             return;
                           }
@@ -780,7 +788,7 @@ export default function AdminDevices() {
                     <div className="max-h-[350px] overflow-y-auto pr-2 space-y-3">
                       {formData.variants?.map((v, idx) => (
                         <div key={idx} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-wrap items-center gap-3">
-                          {formData.category === 'mobile' || formData.category === 'tablet' ? (
+                          {['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch'].includes(formData.category) ? (
                             <>
                               <div className="flex-1 min-w-[120px] admin-field mb-0">
                                 <label className="text-[9px] mb-0.5">Storage</label>
@@ -972,7 +980,7 @@ export default function AdminDevices() {
                         const isLaptopIssue = ['battery', 'keyboard', 'trackpad', 'speakers', 'webcam', 'ports', 'hinge', 'overheat', 'gpu', 'screenChanged', 'wifi', 'biometric', 'charging', 'cdDrive', 'chargerIssue', 'hardDisk', 'displayIssue', 'motherboard'].includes(issue);
                         const isMobileIssue = ['batteryLow', 'cameraIssue', 'speakerIssue', 'biometricIssue', 'chargingIssue'].includes(issue);
 
-                        if (formData.category === 'mobile' || formData.category === 'tablet') {
+                        if (['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch'].includes(formData.category)) {
                           if (isLaptopIssue) return null;
                         } else {
                           if (isMobileIssue) return null;
@@ -993,7 +1001,7 @@ export default function AdminDevices() {
                   </div>
 
                   {/* Battery Deductions (Mobile) */}
-                  {(formData.category === 'mobile' || formData.category === 'tablet') && (
+                  {['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch'].includes(formData.category) && (
                     <div>
                       <h4 className="admin-section-title">Battery Health Deductions (INR)</h4>
                       <div className="admin-multiplier-grid">

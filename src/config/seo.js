@@ -69,4 +69,40 @@ export const CATEGORY_SEO = {
     description:
       'Sell your used iMac or Mac online. Instant price check, free doorstep pickup, and secure payment with DeviceKart.',
   },
+  tv: {
+    label: 'TVs',
+    brandPath: '/sell/tv/brand',
+    pathPrefix: '/sell/tv',
+    category: 'tv',
+    title: 'Sell Old TVs Online — Instant Cash | DeviceKart',
+    description:
+      'Sell your used LED, LCD or Smart TV online. Instant quotes, free pickup, and secure payment with DeviceKart.',
+  },
+  earbuds: {
+    label: 'Earbuds',
+    brandPath: '/sell/earbuds/brand',
+    pathPrefix: '/sell/earbuds',
+    category: 'earbuds',
+    title: 'Sell Old Earbuds Online — Instant Cash | DeviceKart',
+    description:
+      'Sell your used wireless earbuds online. Get instant quotes, free pickup, and secure payment with DeviceKart.',
+  },
+  refrigerator: {
+    label: 'Refrigerators',
+    brandPath: '/sell/refrigerator/brand',
+    pathPrefix: '/sell/refrigerator',
+    category: 'refrigerator',
+    title: 'Sell Old Refrigerators Online — Instant Cash | DeviceKart',
+    description:
+      'Sell your used refrigerator online. Instant quotes, free doorstep pickup, and secure payment with DeviceKart.',
+  },
+  smartwatch: {
+    label: 'Smartwatches',
+    brandPath: '/sell/smartwatch/brand',
+    pathPrefix: '/sell/smartwatch',
+    category: 'smartwatch',
+    title: 'Sell Old Smartwatches Online — Instant Cash | DeviceKart',
+    description:
+      'Sell your used smartwatch online. Instant quotes, free pickup, and secure payment with DeviceKart.',
+  },
 };

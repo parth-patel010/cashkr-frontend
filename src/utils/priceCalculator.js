@@ -398,7 +398,9 @@ export function calculateLaptopPrice(device, selections) {
     }
 
     // Convert Retail Base Price to Buy-back Base Price
-    basePrice = Math.round(basePrice * 0.73);
+    // 0.84 ≈ previous 0.73 + ~15% (target 10–20% higher MacBook quotes)
+    const APPLE_BUYBACK_FACTOR = 0.84;
+    basePrice = Math.round(basePrice * APPLE_BUYBACK_FACTOR);
 
     // Apple Age Multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;

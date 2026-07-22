@@ -256,6 +256,8 @@ export default function AdminBuyDevices() {
                       <option value="smartwatch">Smartwatch</option>
                       <option value="earbuds">Earbuds</option>
                       <option value="tv">TV</option>
+                      <option value="mac">Mac</option>
+                      <option value="refrigerator">Refrigerator</option>
                       <option value="other">Other</option>
                     </select>
                   </div>
@@ -305,7 +307,7 @@ export default function AdminBuyDevices() {
 
                 <div className="admin-field-row">
                   <div className="admin-field">
-                    <label>Cover image (max 3MB)</label>
+                    <label>Cover image (max 10MB)</label>
                     <div className="flex flex-wrap items-center gap-3">
                       {form.imageUrl ? (
                         <img
@@ -324,8 +326,8 @@ export default function AdminBuyDevices() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            if (file.size > 3 * 1024 * 1024) {
-                              alert('Image must be 3MB or less');
+                            if (file.size > 10 * 1024 * 1024) {
+                              alert('Image must be 10MB or less');
                               e.target.value = '';
                               return;
                             }
@@ -401,9 +403,9 @@ export default function AdminBuyDevices() {
                       onChange={async (e) => {
                         const files = Array.from(e.target.files || []);
                         if (!files.length) return;
-                        const tooBig = files.find((f) => f.size > 3 * 1024 * 1024);
+                        const tooBig = files.find((f) => f.size > 10 * 1024 * 1024);
                         if (tooBig) {
-                          alert('Each image must be 3MB or less');
+                          alert('Each image must be 10MB or less');
                           e.target.value = '';
                           return;
                         }
