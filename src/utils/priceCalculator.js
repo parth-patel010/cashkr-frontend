@@ -394,9 +394,8 @@ function isIntelMacProcessor(processorStr) {
 const MAC_INTEL_MARKET_FACTOR = 20 / 30;
 
 /**
- * MacBook Pro 2020 quotes much higher on Cashify (~₹32k vs our ~₹19k with the
- * general Intel cut). Use a Pro-2020 factor so i5 lands near ~₹32k; other Intel
- * Macs keep the general 20/30 cut.
+ * MacBook Pro 2020 — Cashify ~₹32k+. General Intel cut is softened and we add
+ * a flat ₹3,000 so quotes sit at/above Cashify (e.g. ₹30k → ₹33k+).
  */
 function getMacIntelMarketFactor(device) {
   const m = (device?.modelName || '').toLowerCase();
@@ -406,6 +405,13 @@ function getMacIntelMarketFactor(device) {
   }
   return MAC_INTEL_MARKET_FACTOR;
 }
+
+function isMacBookPro2020(device) {
+  const m = (device?.modelName || '').toLowerCase();
+  return m.includes('macbook pro') && m.includes('2020');
+}
+
+const MACBOOK_PRO_2020_EXTRA = 3000;
 
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
@@ -485,6 +491,9 @@ export function calculateLaptopPrice(device, selections) {
     // Apple age multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
     let currentPrice = Math.round(basePrice * ageMult);
+    if (isMacBookPro2020(device)) {
+      currentPrice += MACBOOK_PRO_2020_EXTRA;
+    }
     const ageAdjustment = currentPrice - basePrice;
 
     let powerDeduction = 0;
