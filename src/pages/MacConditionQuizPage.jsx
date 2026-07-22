@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Keyboard, Disc3, MousePointer2, Battery, Volume2, Wifi, Usb, Camera,
+  Plug, HardDrive, Cpu, Bluetooth, MonitorX, Monitor, Laptop,
+  AlertTriangle, Minus, FileText, Package, Cable,
+} from 'lucide-react';
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
@@ -545,30 +550,33 @@ function SummaryPriceRow({ label, value, original, isFree }) {
 function IssuesModal({ isOpen, onClose, onFinish, initialList }) {
   const [selected, setSelected] = useState(initialList || []);
   const issues = [
-    { id: 'keyboard', label: 'Keyboard not working / key(s) missing', icon: '⌨️', pct: '7%' },
-    { id: 'cdDrive', label: 'CD/DVD Drive not working', icon: '💿', pct: '7%' },
-    { id: 'trackpad', label: 'Touchpad not working / click faulty', icon: '🖱️', pct: '18%' },
-    { id: 'battery', label: 'Battery dead / backup < 60 mins', icon: '🔋', pct: '6%' },
-    { id: 'speakers', label: 'Speakers faulty / cracked sound', icon: '🔊', pct: '3%' },
-    { id: 'wifi', label: 'Wi-Fi not working', icon: '🌐', pct: '5%' },
-    { id: 'ports', label: 'USB Port not working', icon: '🔌', pct: '8%' },
-    { id: 'webcam', label: 'Web Cam not working', icon: '📷', pct: '6%' },
-    { id: 'charging', label: 'Charging Port not working', icon: '🔌', pct: '8%' },
-    { id: 'hardDisk', label: 'Hard Drive Missing / Defective', icon: '💾', pct: '10%' },
-    { id: 'motherboard', label: 'Motherboard issue (restart/hang/heat)', icon: '🧩', pct: '35%' },
-    { id: 'bluetooth', label: 'Bluetooth not working', icon: '📡', pct: '6%' },
+    { id: 'keyboard', label: 'Keyboard not working / key(s) missing', Icon: Keyboard, pct: '7%' },
+    { id: 'cdDrive', label: 'CD/DVD Drive not working', Icon: Disc3, pct: '7%' },
+    { id: 'trackpad', label: 'Touchpad not working / click faulty', Icon: MousePointer2, pct: '18%' },
+    { id: 'battery', label: 'Battery dead / backup < 60 mins', Icon: Battery, pct: '6%' },
+    { id: 'speakers', label: 'Speakers faulty / cracked sound', Icon: Volume2, pct: '3%' },
+    { id: 'wifi', label: 'Wi-Fi not working', Icon: Wifi, pct: '5%' },
+    { id: 'ports', label: 'USB Port not working', Icon: Usb, pct: '8%' },
+    { id: 'webcam', label: 'Web Cam not working', Icon: Camera, pct: '6%' },
+    { id: 'charging', label: 'Charging Port not working', Icon: Plug, pct: '8%' },
+    { id: 'hardDisk', label: 'Hard Drive Missing / Defective', Icon: HardDrive, pct: '10%' },
+    { id: 'motherboard', label: 'Motherboard issue (restart/hang/heat)', Icon: Cpu, pct: '35%' },
+    { id: 'bluetooth', label: 'Bluetooth not working', Icon: Bluetooth, pct: '6%' },
   ];
   const toggle = (id) => selected.includes(id) ? setSelected(selected.filter(i => i !== id)) : setSelected([...selected, id]);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Select Functional Issues" size="5xl">
        <p className="text-[13px] text-gray-500 font-bold mb-6">Select all issues that apply. Each issue reduces the price by the shown percentage.</p>
-       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{issues.map(i => (
-         <button key={i.id} onClick={() => toggle(i.id)} className={`p-5 rounded-3xl border-[1.5px] flex flex-col items-center gap-3 transition-all relative ${selected.includes(i.id) ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
-           <div className="text-2xl">{i.icon}</div>
+       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{issues.map(i => {
+         const Icon = i.Icon;
+         const isSelected = selected.includes(i.id);
+         return (
+         <button key={i.id} onClick={() => toggle(i.id)} className={`p-5 rounded-3xl border-[1.5px] flex flex-col items-center gap-3 transition-all relative ${isSelected ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
+           <Icon size={28} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
            <span className="text-[11px] font-black text-center leading-tight">{i.label}</span>
            <span className="text-[9px] font-black text-red-400">{i.pct}</span>
          </button>
-       ))}</div>
+       );})}</div>
        <button onClick={() => onFinish(selected)} className="w-full mt-8 py-4 bg-[#0565E6] text-white rounded-2xl font-black">Proceed</button>
     </Modal>
   );
@@ -577,20 +585,23 @@ function IssuesModal({ isOpen, onClose, onFinish, initialList }) {
 function ScreenIssuesModal({ isOpen, onClose, onFinish, initialList }) {
   const [selected, setSelected] = useState(initialList || []);
   const issues = [
-    { id: 'screenCracked', label: 'Screen cracked or broken', icon: '💔', pct: '18%' },
-    { id: 'lineDiscolour', label: 'Line, discolouration or spot', icon: '🖥️', pct: '18%' },
+    { id: 'screenCracked', label: 'Screen cracked or broken', Icon: MonitorX, pct: '18%' },
+    { id: 'lineDiscolour', label: 'Line, discolouration or spot', Icon: Monitor, pct: '18%' },
   ];
   const toggle = (id) => selected.includes(id) ? setSelected(selected.filter(i => i !== id)) : setSelected([...selected, id]);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Screen Condition" size="3xl">
        <p className="text-[13px] text-gray-500 font-bold mb-6">Select any screen issues that apply.</p>
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{issues.map(i => (
-         <button key={i.id} onClick={() => toggle(i.id)} className={`p-8 rounded-3xl border-[1.5px] flex flex-col items-center gap-4 transition-all ${selected.includes(i.id) ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
-           <div className="text-3xl">{i.icon}</div>
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{issues.map(i => {
+         const Icon = i.Icon;
+         const isSelected = selected.includes(i.id);
+         return (
+         <button key={i.id} onClick={() => toggle(i.id)} className={`p-8 rounded-3xl border-[1.5px] flex flex-col items-center gap-4 transition-all ${isSelected ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
+           <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
            <span className="text-sm font-black text-center">{i.label}</span>
            <span className="text-[10px] font-black text-red-400">{i.pct}</span>
          </button>
-       ))}</div>
+       );})}</div>
        <button onClick={() => onFinish(selected)} className="w-full mt-8 py-4 bg-[#0565E6] text-white rounded-2xl font-black">Proceed</button>
     </Modal>
   );
@@ -599,24 +610,27 @@ function ScreenIssuesModal({ isOpen, onClose, onFinish, initialList }) {
 function BodyIssuesModal({ isOpen, onClose, onFinish, initialList }) {
   const [selected, setSelected] = useState(initialList || []);
   const issues = [
-    { id: 'minorDentTop', label: 'Minor dent on top panel', icon: '📱', pct: '8%' },
-    { id: 'minorDentBase', label: 'Minor dent on base panel', icon: '📱', pct: '8%' },
-    { id: 'majorDentTop', label: 'Major dent on top panel', icon: '💥', pct: '35%' },
-    { id: 'majorDentBase', label: 'Major dent on base panel', icon: '💥', pct: '40%' },
-    { id: 'minorScratch', label: 'Minor scratch on body', icon: '✨', pct: '5%' },
-    { id: 'majorScratch', label: 'Major scratch on body', icon: '🔪', pct: '8%' },
+    { id: 'minorDentTop', label: 'Minor dent on top panel', Icon: Laptop, pct: '8%' },
+    { id: 'minorDentBase', label: 'Minor dent on base panel', Icon: Laptop, pct: '8%' },
+    { id: 'majorDentTop', label: 'Major dent on top panel', Icon: AlertTriangle, pct: '35%' },
+    { id: 'majorDentBase', label: 'Major dent on base panel', Icon: AlertTriangle, pct: '40%' },
+    { id: 'minorScratch', label: 'Minor scratch on body', Icon: Minus, pct: '5%' },
+    { id: 'majorScratch', label: 'Major scratch on body', Icon: AlertTriangle, pct: '8%' },
   ];
   const toggle = (id) => selected.includes(id) ? setSelected(selected.filter(i => i !== id)) : setSelected([...selected, id]);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Body Condition" size="4xl">
        <p className="text-[13px] text-gray-500 font-bold mb-6">Select all body damage issues that apply.</p>
-       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{issues.map(i => (
-         <button key={i.id} onClick={() => toggle(i.id)} className={`p-6 rounded-3xl border-[1.5px] flex flex-col items-center gap-3 transition-all ${selected.includes(i.id) ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
-           <div className="text-2xl">{i.icon}</div>
+       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{issues.map(i => {
+         const Icon = i.Icon;
+         const isSelected = selected.includes(i.id);
+         return (
+         <button key={i.id} onClick={() => toggle(i.id)} className={`p-6 rounded-3xl border-[1.5px] flex flex-col items-center gap-3 transition-all ${isSelected ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
+           <Icon size={28} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
            <span className="text-[11px] font-black text-center leading-tight">{i.label}</span>
            <span className="text-[10px] font-black text-red-400">{i.pct}</span>
          </button>
-       ))}</div>
+       );})}</div>
        <button onClick={() => onFinish(selected)} className="w-full mt-8 py-4 bg-[#0565E6] text-white rounded-2xl font-black">Proceed</button>
     </Modal>
   );
@@ -624,11 +638,23 @@ function BodyIssuesModal({ isOpen, onClose, onFinish, initialList }) {
 
 function AccessoriesModal({ isOpen, onClose, onFinish, initialList }) {
   const [selected, setSelected] = useState(initialList || []);
-  const items = [{ id: 'bill', label: 'Bill', icon: '📄' }, { id: 'box', label: 'Box', icon: '📦' }, { id: 'charger', label: 'Charger', icon: '🔌' }];
+  const items = [
+    { id: 'bill', label: 'Bill', Icon: FileText },
+    { id: 'box', label: 'Box', Icon: Package },
+    { id: 'charger', label: 'Charger', Icon: Cable },
+  ];
   const toggle = (id) => selected.includes(id) ? setSelected(selected.filter(i => i !== id)) : setSelected([...selected, id]);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Accessories" size="3xl">
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">{items.map(i => (<button key={i.id} onClick={() => toggle(i.id)} className={`p-8 rounded-[24px] border-[1.5px] flex flex-col items-center gap-4 transition-all ${selected.includes(i.id) ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}><div className="text-3xl">{i.icon}</div><span className="text-xs font-black">{i.label}</span></button>))}</div>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">{items.map(i => {
+         const Icon = i.Icon;
+         const isSelected = selected.includes(i.id);
+         return (
+         <button key={i.id} onClick={() => toggle(i.id)} className={`p-8 rounded-[24px] border-[1.5px] flex flex-col items-center gap-4 transition-all ${isSelected ? 'border-[#0565E6] bg-[#0565E6]/5' : 'border-gray-100 bg-white'}`}>
+           <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
+           <span className="text-xs font-black">{i.label}</span>
+         </button>
+       );})}</div>
        <button onClick={() => onFinish(selected)} className="w-full py-5 bg-[#0565E6] text-white rounded-[20px] font-black text-lg shadow-xl shadow-[#0565E6]/30">GET BEST PRICE →</button>
     </Modal>
   );

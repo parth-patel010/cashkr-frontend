@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Keyboard, Disc3, MousePointer2, Battery, Volume2, Wifi, Usb, Camera,
+  Plug, HardDrive, Cpu, Bluetooth, MonitorX, Monitor, Laptop,
+  AlertTriangle, Minus, FileText, Package, Cable,
+} from 'lucide-react';
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
@@ -34,38 +39,38 @@ const SCREEN_SIZE_OPTIONS = [
 ];
 
 const functionalOptions = [
-  { id: 'keyboard', label: 'Keyboard not working / key(s) missing', icon: '⌨️', pct: '7%' },
-  { id: 'cdDrive', label: 'CD/DVD Drive not working', icon: '💿', pct: '7%' },
-  { id: 'trackpad', label: 'Touchpad not working / click faulty', icon: '🖱️', pct: '18%' },
-  { id: 'battery', label: 'Battery dead / backup < 60 mins', icon: '🔋', pct: '6%' },
-  { id: 'speakers', label: 'Speakers faulty / cracked sound', icon: '🔊', pct: '3%' },
-  { id: 'wifi', label: 'Wi-Fi not working', icon: '🌐', pct: '5%' },
-  { id: 'ports', label: 'USB Port not working', icon: '🔌', pct: '8%' },
-  { id: 'webcam', label: 'Web Cam not working', icon: '📷', pct: '6%' },
-  { id: 'charging', label: 'Charging Port not working', icon: '🔌', pct: '8%' },
-  { id: 'hardDisk', label: 'Hard Drive Missing / Defective', icon: '💾', pct: '10%' },
-  { id: 'motherboard', label: 'Motherboard issue (restart/hang/heat)', icon: '🧩', pct: '35%' },
-  { id: 'bluetooth', label: 'Bluetooth not working', icon: '📡', pct: '6%' },
+  { id: 'keyboard', label: 'Keyboard not working / key(s) missing', Icon: Keyboard, pct: '7%' },
+  { id: 'cdDrive', label: 'CD/DVD Drive not working', Icon: Disc3, pct: '7%' },
+  { id: 'trackpad', label: 'Touchpad not working / click faulty', Icon: MousePointer2, pct: '18%' },
+  { id: 'battery', label: 'Battery dead / backup < 60 mins', Icon: Battery, pct: '6%' },
+  { id: 'speakers', label: 'Speakers faulty / cracked sound', Icon: Volume2, pct: '3%' },
+  { id: 'wifi', label: 'Wi-Fi not working', Icon: Wifi, pct: '5%' },
+  { id: 'ports', label: 'USB Port not working', Icon: Usb, pct: '8%' },
+  { id: 'webcam', label: 'Web Cam not working', Icon: Camera, pct: '6%' },
+  { id: 'charging', label: 'Charging Port not working', Icon: Plug, pct: '8%' },
+  { id: 'hardDisk', label: 'Hard Drive Missing / Defective', Icon: HardDrive, pct: '10%' },
+  { id: 'motherboard', label: 'Motherboard issue (restart/hang/heat)', Icon: Cpu, pct: '35%' },
+  { id: 'bluetooth', label: 'Bluetooth not working', Icon: Bluetooth, pct: '6%' },
 ];
 
 const screenOptions = [
-  { id: 'screenCracked', label: 'Screen cracked or broken', icon: '💔', pct: '18%' },
-  { id: 'lineDiscolour', label: 'Line, discolouration or spot', icon: '🖥️', pct: '18%' },
+  { id: 'screenCracked', label: 'Screen cracked or broken', Icon: MonitorX, pct: '18%' },
+  { id: 'lineDiscolour', label: 'Line, discolouration or spot', Icon: Monitor, pct: '18%' },
 ];
 
 const bodyOptions = [
-  { id: 'minorDentTop', label: 'Minor dent on top panel', icon: '📱', pct: '8%' },
-  { id: 'minorDentBase', label: 'Minor dent on base panel', icon: '📱', pct: '8%' },
-  { id: 'majorDentTop', label: 'Major dent on top panel', icon: '💥', pct: '35%' },
-  { id: 'majorDentBase', label: 'Major dent on base panel', icon: '💥', pct: '40%' },
-  { id: 'minorScratch', label: 'Minor scratch on body', icon: '✨', pct: '5%' },
-  { id: 'majorScratch', label: 'Major scratch on body', icon: '🔪', pct: '8%' },
+  { id: 'minorDentTop', label: 'Minor dent on top panel', Icon: Laptop, pct: '8%' },
+  { id: 'minorDentBase', label: 'Minor dent on base panel', Icon: Laptop, pct: '8%' },
+  { id: 'majorDentTop', label: 'Major dent on top panel', Icon: AlertTriangle, pct: '35%' },
+  { id: 'majorDentBase', label: 'Major dent on base panel', Icon: AlertTriangle, pct: '40%' },
+  { id: 'minorScratch', label: 'Minor scratch on body', Icon: Minus, pct: '5%' },
+  { id: 'majorScratch', label: 'Major scratch on body', Icon: AlertTriangle, pct: '8%' },
 ];
 
 const accessoryOptions = [
-  { id: 'bill', label: 'GST Valid Bill', desc: 'Valid purchase invoice', icon: '📄' },
-  { id: 'box', label: 'Original Box', desc: 'Original purchase box', icon: '📦' },
-  { id: 'charger', label: 'Original Charger', desc: 'Original charging adapter', icon: '🔌' }
+  { id: 'bill', label: 'GST Valid Bill', desc: 'Valid purchase invoice', Icon: FileText },
+  { id: 'box', label: 'Original Box', desc: 'Original purchase box', Icon: Package },
+  { id: 'charger', label: 'Original Charger', desc: 'Original charging adapter', Icon: Cable },
 ];
 
 export default function LaptopConditionQuizPage() {
@@ -367,7 +372,7 @@ export default function LaptopConditionQuizPage() {
                    <EvaluationDetailRow label="Storage" value={specs.storage || 'Standard'} color="#0565E6" />
                    <EvaluationDetailRow label="Power Status" value={powerStatus === 'on' ? 'Turns On' : 'Does Not Turn On (Off)'} color={powerStatus === 'on' ? '#0565E6' : '#EF4444'} />
                    <EvaluationDetailRow label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} color="#0565E6" />
-                   <EvaluationDetailRow label="Dedicated GPU" value={hasGpu === 'yes' ? `Available (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'Not Available'} color={hasGpu === 'yes' && isGpuWorking === 'yes' ? '#0565E6' : '#EF4444'} />
+                   <EvaluationDetailRow label="Graphic Card" value={hasGpu === 'yes' ? `Available (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'Not Available'} color={hasGpu === 'yes' && isGpuWorking === 'yes' ? '#0565E6' : '#EF4444'} />
                    <EvaluationDetailRow label="Device Age" value={age ? AGE_OPTIONS.find(o => o.key === age).label : '-'} color="#0565E6" />
                    <EvaluationDetailRow label="Functional Issues" value={issuesList.length > 0 ? issuesList.length + ' issue(s)' : 'No Issues'} color={issuesList.length > 0 ? '#EF4444' : '#0565E6'} />
                    <EvaluationDetailRow label="Screen Condition" value={screenIssuesList.length > 0 ? screenIssuesList.length + ' issue(s)' : 'No Issues'} color={screenIssuesList.length > 0 ? '#EF4444' : '#0565E6'} />
@@ -511,7 +516,7 @@ export default function LaptopConditionQuizPage() {
                 </div>
               )}
 
-              {/* STEP: Screen Size & Dedicated GPU */}
+              {/* STEP: Screen Size & Graphic Card */}
               {STEPS[currentStepIndex]?.id === 'screenSize' && (
                 <div className="space-y-8">
                   {/* Screen Size Question */}
@@ -539,7 +544,7 @@ export default function LaptopConditionQuizPage() {
                   {/* Dedicated Graphics Card Question */}
                   <div className="space-y-4 pt-6 border-t border-gray-100">
                     <div>
-                      <h3 className="text-lg font-black text-[#111827]">Does the laptop have a dedicated graphics card?</h3>
+                      <h3 className="text-lg font-black text-[#111827]">Does the laptop have a dedicated graphic card?</h3>
                       <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Select option to proceed</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -553,7 +558,7 @@ export default function LaptopConditionQuizPage() {
                             ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
                             : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                       >
-                        Yes, Dedicated GPU Available
+                        Yes, Dedicated Graphic Card Available
                       </button>
                       <button
                         onClick={() => {
@@ -565,7 +570,7 @@ export default function LaptopConditionQuizPage() {
                             ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
                             : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                       >
-                        No Dedicated GPU
+                        No Dedicated Graphic Card
                       </button>
                     </div>
                   </div>
@@ -574,8 +579,8 @@ export default function LaptopConditionQuizPage() {
                   {hasGpu === 'yes' && (
                     <div className="space-y-4 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div>
-                        <h3 className="text-lg font-black text-[#111827]">Is the dedicated graphics card working properly?</h3>
-                        <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Confirm GPU functionality</p>
+                        <h3 className="text-lg font-black text-[#111827]">Is the dedicated graphic card working properly?</h3>
+                        <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Confirm graphic card is working</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
@@ -594,7 +599,7 @@ export default function LaptopConditionQuizPage() {
                               ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
                               : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                         >
-                          No, Graphics Card Issue / Not Working
+                          No, Graphic Card Issue / Not Working
                         </button>
                       </div>
                     </div>
@@ -612,6 +617,7 @@ export default function LaptopConditionQuizPage() {
                   <div className="grid grid-cols-2 md:grid-cols-3 text-xl gap-4 max-h-[350px] overflow-y-auto pr-2 no-scrollbar">
                     {functionalOptions.map(i => {
                       const isSelected = issuesList.includes(i.id);
+                      const Icon = i.Icon;
                       return (
                         <button 
                           key={i.id} 
@@ -621,7 +627,7 @@ export default function LaptopConditionQuizPage() {
                           className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-between gap-2 transition-all relative h-36
                             ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
                         >
-                          <div className="text-[40px]">{i.icon}</div>
+                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
                           <span className="text-[15px] font-black text-center leading-tight">{i.label}</span>
                         </button>
                       );
@@ -640,6 +646,7 @@ export default function LaptopConditionQuizPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {screenOptions.map(i => {
                       const isSelected = screenIssuesList.includes(i.id);
+                      const Icon = i.Icon;
                       return (
                         <button 
                           key={i.id} 
@@ -649,7 +656,7 @@ export default function LaptopConditionQuizPage() {
                           className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-between gap-3 transition-all h-36
                             ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
                         >
-                          <div className="text-[40px]">{i.icon}</div>
+                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
                           <span className="text-[15px] font-black text-center leading-tight">{i.label}</span>
                         </button>
                       );
@@ -668,6 +675,7 @@ export default function LaptopConditionQuizPage() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[350px] overflow-y-auto pr-2 no-scrollbar">
                     {bodyOptions.map(i => {
                       const isSelected = bodyIssuesList.includes(i.id);
+                      const Icon = i.Icon;
                       return (
                         <button 
                           key={i.id} 
@@ -677,7 +685,7 @@ export default function LaptopConditionQuizPage() {
                           className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-between gap-2 transition-all h-36
                             ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
                         >
-                          <div className="text-[40px]">{i.icon}</div>
+                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
                           <span className="text-[15px] font-black text-center leading-tight">{i.label}</span>
                         </button>
                       );
@@ -696,6 +704,7 @@ export default function LaptopConditionQuizPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     {accessoryOptions.map(i => {
                       const isSelected = accessories.includes(i.id);
+                      const Icon = i.Icon;
                       return (
                         <button 
                           key={i.id} 
@@ -706,7 +715,7 @@ export default function LaptopConditionQuizPage() {
                             ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF]' : 'border-gray-100 bg-white hover:border-gray-200'}`}
                         >
                           <div className="flex justify-between items-start w-full">
-                            <span className="text-[40px]">{i.icon}</span>
+                            <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
                               ${isSelected ? 'border-[#0565E6] bg-[#0565E6]' : 'border-gray-300'}`}>
                               {isSelected && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>}
@@ -802,7 +811,7 @@ export default function LaptopConditionQuizPage() {
                    <SummaryItem label="Storage" value={specs.storage || '-'} active={true} />
                    <SummaryItem label="Power Status" value={powerStatus ? (powerStatus === 'on' ? 'Turns On' : 'Does Not Turn On') : '-'} active={powerStatus !== null} />
                    <SummaryItem label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} active={screenSize !== null} />
-                   <SummaryItem label="Dedicated GPU" value={hasGpu ? (hasGpu === 'yes' ? `Yes (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'No') : '-'} active={hasGpu !== null} />
+                   <SummaryItem label="Graphic Card" value={hasGpu ? (hasGpu === 'yes' ? `Yes (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'No') : '-'} active={hasGpu !== null} />
                    <SummaryItem label="Functional" value={issuesList.length > 0 ? `${issuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'functional') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'functional')} />
                    <SummaryItem label="Screen" value={screenIssuesList.length > 0 ? `${screenIssuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'screen') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'screen')} />
                    <SummaryItem label="Body" value={bodyIssuesList.length > 0 ? `${bodyIssuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'body') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'body')} />

@@ -93,7 +93,7 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 {d.ram ? <InfoRow label="RAM" value={d.ram} /> : null}
                 {d.processor ? <InfoRow label="Processor" value={d.processor} /> : null}
                 {d.generation ? <InfoRow label="Generation" value={d.generation} /> : null}
-                {d.graphicsCard ? <InfoRow label="GPU" value={d.graphicsCard} /> : null}
+                {d.graphicsCard ? <InfoRow label="Graphic Card" value={d.graphicsCard} /> : null}
                 {d.screenSize ? <InfoRow label="Screen Size" value={d.screenSize} /> : null}
                 {d.storageType ? <InfoRow label="Storage Type" value={d.storageType} /> : null}
                 {d.yearOfPurchase ? <InfoRow label="Year of Purchase" value={d.yearOfPurchase} /> : null}
@@ -313,6 +313,7 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
             <>
               <Section icon={Smartphone} title="Repair Details">
                 <InfoRow label="Brand" value={repair.brand} />
+                <InfoRow label="Model" value={repair.modelName} />
                 <InfoRow label="Service" value={repair.title} />
                 <InfoRow label="Category" value={repair.category} />
                 <InfoRow label="Issue" value={repair.issueLabel} />
@@ -477,7 +478,9 @@ export default function AdminOrders() {
       );
     }
     if (orderType === 'repair') {
-      return order.snapshot?.title || `${order.snapshot?.brand || ''} Repair`;
+      return order.snapshot?.modelName
+        ? `${order.snapshot.brand || ''} ${order.snapshot.modelName}`.trim()
+        : order.snapshot?.title || `${order.snapshot?.brand || ''} Repair`;
     }
     return `${order.device?.brand || ''} ${order.device?.modelName || ''}`.trim();
   };

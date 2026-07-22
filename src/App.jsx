@@ -41,6 +41,7 @@ import BuyBrandSelectionPage from './pages/BuyBrandSelectionPage.jsx';
 import BuyProductListPage from './pages/BuyProductListPage.jsx';
 import BuyProductPage from './pages/BuyProductPage.jsx';
 import BuyOrderConfirmationPage from './pages/BuyOrderConfirmationPage.jsx';
+import RepairPage from './pages/RepairPage.jsx';
 import WhatsAppButton from './components/WhatsAppButton.jsx';
 
 // Laptop Pages
@@ -104,6 +105,7 @@ function App() {
           <Route path="/signup" element={<Login />} />
           {/* Buy flow */}
           <Route path="/buy" element={<BuyHubPage />} />
+          <Route path="/repair" element={<RepairPage />} />
           <Route path="/buy/order-confirmation/:orderId" element={<ProtectedRoute><BuyOrderConfirmationPage /></ProtectedRoute>} />
           <Route path="/buy/:category/brand" element={<BuyBrandSelectionPage />} />
           <Route path="/buy/:category/:brand/:slug" element={<BuyProductPage />} />

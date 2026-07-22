@@ -38,7 +38,7 @@ export default function AdminLayout() {
     if (path.includes('/vendors')) return 'Vendor Management';
     if (path.includes('/website-settings')) return 'Website Settings';
     if (path.includes('/app-settings')) return 'App Settings';
-    if (path.includes('/repair-services')) return 'Repair Services';
+    if (path.includes('/repair-services')) return 'Repair Prices (Model-wise)';
     if (path.includes('/chat')) return 'Live Chat';
     if (path.includes('/partners')) return 'Partners';
     if (path.includes('/orders')) return 'Orders';

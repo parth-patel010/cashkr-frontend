@@ -1,29 +1,59 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { deviceService } from "../services/device.service";
+import {
+  fetchWebsiteCategories,
+  sellCategories,
+  buyCategories,
+  FALLBACK_WEBSITE_CATEGORIES,
+} from "../utils/websiteCategories";
 import logo from "../assets/logo.png";
 
-const NAV_ITEMS = [
-  { label: 'All', hasDropdown: false, to: '/#our-services' },
-  { label: 'Sell Phone', hasDropdown: false, to: '/sell-old-mobile-phones/brand' },
-  {
-    label: 'Sell Gadgets',
-    hasDropdown: true,
-    items: [
-      { label: 'Tablet', to: '/sell-tablet/brand' },
-      { label: 'Laptop', to: '/sell-old-laptops/brand' },
-      { label: 'Mac', to: '/sell-imac/brand' },
-      { label: 'TV', to: '/sell/tv/brand' },
-      { label: 'Earbuds', to: '/sell/earbuds/brand' },
-      { label: 'Refrigerator', to: '/sell/refrigerator/brand' },
-      { label: 'Smartwatch', to: '/sell/smartwatch/brand' },
-    ],
-  },
-  { label: 'Buy Refurbished Devices', hasDropdown: false, to: '/buy' },
-  { label: 'Find New Gadget', hasDropdown: false, to: '/buy' },
-  { label: 'Buy Laptop', hasDropdown: false, to: '/buy/laptop/brand' },
-];
+function buildNavItems(categories) {
+  const sell = sellCategories(categories);
+  const buy = buyCategories(categories);
+  const byKey = Object.fromEntries(categories.map((c) => [c.key, c]));
+  const mobile = byKey.mobile;
+  const laptop = byKey.laptop;
+  const gadgets = sell.filter((c) => c.key !== 'mobile');
+  const firstSell = sell[0]?.sellPath || '/sell-old-mobile-phones/brand';
+
+  const items = [{ label: 'All', hasDropdown: false, to: '/#our-services' }];
+
+  if (mobile?.enabledSell !== false) {
+    items.push({
+      label: 'Sell Phone',
+      hasDropdown: false,
+      to: mobile?.sellPath || '/sell-old-mobile-phones/brand',
+    });
+  }
+
+  if (gadgets.length > 0) {
+    items.push({
+      label: 'Sell Gadgets',
+      hasDropdown: true,
+      items: gadgets.map((c) => ({ label: c.label, to: c.sellPath || '/' })),
+    });
+  }
+
+  if (buy.length > 0) {
+    items.push({ label: 'Buy Refurbished Devices', hasDropdown: false, to: '/buy' });
+    items.push({ label: 'Find New Gadget', hasDropdown: false, to: '/buy' });
+  }
+
+  items.push({ label: 'Repair', hasDropdown: false, to: '/repair' });
+
+  if (laptop?.enabledBuy !== false) {
+    items.push({
+      label: 'Buy Laptop',
+      hasDropdown: false,
+      to: laptop?.buyPath || '/buy/laptop/brand',
+    });
+  }
+
+  return { items, firstSell };
+}
 
 const CATEGORY_ROUTE_MAP = {
   mobile: "/sell-old-mobile-phones",
@@ -78,11 +108,12 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(null);
-  const [activeItem, setActiveItem] = useState("Sell Phone");
+  const [activeItem, setActiveItem] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [categories, setCategories] = useState(FALLBACK_WEBSITE_CATEGORIES);
 
   const searchRef = useRef(null);
   const mobileSearchRef = useRef(null);
@@ -92,6 +123,12 @@ export default function Navbar() {
   const isLoggedIn = auth?.isAuthenticated;
   const userName = auth?.user?.name;
   const navigate = useNavigate();
+
+  const { items: navItems, firstSell } = useMemo(() => buildNavItems(categories), [categories]);
+
+  useEffect(() => {
+    fetchWebsiteCategories().then(setCategories);
+  }, []);
 
   const handleMobileExpand = (label) => {
     setMobileExpanded((prev) => (prev === label ? null : label));
@@ -251,7 +288,7 @@ export default function Navbar() {
           )}
 
           <Link
-            to="/sell-old-mobile-phones/brand"
+            to={firstSell}
             className="bg-primary hover:bg-primary-dark text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg transition-all no-underline shadow-sm hover:-translate-y-px active:translate-y-0 uppercase tracking-wide"
           >
             Sell Now
@@ -269,7 +306,7 @@ export default function Navbar() {
 
       {/* Bottom Nav (Desktop) */}
       <div className="hidden md:flex items-center justify-around px-8 h-12 gap-1 overflow-x-auto no-scrollbar">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <div
             key={item.label}
             className="relative"
@@ -343,7 +380,7 @@ export default function Navbar() {
           </div>
 
           <div className="space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <div key={item.label}>
                 <button
                   className={`flex items-center justify-between w-full px-5 py-4 text-left font-medium border-b border-gray-50 transition-colors
@@ -396,7 +433,7 @@ export default function Navbar() {
                 <UserIcon /> Login
               </Link>
             )}
-            <Link to="/sell-old-mobile-phones/brand" className="bg-primary text-white p-4 rounded-xl font-bold text-center no-underline shadow-lg uppercase tracking-wider">
+            <Link to={firstSell} className="bg-primary text-white p-4 rounded-xl font-bold text-center no-underline shadow-lg uppercase tracking-wider">
               Sell Now
             </Link>
           </div>

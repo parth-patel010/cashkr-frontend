@@ -94,6 +94,11 @@ export const adminService = {
   createRepairService: (data) => adminApi.post('/admin/repair-services', data),
   updateRepairService: (id, data) => adminApi.put(`/admin/repair-services/${id}`, data),
   deleteRepairService: (id) => adminApi.delete(`/admin/repair-services/${id}`),
+  getRepairTemplates: (params) => adminApi.get('/admin/repair-templates', { params }),
+  createRepairTemplate: (data) => adminApi.post('/admin/repair-templates', data),
+  updateRepairTemplate: (id, data) => adminApi.put(`/admin/repair-templates/${id}`, data),
+  deleteRepairTemplate: (id) => adminApi.delete(`/admin/repair-templates/${id}`),
+  applyRepairTemplate: (id, data) => adminApi.post(`/admin/repair-templates/${id}/apply`, data),
 
   // Partners
   getPartners: (params) => adminApi.get('/admin/partners', { params }),

@@ -219,30 +219,72 @@ export default function HomePage() {
   ]);
 
   const buyCats = buyCategories(allCategories).slice(0, 4);
+  const byKey = Object.fromEntries(allCategories.map((c) => [c.key, c]));
+  const isSellOn = (key) => byKey[key]?.enabledSell !== false;
+  const isBuyOn = (key) => byKey[key]?.enabledBuy !== false;
+  const gadgetSellCats = deviceCategories.filter((c) => c.key !== 'mobile');
+  const firstGadgetSell = gadgetSellCats[0];
+  const firstSellPath = deviceCategories[0]?.sellPath || '/sell-old-mobile-phones/brand';
 
   const serviceTiles = [
-    { key: 'sell-phone', label: 'Sell Phone', to: '/sell-old-mobile-phones/brand', Icon: Smartphone },
-    { key: 'sell-gadgets', label: 'Sell Gadgets', to: '/sell-tablet/brand', Icon: Tablet },
-    { key: 'buy-refurb', label: 'Buy Refurbished', to: '/buy', Icon: ShoppingBag },
-    { key: 'buy-laptop', label: 'Buy Laptop', to: '/buy/laptop/brand', Icon: Laptop },
-    { key: 'sell-tv', label: 'Sell TV', to: '/sell/tv/brand', Icon: Tv },
-    { key: 'sell-earbuds', label: 'Sell Earbuds', to: '/sell/earbuds/brand', Icon: Headphones },
-    { key: 'sell-fridge', label: 'Sell Refrigerator', to: '/sell/refrigerator/brand', Icon: Refrigerator },
-    { key: 'sell-watch', label: 'Sell Smartwatch', to: '/sell/smartwatch/brand', Icon: Watch },
-    { key: 'repair', label: 'Repair', to: '/contact-us', Icon: Wrench },
-  ].filter((tile) => {
-    // Hide sell tiles if that category is disabled in website settings
-    const sellKeyMap = {
-      'sell-tv': 'tv',
-      'sell-earbuds': 'earbuds',
-      'sell-fridge': 'refrigerator',
-      'sell-watch': 'smartwatch',
-    };
-    const catKey = sellKeyMap[tile.key];
-    if (!catKey) return true;
-    const cat = allCategories.find((c) => c.key === catKey);
-    return !cat || cat.enabledSell !== false;
-  });
+    {
+      key: 'sell-phone',
+      label: 'Sell Phone',
+      to: byKey.mobile?.sellPath || '/sell-old-mobile-phones/brand',
+      Icon: Smartphone,
+      show: isSellOn('mobile'),
+    },
+    {
+      key: 'sell-gadgets',
+      label: 'Sell Gadgets',
+      to: firstGadgetSell?.sellPath || '/sell-tablet/brand',
+      Icon: Tablet,
+      show: gadgetSellCats.length > 0,
+    },
+    {
+      key: 'buy-refurb',
+      label: 'Buy Refurbished',
+      to: '/buy',
+      Icon: ShoppingBag,
+      show: buyCats.length > 0,
+    },
+    {
+      key: 'buy-laptop',
+      label: 'Buy Laptop',
+      to: byKey.laptop?.buyPath || '/buy/laptop/brand',
+      Icon: Laptop,
+      show: isBuyOn('laptop'),
+    },
+    {
+      key: 'sell-tv',
+      label: 'Sell TV',
+      to: byKey.tv?.sellPath || '/sell/tv/brand',
+      Icon: Tv,
+      show: isSellOn('tv'),
+    },
+    {
+      key: 'sell-earbuds',
+      label: 'Sell Earbuds',
+      to: byKey.earbuds?.sellPath || '/sell/earbuds/brand',
+      Icon: Headphones,
+      show: isSellOn('earbuds'),
+    },
+    {
+      key: 'sell-fridge',
+      label: 'Sell Refrigerator',
+      to: byKey.refrigerator?.sellPath || '/sell/refrigerator/brand',
+      Icon: Refrigerator,
+      show: isSellOn('refrigerator'),
+    },
+    {
+      key: 'sell-watch',
+      label: 'Sell Smartwatch',
+      to: byKey.smartwatch?.sellPath || '/sell/smartwatch/brand',
+      Icon: Watch,
+      show: isSellOn('smartwatch'),
+    },
+    { key: 'repair', label: 'Repair', to: '/repair', Icon: Wrench, show: true },
+  ].filter((tile) => tile.show);
 
   return (
     <div className="w-full bg-[#F7F9FC]">
@@ -281,39 +323,47 @@ export default function HomePage() {
       </section>
 
       {/* ── Sell categories strip ── */}
-      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="flex items-end justify-between gap-4 mb-5">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900">Sell for Instant Cash</h2>
-            <p className="text-sm text-gray-500 mt-1">Pick a category and get a fair buyback quote in minutes.</p>
+      {deviceCategories.length > 0 ? (
+        <section className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex items-end justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900">Sell for Instant Cash</h2>
+              <p className="text-sm text-gray-500 mt-1">Pick a category and get a fair buyback quote in minutes.</p>
+            </div>
+            {isSellOn('mobile') ? (
+              <Link to={byKey.mobile?.sellPath || '/sell-old-mobile-phones/brand'} className="hidden sm:inline text-sm font-bold text-[#0565E6] no-underline hover:underline">
+                Sell phone →
+              </Link>
+            ) : (
+              <Link to={firstSellPath} className="hidden sm:inline text-sm font-bold text-[#0565E6] no-underline hover:underline">
+                Sell now →
+              </Link>
+            )}
           </div>
-          <Link to="/sell-old-mobile-phones/brand" className="hidden sm:inline text-sm font-bold text-[#0565E6] no-underline hover:underline">
-            Sell phone →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {deviceCategories.map((cat) => (
-            <Link
-              to={cat.sellPath || '/'}
-              key={cat.key}
-              className="group flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-[#0565E6]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
-            >
-              <div className="flex items-center justify-center bg-[#F8FAFF] h-[110px] sm:h-[130px] px-4 pt-4 pb-2">
-                <img
-                  src={categoryImage(cat)}
-                  alt={cat.label}
-                  className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="px-3 py-3 text-center">
-                <span className="text-sm sm:text-base font-bold text-gray-700 group-hover:text-[#0565E6] transition-colors">
-                  Sell {cat.label}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {deviceCategories.map((cat) => (
+              <Link
+                to={cat.sellPath || '/'}
+                key={cat.key}
+                className="group flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-[#0565E6]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
+              >
+                <div className="flex items-center justify-center bg-[#F8FAFF] h-[110px] sm:h-[130px] px-4 pt-4 pb-2">
+                  <img
+                    src={categoryImage(cat)}
+                    alt={cat.label}
+                    className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="px-3 py-3 text-center">
+                  <span className="text-sm sm:text-base font-bold text-gray-700 group-hover:text-[#0565E6] transition-colors">
+                    Sell {cat.label}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* ── Buy refurbished ── */}
       {buyCats.length > 0 ? (

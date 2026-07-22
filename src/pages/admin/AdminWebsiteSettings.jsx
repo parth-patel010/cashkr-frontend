@@ -17,8 +17,19 @@ export default function AdminWebsiteSettings() {
     setLoading(true);
     try {
       const { data } = await adminService.getAppSettings();
-      setCategories(data.categories || []);
-      setBanners(data.banners || []);
+      setCategories(
+        (data.categories || []).map((c) => ({
+          ...c,
+          enabledSell: c.enabledSell !== false,
+          enabledBuy: c.enabledBuy !== false,
+        })),
+      );
+      setBanners(
+        (data.banners || []).map((b) => ({
+          ...b,
+          enabled: b.enabled !== false,
+        })),
+      );
     } catch (e) {
       console.error(e);
       setMessage('Failed to load website settings');
@@ -97,7 +108,20 @@ export default function AdminWebsiteSettings() {
     setSaving(true);
     setMessage('');
     try {
-      const { data } = await adminService.saveAppSettings({ categories, banners });
+      const payload = {
+        categories: categories.map((c) => ({
+          ...c,
+          enabledSell: c.enabledSell === true,
+          enabledBuy: c.enabledBuy === true,
+          sortOrder: Number(c.sortOrder) || 0,
+        })),
+        banners: banners.map((b, index) => ({
+          ...b,
+          enabled: b.enabled === true,
+          sortOrder: b.sortOrder != null ? Number(b.sortOrder) || 0 : index + 1,
+        })),
+      };
+      const { data } = await adminService.saveAppSettings(payload);
       setCategories(data.categories || []);
       setBanners(data.banners || []);
       setMessage('Website settings saved');
@@ -312,11 +336,11 @@ export default function AdminWebsiteSettings() {
                     <label className="inline-flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={cat.enabledSell !== false}
+                        checked={cat.enabledSell === true}
                         onChange={(e) => updateCategory(cat.key, { enabledSell: e.target.checked })}
                       />
                       <span className="text-xs font-bold text-slate-600">
-                        {cat.enabledSell !== false ? 'On' : 'Off'}
+                        {cat.enabledSell === true ? 'On' : 'Off'}
                       </span>
                     </label>
                   </td>
@@ -324,11 +348,11 @@ export default function AdminWebsiteSettings() {
                     <label className="inline-flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={cat.enabledBuy !== false}
+                        checked={cat.enabledBuy === true}
                         onChange={(e) => updateCategory(cat.key, { enabledBuy: e.target.checked })}
                       />
                       <span className="text-xs font-bold text-slate-600">
-                        {cat.enabledBuy !== false ? 'On' : 'Off'}
+                        {cat.enabledBuy === true ? 'On' : 'Off'}
                       </span>
                     </label>
                   </td>

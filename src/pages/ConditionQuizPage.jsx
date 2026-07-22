@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Smartphone, Palette, Camera, Battery, CircleDot, Wifi, Fingerprint, User,
+  Volume2, Plug, Zap, Phone, Bluetooth, Vibrate, Mic, Radar, FileText, Package, Cable,
+} from 'lucide-react';
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
@@ -26,9 +30,33 @@ const ALL_STEPS = [
 ];
 
 const ALL_ACCESSORIES = [
-  { id: 'Bill', label: 'GST Valid Bill', desc: 'Valid GST invoice', icon: '📄' },
-  { id: 'Box', label: 'Original Box', desc: 'Original purchase box', icon: '📦' },
-  { id: 'Charger', label: 'Original Charger', desc: 'Original charging adapter', icon: '🔌' }
+  { id: 'Bill', label: 'GST Valid Bill', desc: 'Valid GST invoice', Icon: FileText },
+  { id: 'Box', label: 'Original Box', desc: 'Original purchase box', Icon: Package },
+  { id: 'Charger', label: 'Original Charger', desc: 'Original charging adapter', Icon: Cable },
+];
+
+const PHYSICAL_ISSUES = [
+  { id: 'glass_crack', label: 'Glass Crack', desc: 'Screen glass contains cracks', Icon: Smartphone },
+  { id: 'back_panel', label: 'Back Panel Damage', desc: 'Scratches, dents or broken back panel', Icon: Palette },
+  { id: 'camera_glass_broken', label: 'Camera Glass Broken', desc: 'Camera lens glass is cracked/broken', Icon: Camera },
+];
+
+const TECHNICAL_ISSUES = [
+  { id: 'battery_service', label: 'Battery Warning', Icon: Battery, pct: '13%' },
+  { id: 'front_camera', label: 'Front Camera faulty', Icon: Camera, pct: '8%' },
+  { id: 'back_camera', label: 'Back Camera faulty', Icon: Camera, pct: '15%' },
+  { id: 'volume_button', label: 'Volume button issue', Icon: CircleDot, pct: '4%' },
+  { id: 'wifi_issue', label: 'Wifi issue', Icon: Wifi, pct: '39%' },
+  { id: 'finger_touch', label: 'Finger touch issue', Icon: Fingerprint, pct: '26%' },
+  { id: 'face_unlock', label: 'Face unlock issue', Icon: User, pct: '26%' },
+  { id: 'speaker_faulty', label: 'Speaker faulty', Icon: Volume2, pct: '4%' },
+  { id: 'power_button', label: 'Power button issue', Icon: Plug, pct: '2%' },
+  { id: 'charging_port', label: 'Charging port issue', Icon: Zap, pct: '10%' },
+  { id: 'audio_receiver', label: 'Audio receiver issue', Icon: Phone, pct: '7%' },
+  { id: 'bluetooth', label: 'Bluetooth issue', Icon: Bluetooth, pct: '39%' },
+  { id: 'vibrator', label: 'Vibrator issue', Icon: Vibrate, pct: '2%' },
+  { id: 'microphone', label: 'Microphone issue', Icon: Mic, pct: '2%' },
+  { id: 'proximity_sensor', label: 'Proximity sensor', Icon: Radar, pct: '3%' },
 ];
 
 const AGE_OPTIONS = [
@@ -797,12 +825,9 @@ export default function ConditionQuizPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {[
-                        { id: 'glass_crack', label: 'Glass Crack', desc: 'Screen glass contains cracks', icon: '📱' },
-                        { id: 'back_panel', label: 'Back Panel Damage', desc: 'Scratches, dents or broken back panel', icon: '🎨' },
-                        { id: 'camera_glass_broken', label: 'Camera Glass Broken', desc: 'Camera lens glass is cracked/broken', icon: '📷' }
-                      ].map(issue => {
+                      {PHYSICAL_ISSUES.map(issue => {
                         const selected = physicalIssues.includes(issue.id);
+                        const Icon = issue.Icon;
                         return (
                           <button
                             key={issue.id}
@@ -816,7 +841,7 @@ export default function ConditionQuizPage() {
                                 ? 'border-[#0565E6] bg-[#E8F1FF]' 
                                 : 'border-gray-100 bg-white hover:border-gray-200'}`}
                           >
-                            <span className="text-2xl">{issue.icon}</span>
+                            <Icon size={28} strokeWidth={1.6} className={selected ? 'text-[#0565E6]' : 'text-gray-500'} />
                             <div>
                               <p className={`font-black text-sm ${selected ? 'text-[#0565E6]' : 'text-[#111827]'}`}>{issue.label}</p>
                               <p className="text-xs text-gray-400 mt-1">{issue.desc}</p>
@@ -837,24 +862,9 @@ export default function ConditionQuizPage() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[360px] overflow-y-auto pr-2 no-scrollbar">
-                      {[
-                        { id: 'battery_service', label: 'Battery Warning', icon: '🔋', pct: '13%' },
-                        { id: 'front_camera', label: 'Front Camera faulty', icon: '📸', pct: '8%' },
-                        { id: 'back_camera', label: 'Back Camera faulty', icon: '📷', pct: '15%' },
-                        { id: 'volume_button', label: 'Volume button issue', icon: '🔘', pct: '4%' },
-                        { id: 'wifi_issue', label: 'Wifi issue', icon: '📶', pct: '39%' },
-                        { id: 'finger_touch', label: 'Finger touch issue', icon: '☝️', pct: '26%' },
-                        { id: 'face_unlock', label: 'Face unlock issue', icon: '👤', pct: '26%' },
-                        { id: 'speaker_faulty', label: 'Speaker faulty', icon: '🔊', pct: '4%' },
-                        { id: 'power_button', label: 'Power button issue', icon: '🔌', pct: '2%' },
-                        { id: 'charging_port', label: 'Charging port issue', icon: '⚡', pct: '10%' },
-                        { id: 'audio_receiver', label: 'Audio receiver issue', icon: '📞', pct: '7%' },
-                        { id: 'bluetooth', label: 'Bluetooth issue', icon: '🦷', pct: '39%' },
-                        { id: 'vibrator', label: 'Vibrator issue', icon: '📳', pct: '2%' },
-                        { id: 'microphone', label: 'Microphone issue', icon: '🎤', pct: '2%' },
-                        { id: 'proximity_sensor', label: 'Proximity sensor', icon: '📡', pct: '3%' }
-                      ].map(issue => {
+                      {TECHNICAL_ISSUES.map(issue => {
                         const selected = technicalIssues.includes(issue.id);
+                        const Icon = issue.Icon;
                         return (
                           <button
                             key={issue.id}
@@ -868,7 +878,7 @@ export default function ConditionQuizPage() {
                                 ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
                                 : 'border-gray-50 bg-white text-gray-500 hover:border-gray-100'}`}
                           >
-                            <span className="text-2xl">{issue.icon}</span>
+                            <Icon size={28} strokeWidth={1.6} className={selected ? 'text-[#0565E6]' : 'text-gray-500'} />
                             <span className="text-xs font-bold leading-tight">{issue.label}</span>
                           </button>
                         );
@@ -888,6 +898,7 @@ export default function ConditionQuizPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       {ACCESSORIES.map(acc => {
                         const selected = selectedAccessories.includes(acc.id);
+                        const Icon = acc.Icon;
                         return (
                           <button
                             key={acc.id}
@@ -902,7 +913,7 @@ export default function ConditionQuizPage() {
                                 : 'border-gray-100 bg-white hover:border-gray-200'}`}
                           >
                             <div className="flex justify-between items-start w-full">
-                              <span className="text-2xl">{acc.icon}</span>
+                              <Icon size={28} strokeWidth={1.6} className={selected ? 'text-[#0565E6]' : 'text-gray-500'} />
                               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
                                 ${selected ? 'border-[#0565E6] bg-[#0565E6]' : 'border-gray-200'}`}>
                                 {selected && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>}

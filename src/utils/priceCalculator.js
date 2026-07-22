@@ -398,37 +398,32 @@ export function calculateLaptopPrice(device, selections) {
     }
 
     // Convert Retail Base Price to Buy-back Base Price
-    const APPLE_BUYBACK_FACTOR = 0.73;
+    const APPLE_BUYBACK_FACTOR = 0.88;
     basePrice = Math.round(basePrice * APPLE_BUYBACK_FACTOR);
 
-    // Stricter Apple age curve so aged / out-of-warranty quotes stay ~₹11k under competitors
+    // Apple / Mac age curve — keep quotes competitive without crashing to near-zero
     const APPLE_AGE_MULT = {
-      lessThan1: 0.88, // in warranty (< 1 yr)
-      oneToTwo: 0.65, // 1–3 years (typically out of warranty)
-      twoToThree: 0.48, // 3+ years
-      lessThan3: 0.88,
-      threeToEleven: 0.70,
-      aboveEleven: 0.52,
-      threeToFour: 0.40,
-      fourToFive: 0.30,
-      moreThan5: 0.18,
+      lessThan1: 0.95, // in warranty (< 1 yr)
+      oneToTwo: 0.82, // 1–3 years
+      twoToThree: 0.72, // 3+ years
+      lessThan3: 0.95,
+      threeToEleven: 0.85,
+      aboveEleven: 0.75,
+      threeToFour: 0.68,
+      fourToFive: 0.58,
+      moreThan5: 0.48,
     };
-    const APPLE_AGING_FLAT_DEDUCTION = 11000; // competitive gap vs market on aged units
 
     const ageMult =
       APPLE_AGE_MULT[yearBracket] ??
       device.ageMultipliers?.[yearBracket] ??
       1;
-    const conditionMultiplier = calculateConditionMultiplier(totalIssueCount);
-    let currentPrice = Math.round(basePrice * ageMult * conditionMultiplier);
+    // No silent cut when device has zero issues
+    const appleConditionMult = totalIssueCount === 0
+      ? 1
+      : calculateConditionMultiplier(totalIssueCount);
+    let currentPrice = Math.round(basePrice * ageMult * appleConditionMult);
     const ageAdjustment = currentPrice - basePrice;
-
-    // Extra aging cut for out-of-warranty / older brackets
-    let agingDeduction = 0;
-    if (yearBracket && yearBracket !== 'lessThan1' && yearBracket !== 'lessThan3') {
-      agingDeduction = APPLE_AGING_FLAT_DEDUCTION;
-      currentPrice = Math.max(currentPrice - agingDeduction, 0);
-    }
 
     let powerDeduction = 0;
     if (powerStatus === 'off') {
@@ -480,7 +475,7 @@ export function calculateLaptopPrice(device, selections) {
     return {
       basePrice,
       ageAdjustment,
-      agingDeduction: agingDeduction ? -agingDeduction : 0,
+      agingDeduction: 0,
       powerDeduction: -powerDeduction,
       functionalDeduction: -functionalDeduction,
       screenDeduction: -screenDeduction,

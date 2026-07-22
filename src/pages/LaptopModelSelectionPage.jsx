@@ -87,7 +87,7 @@ export default function LaptopModelSelectionPage() {
                 )}
                 {model.isGamingLaptop && (
                   <span className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-lg">
-                    🎮 Gaming
+                    Gaming
                   </span>
                 )}
               </div>
