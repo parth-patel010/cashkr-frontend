@@ -84,6 +84,8 @@ export default function AdminRepairServices() {
   const [templates, setTemplates] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
   const [deviceOptions, setDeviceOptions] = useState([]);
+  const [deviceSearch, setDeviceSearch] = useState('');
+  const [devicesLoading, setDevicesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -101,9 +103,11 @@ export default function AdminRepairServices() {
   const [applyTemplate, setApplyTemplate] = useState(null);
   const [applyBrand, setApplyBrand] = useState('');
   const [applyCategory, setApplyCategory] = useState('mobile');
+  const [applyDeviceSearch, setApplyDeviceSearch] = useState('');
   const [applyDevices, setApplyDevices] = useState([]);
   const [selectedDeviceIds, setSelectedDeviceIds] = useState([]);
   const [applyBusy, setApplyBusy] = useState(false);
+  const [applyDevicesLoading, setApplyDevicesLoading] = useState(false);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -126,22 +130,27 @@ export default function AdminRepairServices() {
     }
   };
 
+  /** Load devices from Devices catalog (same as Admin → Devices) */
+  const loadCatalogDevices = async ({ category, brand, search: q, setter, setLoadingFlag }) => {
+    setLoadingFlag?.(true);
+    try {
+      const params = { category, limit: 500, page: 1 };
+      if (brand) params.brand = brand;
+      if (q?.trim()) params.search = q.trim();
+      const { data } = await adminService.getDevices(params);
+      setter(data.devices || []);
+    } catch {
+      setter([]);
+    } finally {
+      setLoadingFlag?.(false);
+    }
+  };
+
   const loadBrands = (category) => {
     adminService
       .getBrands({ category, active: 'true' })
       .then((res) => setBrandOptions(res.data.brands || []))
       .catch(() => setBrandOptions([]));
-  };
-
-  const loadDevices = (category, brand) => {
-    if (!brand) {
-      setDeviceOptions([]);
-      return;
-    }
-    adminService
-      .getDevices({ category, brand, limit: 500, page: 1 })
-      .then((res) => setDeviceOptions(res.data.devices || []))
-      .catch(() => setDeviceOptions([]));
   };
 
   useEffect(() => {
@@ -150,39 +159,44 @@ export default function AdminRepairServices() {
   }, [search]);
 
   useEffect(() => {
-    if (showModal) {
-      loadBrands(form.category);
-      if (form.brand) loadDevices(form.category, form.brand);
-    }
-  }, [showModal, form.category, form.brand]);
+    if (!showModal) return;
+    loadBrands(form.category);
+    loadCatalogDevices({
+      category: form.category,
+      brand: form.brand || undefined,
+      search: deviceSearch,
+      setter: setDeviceOptions,
+      setLoadingFlag: setDevicesLoading,
+    });
+  }, [showModal, form.category, form.brand, deviceSearch]);
 
   useEffect(() => {
-    if (applyOpen) {
-      loadBrands(applyCategory);
-      if (applyBrand) {
-        adminService
-          .getDevices({ category: applyCategory, brand: applyBrand, limit: 500, page: 1 })
-          .then((res) => setApplyDevices(res.data.devices || []))
-          .catch(() => setApplyDevices([]));
-      } else {
-        setApplyDevices([]);
-      }
-      setSelectedDeviceIds([]);
-    }
-  }, [applyOpen, applyBrand, applyCategory]);
+    if (!applyOpen) return;
+    loadBrands(applyCategory);
+    loadCatalogDevices({
+      category: applyCategory,
+      brand: applyBrand || undefined,
+      search: applyDeviceSearch,
+      setter: setApplyDevices,
+      setLoadingFlag: setApplyDevicesLoading,
+    });
+  }, [applyOpen, applyBrand, applyCategory, applyDeviceSearch]);
 
   const openCreate = () => {
     setEditingId(null);
+    setDeviceSearch('');
     setForm({ ...EMPTY_FORM, issues: DEFAULT_ISSUES.map((i) => ({ ...i })) });
     setShowModal(true);
   };
 
   const openEdit = (service) => {
     setEditingId(service._id);
+    setDeviceSearch('');
+    const deviceId = service.deviceId?._id || service.deviceId || '';
     setForm({
       category: service.category || 'mobile',
       brand: service.brand || '',
-      deviceId: service.deviceId || '',
+      deviceId: String(deviceId),
       modelName: service.modelName || '',
       deviceSlug: service.deviceSlug || '',
       title: service.title || '',
@@ -200,6 +214,20 @@ export default function AdminRepairServices() {
       })),
     });
     setShowModal(true);
+  };
+
+  const selectDevice = (device) => {
+    if (!device) return;
+    setForm((p) => ({
+      ...p,
+      category: device.category || p.category,
+      brand: device.brand || '',
+      deviceId: device._id,
+      modelName: device.modelName || '',
+      deviceSlug: device.slug || '',
+      imageUrl: device.imageUrl || p.imageUrl,
+      title: `${device.brand} ${device.modelName} Repair`,
+    }));
   };
 
   const updateIssue = (index, field, value) => {
@@ -320,12 +348,15 @@ export default function AdminRepairServices() {
     setApplyTemplate(tpl);
     setApplyCategory(tpl.category || 'mobile');
     setApplyBrand('');
+    setApplyDeviceSearch('');
+    setSelectedDeviceIds([]);
     setApplyOpen(true);
   };
 
   const toggleDevice = (id) => {
+    const sid = String(id);
     setSelectedDeviceIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      prev.map(String).includes(sid) ? prev.filter((x) => String(x) !== sid) : [...prev, id],
     );
   };
 
@@ -395,7 +426,7 @@ export default function AdminRepairServices() {
       </div>
 
       <p className="text-sm text-slate-500 mb-6">
-        Set repair prices <strong>per phone model</strong>. Create a common price once, then apply it to many models in one click.
+        Pick a device from your <strong>Devices</strong> catalog, then set repair prices. Or create a common template and apply it to many devices at once.
       </p>
 
       {tab === 'models' ? (
@@ -553,21 +584,38 @@ export default function AdminRepairServices() {
                   <select
                     className="admin-input"
                     value={form.category}
-                    onChange={(e) => setForm((p) => ({ ...p, category: e.target.value, brand: '', deviceId: '', modelName: '' }))}
+                    onChange={(e) => {
+                      setDeviceSearch('');
+                      setForm((p) => ({
+                        ...p,
+                        category: e.target.value,
+                        brand: '',
+                        deviceId: '',
+                        modelName: '',
+                        deviceSlug: '',
+                      }));
+                    }}
                   >
                     <option value="mobile">Mobile</option>
                     <option value="tablet">Tablet</option>
                   </select>
                 </div>
                 <div>
-                  <label className="admin-label">Brand</label>
+                  <label className="admin-label">Filter by brand (optional)</label>
                   <select
                     className="admin-input"
                     value={form.brand}
-                    onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value, deviceId: '', modelName: '' }))}
-                    required
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        brand: e.target.value,
+                        deviceId: '',
+                        modelName: '',
+                        deviceSlug: '',
+                      }))
+                    }
                   >
-                    <option value="">Select brand</option>
+                    <option value="">All brands</option>
                     {brandOptions.map((b) => (
                       <option key={b._id || b.name || b.brand} value={b.name || b.brand}>
                         {b.name || b.brand}
@@ -578,30 +626,76 @@ export default function AdminRepairServices() {
               </div>
 
               <div>
-                <label className="admin-label">Phone model</label>
-                <select
-                  className="admin-input"
-                  value={form.deviceId}
-                  onChange={(e) => {
-                    const device = deviceOptions.find((d) => d._id === e.target.value);
-                    setForm((p) => ({
-                      ...p,
-                      deviceId: e.target.value,
-                      modelName: device?.modelName || '',
-                      deviceSlug: device?.slug || '',
-                      imageUrl: device?.imageUrl || p.imageUrl,
-                      title: device ? `${device.brand} ${device.modelName} Repair` : p.title,
-                    }));
-                  }}
-                  required={!editingId}
-                >
-                  <option value="">{form.brand ? 'Select model' : 'Select brand first'}</option>
-                  {deviceOptions.map((d) => (
-                    <option key={d._id} value={d._id}>
-                      {d.modelName}{pricedDeviceIds.has(String(d._id)) && form.deviceId !== d._id ? ' (has pricing)' : ''}
-                    </option>
-                  ))}
-                </select>
+                <label className="admin-label">Select device (from Devices catalog)</label>
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    className="admin-input pl-10"
+                    placeholder="Search model name from Devices…"
+                    value={deviceSearch}
+                    onChange={(e) => setDeviceSearch(e.target.value)}
+                  />
+                </div>
+                {form.deviceId ? (
+                  <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-[#0565E6]/30 bg-[#E8F1FF] px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-[#0565E6] truncate">
+                        Selected: {form.brand} {form.modelName}
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate">{form.deviceSlug}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-ghost text-xs shrink-0"
+                      onClick={() =>
+                        setForm((p) => ({ ...p, deviceId: '', modelName: '', deviceSlug: '', title: '' }))
+                      }
+                    >
+                      Clear
+                    </button>
+                  </div>
+                ) : null}
+                <div className="max-h-[220px] overflow-y-auto border border-slate-200 rounded-xl divide-y bg-white">
+                  {devicesLoading ? (
+                    <div className="p-4 text-center text-sm text-slate-400">Loading devices…</div>
+                  ) : deviceOptions.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-slate-400">
+                      No devices found. Add them first under Admin → Devices.
+                    </div>
+                  ) : (
+                    deviceOptions.map((d) => {
+                      const selected = String(form.deviceId) === String(d._id);
+                      const alreadyPriced = pricedDeviceIds.has(String(d._id)) && !selected;
+                      return (
+                        <button
+                          key={d._id}
+                          type="button"
+                          onClick={() => selectDevice(d)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors ${
+                            selected ? 'bg-[#E8F1FF]' : ''
+                          }`}
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                            {d.imageUrl ? (
+                              <img src={d.imageUrl} alt="" className="w-full h-full object-contain" />
+                            ) : (
+                              <span className="text-[10px] text-slate-400">N/A</span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-slate-800 truncate">{d.modelName}</div>
+                            <div className="text-xs text-slate-500">{d.brand}</div>
+                          </div>
+                          {alreadyPriced ? (
+                            <span className="text-[10px] font-bold text-amber-600 shrink-0">priced</span>
+                          ) : selected ? (
+                            <span className="text-[10px] font-bold text-[#0565E6] shrink-0">selected</span>
+                          ) : null}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
 
               <IssuePriceEditor
@@ -622,7 +716,7 @@ export default function AdminRepairServices() {
                 </button>
                 <div className="flex gap-2">
                   <button type="button" className="admin-btn admin-btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button type="submit" className="admin-btn admin-btn-primary" disabled={submitting}>
+                  <button type="submit" className="admin-btn admin-btn-primary" disabled={submitting || !form.deviceId}>
                     {submitting ? 'Saving…' : 'Save model prices'}
                   </button>
                 </div>
@@ -707,7 +801,7 @@ export default function AdminRepairServices() {
             </div>
             <div className="admin-modal-body space-y-4">
               <p className="text-sm text-slate-500">
-                Pick a brand, select models (or Select all), then apply. Existing model prices are overwritten with this template.
+                Select devices from your Devices catalog, then apply this common price to all of them.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -718,6 +812,8 @@ export default function AdminRepairServices() {
                     onChange={(e) => {
                       setApplyCategory(e.target.value);
                       setApplyBrand('');
+                      setApplyDeviceSearch('');
+                      setSelectedDeviceIds([]);
                     }}
                   >
                     <option value="mobile">Mobile</option>
@@ -725,13 +821,16 @@ export default function AdminRepairServices() {
                   </select>
                 </div>
                 <div>
-                  <label className="admin-label">Brand</label>
+                  <label className="admin-label">Filter by brand (optional)</label>
                   <select
                     className="admin-input"
                     value={applyBrand}
-                    onChange={(e) => setApplyBrand(e.target.value)}
+                    onChange={(e) => {
+                      setApplyBrand(e.target.value);
+                      setSelectedDeviceIds([]);
+                    }}
                   >
-                    <option value="">Select brand</option>
+                    <option value="">All brands</option>
                     {brandOptions.map((b) => (
                       <option key={b._id || b.name || b.brand} value={b.name || b.brand}>
                         {b.name || b.brand}
@@ -741,29 +840,53 @@ export default function AdminRepairServices() {
                 </div>
               </div>
 
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  className="admin-input pl-10"
+                  placeholder="Search devices from catalog…"
+                  value={applyDeviceSearch}
+                  onChange={(e) => setApplyDeviceSearch(e.target.value)}
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-slate-600">
-                  {selectedDeviceIds.length} selected / {applyDevices.length} models
+                  {selectedDeviceIds.length} selected / {applyDevices.length} devices
                 </span>
-                <button type="button" className="admin-btn admin-btn-ghost text-xs" onClick={selectAllDevices} disabled={!applyDevices.length}>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-ghost text-xs"
+                  onClick={selectAllDevices}
+                  disabled={!applyDevices.length}
+                >
                   Select all
                 </button>
               </div>
 
               <div className="max-h-[280px] overflow-y-auto border border-slate-100 rounded-xl divide-y">
-                {applyDevices.length === 0 ? (
-                  <div className="p-6 text-center text-slate-400 text-sm">Select a brand to load models</div>
+                {applyDevicesLoading ? (
+                  <div className="p-6 text-center text-slate-400 text-sm">Loading devices…</div>
+                ) : applyDevices.length === 0 ? (
+                  <div className="p-6 text-center text-slate-400 text-sm">
+                    No devices found in catalog. Add phones under Admin → Devices first.
+                  </div>
                 ) : (
                   applyDevices.map((d) => (
                     <label key={d._id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedDeviceIds.includes(d._id)}
+                        checked={selectedDeviceIds.map(String).includes(String(d._id))}
                         onChange={() => toggleDevice(d._id)}
                       />
-                      <span className="text-sm font-medium text-slate-800">{d.modelName}</span>
+                      {d.imageUrl ? (
+                        <img src={d.imageUrl} alt="" className="w-8 h-8 object-contain rounded bg-slate-50" />
+                      ) : null}
+                      <span className="text-sm font-medium text-slate-800 min-w-0 truncate">
+                        {d.brand} {d.modelName}
+                      </span>
                       {pricedDeviceIds.has(String(d._id)) ? (
-                        <span className="text-[10px] font-bold text-amber-600 ml-auto">already priced</span>
+                        <span className="text-[10px] font-bold text-amber-600 ml-auto shrink-0">already priced</span>
                       ) : null}
                     </label>
                   ))
@@ -773,7 +896,7 @@ export default function AdminRepairServices() {
               <div className="flex justify-end gap-2">
                 <button type="button" className="admin-btn admin-btn-ghost" onClick={() => setApplyOpen(false)}>Cancel</button>
                 <button type="button" className="admin-btn admin-btn-primary" disabled={applyBusy || !selectedDeviceIds.length} onClick={runApply}>
-                  {applyBusy ? 'Applying…' : `Apply to ${selectedDeviceIds.length || 0} models`}
+                  {applyBusy ? 'Applying…' : `Apply to ${selectedDeviceIds.length || 0} devices`}
                 </button>
               </div>
             </div>
