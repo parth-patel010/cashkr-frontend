@@ -110,6 +110,13 @@ export default function MacConditionQuizPage() {
   const freshStartHandledRef = useRef(false);
 
   useEffect(() => {
+    if (location.state?.freshStart) {
+      freshStartHandledRef.current = false;
+      quizRestoredRef.current = false;
+    }
+  }, [location.state?.freshStart, location.state?.startedAt]);
+
+  useEffect(() => {
     if (!specs) {
       // Try to restore specs from session storage before redirecting
       try {

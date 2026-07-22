@@ -16,13 +16,23 @@ export default function LaptopSpecModal({ isOpen, onClose, device, onComplete, i
   // Detect if device is Apple/Mac — no Generation question for Mac
   const isMac = device?.brand === 'Apple' || device?.processorFamily?.startsWith('Apple');
 
-  // Load initial values when modal opens
+  // Reset or hydrate selections every time the modal opens
   useEffect(() => {
-    if (isOpen && initialValues) {
+    if (!isOpen) {
+      setOpenDropdown(null);
+      return;
+    }
+    if (initialValues?.processor || initialValues?.ram || initialValues?.storage) {
       setSelectedProcessor(initialValues.processor || null);
       setSelectedRam(initialValues.ram || null);
       setSelectedStorage(initialValues.storage || null);
+    } else {
+      // Fresh "Start Selling" — never keep previous processor/RAM/storage
+      setSelectedProcessor(null);
+      setSelectedRam(null);
+      setSelectedStorage(null);
     }
+    setOpenDropdown(null);
   }, [isOpen, initialValues]);
 
   if (!device) return null;

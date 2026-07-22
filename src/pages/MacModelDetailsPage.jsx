@@ -28,11 +28,21 @@ export default function MacModelDetailsPage() {
 
   const maxPrice = Math.max(...device.variants.map(v => v.basePrice));
 
+  const handleStartSelling = () => {
+    try {
+      sessionStorage.removeItem(`devicekart_mac_quiz_${device.slug}`);
+    } catch { /* ignore */ }
+    setIsModalOpen(true);
+  };
+
   const handleSpecsComplete = (specs) => {
     try {
       sessionStorage.removeItem(`devicekart_mac_quiz_${device.slug}`);
     } catch { /* ignore */ }
-    navigate(`/sell-imac/${brand}/${device.slug}/quiz`, { state: { specs, freshStart: true } });
+    setIsModalOpen(false);
+    navigate(`/sell-imac/${brand}/${device.slug}/quiz`, {
+      state: { specs, freshStart: true, startedAt: Date.now() },
+    });
   };
 
   const brandSlug = brand || device.brand?.toLowerCase();
@@ -105,7 +115,7 @@ export default function MacModelDetailsPage() {
             <PincodeBox onVerified={setIsPincodeVerified} />
 
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleStartSelling}
               disabled={!isPincodeVerified}
               className={`group w-full font-black py-5 rounded-[24px] transition-all text-base flex items-center justify-center gap-3 active:scale-95
                 ${isPincodeVerified ? 'bg-[#0565E6] text-white hover:bg-[#044BA8] shadow-xl shadow-blue-100' : 'bg-gray-300 text-white cursor-not-allowed opacity-60'}`}
@@ -131,6 +141,7 @@ export default function MacModelDetailsPage() {
       </div>
 
       <LaptopSpecModal
+        key={`mac-spec-${device.slug}-${isModalOpen ? 'open' : 'closed'}`}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         device={device}

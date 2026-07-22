@@ -29,6 +29,9 @@ export default function LaptopModelDetailsPage() {
   const maxPrice = Math.max(...device.variants.map(v => v.basePrice));
 
   const handleStartSelling = () => {
+    try {
+      sessionStorage.removeItem(`devicekart_laptop_quiz_${device.slug}`);
+    } catch { /* ignore */ }
     setIsModalOpen(true);
   };
 
@@ -36,8 +39,9 @@ export default function LaptopModelDetailsPage() {
     try {
       sessionStorage.removeItem(`devicekart_laptop_quiz_${device.slug}`);
     } catch { /* ignore */ }
+    setIsModalOpen(false);
     navigate(`/sell-old-laptops/${device.brand}/${device.slug}/quiz`, {
-      state: { specs, freshStart: true },
+      state: { specs, freshStart: true, startedAt: Date.now() },
     });
   };
 
@@ -138,6 +142,7 @@ export default function LaptopModelDetailsPage() {
       </div>
 
       <LaptopSpecModal 
+        key={`laptop-spec-${slug}-${isModalOpen ? 'open' : 'closed'}`}
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         device={device}

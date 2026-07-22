@@ -148,6 +148,14 @@ export default function LaptopConditionQuizPage() {
 
   const freshStartHandledRef = useRef(false);
 
+  // Allow a new Start Selling run even if this quiz page instance is reused
+  useEffect(() => {
+    if (location.state?.freshStart) {
+      freshStartHandledRef.current = false;
+      quizRestoredRef.current = false;
+    }
+  }, [location.state?.freshStart, location.state?.startedAt]);
+
   useEffect(() => {
     if (!specs) {
       // Try to restore specs from session storage before redirecting
