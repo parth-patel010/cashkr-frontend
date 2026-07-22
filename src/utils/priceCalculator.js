@@ -354,6 +354,39 @@ export function isAppleMacDevice(device) {
   );
 }
 
+/**
+ * Relative CPU value for Mac catalog pricing (i5 / M1 = 1.0).
+ * Used so Intel i3 quotes land below i5 (Cashify-style), without Windows CPU_PRICES.
+ */
+function getMacCpuFactor(processorStr) {
+  const p = (processorStr || '').toLowerCase();
+  if (!p) return 1;
+
+  // Apple Silicon (relative to M1)
+  if (p.includes('m4 max')) return 1.55;
+  if (p.includes('m4 pro')) return 1.40;
+  if (p.includes('m4')) return 1.25;
+  if (p.includes('m3 max')) return 1.45;
+  if (p.includes('m3 pro')) return 1.30;
+  if (p.includes('m3')) return 1.18;
+  if (p.includes('m2 max')) return 1.35;
+  if (p.includes('m2 pro')) return 1.22;
+  if (p.includes('m2')) return 1.10;
+  if (p.includes('m1 max')) return 1.25;
+  if (p.includes('m1 pro')) return 1.12;
+  if (p.includes('m1') || p.includes('apple m')) return 1.00;
+
+  // Intel — relative to catalog i5 (most Intel MacBook basePrices are i5-listed).
+  // Cashify-style: i3 well below i5 (≈13k vs ≈19k). Our catalog i5 path often
+  // lands ~₹30k, so i3 uses 0.45 → ~₹13.5k before issue deductions.
+  if (p.includes('i9')) return 1.40;
+  if (p.includes('i7')) return 1.25;
+  if (p.includes('i5')) return 1.00;
+  if (p.includes('i3')) return 0.45;
+
+  return 1;
+}
+
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
     functionalIssues = [], screenIssues = [], bodyIssues = [],
@@ -362,12 +395,22 @@ export function calculateLaptopPrice(device, selections) {
   let basePrice = 0;
 
   if (isAppleMacDevice(device)) {
-    // ── MacBook / Apple logic (catalog base → age → cascading deductions) ──
-    // Processor (i3/i5/M1/…) is NOT used for valuation — only the seeded variant basePrice.
+    // ── MacBook / Apple logic (catalog base → CPU tier → age → deductions) ──
     const variants = device.variants || [];
-    let variant = variants.find(v =>
-      v.ram && v.storage && v.ram === ram && v.storage === storage
-    );
+    const selectedProcessor = selections.processor || '';
+
+    // Prefer exact variant match including processor when catalog has CPU-specific rows
+    let variant =
+      variants.find(v =>
+        v.processor &&
+        selectedProcessor &&
+        v.processor === selectedProcessor &&
+        (!v.ram || v.ram === ram) &&
+        (!v.storage || v.storage === storage)
+      ) ||
+      variants.find(v =>
+        v.ram && v.storage && v.ram === ram && v.storage === storage
+      );
 
     if (!variant && variants.length === 1) {
       variant = variants[0];
@@ -376,7 +419,6 @@ export function calculateLaptopPrice(device, selections) {
     if (variant) {
       basePrice = variant.basePrice;
     } else if (variants.length > 0) {
-      // Fallback: nearest catalog price by RAM/storage only (ignore CPU tier)
       const baseline = variants[0];
       basePrice = baseline.basePrice;
 
@@ -395,9 +437,20 @@ export function calculateLaptopPrice(device, selections) {
         return totalGB;
       };
 
-      const baselineGB = parseStorage(baseline.storage);
-      const selectedGB = parseStorage(storage);
-      basePrice += (selectedGB - baselineGB) * 5;
+      basePrice += (parseStorage(storage) - parseStorage(baseline.storage)) * 5;
+    }
+
+    // Scale catalog price by selected CPU vs the model's listed CPU (usually i5 / M-series).
+    // Example: catalog i5 path ~₹30k → i3 ~₹13.5k (0.45×), i7 ~₹37.5k (1.25×).
+    const catalogCpu =
+      (variant && variant.processor) ||
+      device.processorFamily ||
+      '';
+    const selectedCpu = selectedProcessor || catalogCpu;
+    const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
+    const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
+    if (catalogFactor > 0 && selectedFactor !== catalogFactor) {
+      basePrice = Math.round(basePrice * (selectedFactor / catalogFactor));
     }
 
     // Apple age multipliers & deductions
