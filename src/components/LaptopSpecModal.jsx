@@ -13,8 +13,16 @@ export default function LaptopSpecModal({ isOpen, onClose, device, onComplete, i
   const [selectedStorage, setSelectedStorage] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // Detect if device is Apple/Mac — no Generation question for Mac
-  const isMac = device?.brand === 'Apple' || device?.processorFamily?.startsWith('Apple');
+  // Detect if device is Apple/Mac — use Mac processor list, never Windows CPU pricing path
+  const brand = (device?.brand || '').toLowerCase().trim();
+  const model = (device?.modelName || '').toLowerCase();
+  const family = (device?.processorFamily || '').toLowerCase();
+  const isMac =
+    brand === 'apple' ||
+    device?.category === 'mac' ||
+    model.includes('macbook') ||
+    model.includes('imac') ||
+    family.startsWith('apple m');
 
   // Reset or hydrate selections every time the modal opens
   useEffect(() => {

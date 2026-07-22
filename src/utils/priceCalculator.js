@@ -338,6 +338,22 @@ function getAgeMultiplier(yearBracket) {
   return 1.0;
 }
 
+/** Apple MacBook / iMac — never use Windows CPU/RAM/GPU component pricing. */
+export function isAppleMacDevice(device) {
+  if (!device) return false;
+  const brand = (device.brand || '').toLowerCase().trim();
+  const category = (device.category || '').toLowerCase();
+  const model = (device.modelName || '').toLowerCase();
+  const family = (device.processorFamily || '').toLowerCase();
+  return (
+    brand === 'apple' ||
+    category === 'mac' ||
+    model.includes('macbook') ||
+    model.includes('imac') ||
+    family.startsWith('apple m')
+  );
+}
+
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
     functionalIssues = [], screenIssues = [], bodyIssues = [],
@@ -345,23 +361,23 @@ export function calculateLaptopPrice(device, selections) {
 
   let basePrice = 0;
 
-  if (device.brand === 'Apple') {
-    // ── MacBook / Apple logic (variant base → age → cascading deductions) ──
-    let variant = device.variants.find(v =>
-      v.ram === ram &&
-      v.storage === storage &&
-      (!selections.processor || v.processor === selections.processor) &&
-      (!selections.generation || v.generation === selections.generation)
+  if (isAppleMacDevice(device)) {
+    // ── MacBook / Apple logic (catalog base → age → cascading deductions) ──
+    // Processor (i3/i5/M1/…) is NOT used for valuation — only the seeded variant basePrice.
+    const variants = device.variants || [];
+    let variant = variants.find(v =>
+      v.ram && v.storage && v.ram === ram && v.storage === storage
     );
+
+    if (!variant && variants.length === 1) {
+      variant = variants[0];
+    }
 
     if (variant) {
       basePrice = variant.basePrice;
-    } else if (device.variants.length === 1 && !device.variants[0].ram) {
-      // Single-variant device (flat price, e.g., Apple models)
-      basePrice = device.variants[0].basePrice;
-    } else {
-      // Fallback: Use the first variant as baseline and adjust
-      const baseline = device.variants[0];
+    } else if (variants.length > 0) {
+      // Fallback: nearest catalog price by RAM/storage only (ignore CPU tier)
+      const baseline = variants[0];
       basePrice = baseline.basePrice;
 
       const ramVal = (r) => parseInt(r) || 8;
