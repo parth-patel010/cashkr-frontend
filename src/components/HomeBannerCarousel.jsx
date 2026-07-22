@@ -93,66 +93,64 @@ export default function HomeBannerCarousel() {
     <img
       src={banner.imageUrl}
       alt={banner.title || 'DeviceKart banner'}
-      className="w-full h-full object-contain"
+      className="w-full h-auto block"
     />
   );
 
   return (
-    <section className="w-full pt-3 sm:pt-4">
-      <div className="relative w-full">
-        <div className="relative overflow-hidden bg-[#F2F4F7] w-full aspect-[100/44] sm:aspect-[21/9] max-h-[380px] sm:max-h-[420px]">
-          {banner.ctaLink ? (
-            <Link to={banner.ctaLink} className="absolute inset-0 block no-underline">
-              {slide}
-            </Link>
-          ) : (
-            <div className="absolute inset-0">{slide}</div>
-          )}
-
-          {count > 1 ? (
-            <>
-              <button
-                type="button"
-                aria-label="Previous banner"
-                onClick={(e) => {
-                  e.preventDefault();
-                  go(-1);
-                }}
-                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                type="button"
-                aria-label="Next banner"
-                onClick={(e) => {
-                  e.preventDefault();
-                  go(1);
-                }}
-                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </>
-          ) : null}
-        </div>
+    <section className="w-full">
+      <div className="relative w-full overflow-hidden bg-[#E8F2FF]">
+        {banner.ctaLink ? (
+          <Link to={banner.ctaLink} className="block w-full no-underline">
+            {slide}
+          </Link>
+        ) : (
+          <div className="w-full">{slide}</div>
+        )}
 
         {count > 1 ? (
-          <div className="flex justify-center gap-1.5 mt-2.5 px-4">
-            {banners.map((b, i) => (
-              <button
-                key={b.id}
-                type="button"
-                aria-label={`Go to slide ${i + 1}`}
-                onClick={() => setIndex(i)}
-                className={`h-1 rounded-full transition-all ${
-                  i === index ? 'w-9 bg-[#0565E6]' : 'w-7 bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
-          </div>
+          <>
+            <button
+              type="button"
+              aria-label="Previous banner"
+              onClick={(e) => {
+                e.preventDefault();
+                go(-1);
+              }}
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label="Next banner"
+              onClick={(e) => {
+                e.preventDefault();
+                go(1);
+              }}
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </>
         ) : null}
       </div>
+
+      {count > 1 ? (
+        <div className="flex justify-center gap-1.5 mt-2.5 px-4">
+          {banners.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => setIndex(i)}
+              className={`h-1 rounded-full transition-all ${
+                i === index ? 'w-9 bg-[#0565E6]' : 'w-7 bg-gray-300 hover:bg-gray-400'
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
