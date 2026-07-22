@@ -225,7 +225,20 @@ export default function TabletConditionQuizPage() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => setShowResult(false)}
+                      onClick={() => {
+                        setShowResult(false);
+                        setCurrentStepIndex(0);
+                        setDeviceAge('3 - 6 Months');
+                        setUnderWarranty(null);
+                        seteSIMSupport('physical+esim');
+                        setAbleToMakeCalls(null);
+                        setIsTouchScreenWorking(null);
+                        setIsScreenOriginal(null);
+                        setPhysicalIssues([]);
+                        setTechnicalIssues([]);
+                        setSelectedAccessories([]);
+                        setBreakdown(null);
+                      }}
                       className="text-[#0565E6] font-black text-sm underline underline-offset-8 hover:text-[#044BA8] transition-all"
                     >
                       Recalculate

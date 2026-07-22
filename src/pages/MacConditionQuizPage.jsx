@@ -345,6 +345,28 @@ export default function MacConditionQuizPage() {
     else navigate('/schedule-pickup');
   };
 
+  const handleRecalculate = () => {
+    setShowResult(false);
+    setCurrentStep(1);
+    setAge(null);
+    setFunctionalIssues(null);
+    setIssuesList([]);
+    setScreenIssues(null);
+    setScreenIssuesList([]);
+    setBodyIssues(null);
+    setBodyIssuesList([]);
+    setAccessories([]);
+    setBreakdown(null);
+    setCurrentPrice(0);
+    try {
+      sessionStorage.setItem(quizStorageKey, JSON.stringify({
+        specs,
+        currentStep: 1,
+        pendingShowResult: false,
+      }));
+    } catch { /* ignore */ }
+  };
+
   if (loading) return <Loader />;
   if (!device) return <div className="text-center py-20 font-black text-gray-400">Device not found</div>;
 
@@ -388,7 +410,7 @@ export default function MacConditionQuizPage() {
                         <span className="text-xs font-black uppercase tracking-widest">Guaranteed</span>
                       </div>
                     </div>
-                    <button onClick={() => setShowResult(false)} className="text-[#0565E6] font-black text-sm underline underline-offset-8 hover:text-[#0452B9] transition-all">Recalculate</button>
+                    <button onClick={handleRecalculate} className="text-[#0565E6] font-black text-sm underline underline-offset-8 hover:text-[#0452B9] transition-all">Recalculate</button>
                   </div>
                 </div>
 

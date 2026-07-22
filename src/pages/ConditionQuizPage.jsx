@@ -442,6 +442,23 @@ export default function ConditionQuizPage() {
                       onClick={() => {
                         leadTrackedRef.current = false;
                         setShowResult(false);
+                        setCurrentStepIndex(0);
+                        setDeviceAge('3 - 6 Months');
+                        setUnderWarranty(special ? true : null);
+                        seteSIMSupport(null);
+                        setAbleToMakeCalls(null);
+                        setIsTouchScreenWorking(null);
+                        setIsScreenOriginal(null);
+                        setPhysicalIssues([]);
+                        setTechnicalIssues([]);
+                        setSelectedAccessories(special ? [] : []);
+                        setBreakdown(null);
+                        try {
+                          sessionStorage.setItem(quizStorageKey, JSON.stringify({
+                            currentStepIndex: 0,
+                            pendingShowResult: false,
+                          }));
+                        } catch { /* ignore */ }
                       }}
                       className="text-[#0565E6] font-black text-sm underline underline-offset-8 hover:text-[#044BA8] transition-all"
                     >
