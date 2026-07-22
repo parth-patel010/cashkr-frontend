@@ -2,8 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
-import banner1 from '../assets/banners/banner1.png';
-import banner2 from '../assets/banners/banner2.png';
 
 const REPAIR_BANNER = {
   id: 'repair-banner',
@@ -14,23 +12,24 @@ const REPAIR_BANNER = {
   sortOrder: 3,
 };
 
-/** Same creatives as the DeviceKart mobile app (Main_images/banner1 & banner2) + repair. */
+/** Homepage creatives: repair (test) + sell (fest). */
 const APP_BANNERS = [
   {
     id: 'app-banner-1',
-    imageUrl: banner1,
-    ctaLink: '/sell-old-mobile-phones/brand',
+    imageUrl: '/test.jpeg',
+    ctaLink: '/repair',
+    title: 'Mobile Phone Repair',
     enabled: true,
     sortOrder: 1,
   },
   {
     id: 'app-banner-2',
-    imageUrl: banner2,
-    ctaLink: '/buy',
+    imageUrl: '/fest.jpeg',
+    ctaLink: '/sell-old-mobile-phones/brand',
+    title: 'Sell Your Old Device',
     enabled: true,
     sortOrder: 2,
   },
-  REPAIR_BANNER,
 ];
 
 function withRepairBanner(list) {
