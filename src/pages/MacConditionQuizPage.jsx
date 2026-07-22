@@ -107,6 +107,8 @@ export default function MacConditionQuizPage() {
     navigate(`/login?returnUrl=${returnUrl}`);
   };
 
+  const freshStartHandledRef = useRef(false);
+
   useEffect(() => {
     if (!specs) {
       // Try to restore specs from session storage before redirecting
@@ -123,6 +125,33 @@ export default function MacConditionQuizPage() {
       navigate(`/sell-imac/${brand}/${slug}`, { replace: true });
       return;
     }
+
+    if (location.state?.freshStart && !freshStartHandledRef.current) {
+      freshStartHandledRef.current = true;
+      quizRestoredRef.current = true;
+      try {
+        sessionStorage.removeItem(quizStorageKey);
+      } catch { /* ignore */ }
+      setCurrentStep(1);
+      setAge(null);
+      setFunctionalIssues(null);
+      setIssuesList([]);
+      setScreenIssues(null);
+      setScreenIssuesList([]);
+      setBodyIssues(null);
+      setBodyIssuesList([]);
+      setAccessories([]);
+      setShowResult(false);
+      try {
+        sessionStorage.setItem(quizStorageKey, JSON.stringify({
+          specs,
+          currentStep: 1,
+          pendingShowResult: false,
+        }));
+      } catch { /* ignore */ }
+      navigate(location.pathname, { replace: true, state: { specs } });
+    }
+
     deviceService.getDevice(slug).then(res => {
       const dev = res.data;
       setDevice(dev);
@@ -143,7 +172,7 @@ export default function MacConditionQuizPage() {
         } catch { /* ignore */ }
       }
     }).catch(() => setLoading(false));
-  }, [slug, specs, navigate, brand, quizStorageKey, isAuthenticated]);
+  }, [slug, specs, navigate, brand, quizStorageKey, isAuthenticated, location.state, location.pathname]);
 
   // Restore quiz state after login
   useEffect(() => {

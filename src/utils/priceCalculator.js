@@ -398,20 +398,20 @@ export function calculateLaptopPrice(device, selections) {
     }
 
     // Convert Retail Base Price to Buy-back Base Price
-    const APPLE_BUYBACK_FACTOR = 0.88;
+    const APPLE_BUYBACK_FACTOR = 0.90;
     basePrice = Math.round(basePrice * APPLE_BUYBACK_FACTOR);
 
-    // Apple / Mac age curve — keep quotes competitive without crashing to near-zero
+    // Apple / Mac age curve
     const APPLE_AGE_MULT = {
-      lessThan1: 0.95, // in warranty (< 1 yr)
-      oneToTwo: 0.82, // 1–3 years
-      twoToThree: 0.72, // 3+ years
-      lessThan3: 0.95,
-      threeToEleven: 0.85,
-      aboveEleven: 0.75,
-      threeToFour: 0.68,
-      fourToFive: 0.58,
-      moreThan5: 0.48,
+      lessThan1: 0.96, // in warranty (< 1 yr)
+      oneToTwo: 0.84, // 1–3 years
+      twoToThree: 0.74, // 3+ years
+      lessThan3: 0.96,
+      threeToEleven: 0.86,
+      aboveEleven: 0.76,
+      threeToFour: 0.70,
+      fourToFive: 0.60,
+      moreThan5: 0.50,
     };
 
     const ageMult =
@@ -469,6 +469,10 @@ export function calculateLaptopPrice(device, selections) {
     }
     const accBonus = accList.reduce((sum, item) => sum + (device.accessoriesBonus?.[item] || 0), 0);
     currentPrice += accBonus;
+
+    // Extra Mac/Apple uplift (~₹3.5k) on top of the restored curve
+    const APPLE_QUOTE_BOOST = 3500;
+    currentPrice += APPLE_QUOTE_BOOST;
 
     const finalPrice = Math.max(Math.round(currentPrice / 100) * 100, 0);
 

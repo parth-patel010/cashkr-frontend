@@ -33,8 +33,11 @@ export default function LaptopModelDetailsPage() {
   };
 
   const handleSpecsComplete = (specs) => {
+    try {
+      sessionStorage.removeItem(`devicekart_laptop_quiz_${device.slug}`);
+    } catch { /* ignore */ }
     navigate(`/sell-old-laptops/${device.brand}/${device.slug}/quiz`, {
-      state: { specs }
+      state: { specs, freshStart: true },
     });
   };
 

@@ -29,7 +29,10 @@ export default function MacModelDetailsPage() {
   const maxPrice = Math.max(...device.variants.map(v => v.basePrice));
 
   const handleSpecsComplete = (specs) => {
-    navigate(`/sell-imac/${brand}/${device.slug}/quiz`, { state: { specs } });
+    try {
+      sessionStorage.removeItem(`devicekart_mac_quiz_${device.slug}`);
+    } catch { /* ignore */ }
+    navigate(`/sell-imac/${brand}/${device.slug}/quiz`, { state: { specs, freshStart: true } });
   };
 
   const brandSlug = brand || device.brand?.toLowerCase();

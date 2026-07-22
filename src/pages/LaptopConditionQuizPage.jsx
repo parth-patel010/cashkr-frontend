@@ -146,6 +146,8 @@ export default function LaptopConditionQuizPage() {
     navigate(`/login?returnUrl=${returnUrl}`);
   };
 
+  const freshStartHandledRef = useRef(false);
+
   useEffect(() => {
     if (!specs) {
       // Try to restore specs from session storage before redirecting
@@ -162,6 +164,35 @@ export default function LaptopConditionQuizPage() {
       navigate(`/sell-old-laptops/${brand}/${slug}`, { replace: true });
       return;
     }
+
+    // New Start Selling flow: reset so we don't jump to end of a previous quiz
+    if (location.state?.freshStart && !freshStartHandledRef.current) {
+      freshStartHandledRef.current = true;
+      quizRestoredRef.current = true;
+      try {
+        sessionStorage.removeItem(quizStorageKey);
+      } catch { /* ignore */ }
+      setCurrentStepIndex(0);
+      setShowResult(false);
+      setPowerStatus(null);
+      setScreenSize(null);
+      setHasGpu(null);
+      setIsGpuWorking(null);
+      setIssuesList([]);
+      setScreenIssuesList([]);
+      setBodyIssuesList([]);
+      setAccessories([]);
+      setAge(null);
+      try {
+        sessionStorage.setItem(quizStorageKey, JSON.stringify({
+          specs,
+          currentStepIndex: 0,
+          pendingShowResult: false,
+        }));
+      } catch { /* ignore */ }
+      navigate(location.pathname, { replace: true, state: { specs } });
+    }
+
     deviceService.getDevice(slug).then(res => {
       const dev = res.data;
       setDevice(dev);
@@ -182,7 +213,7 @@ export default function LaptopConditionQuizPage() {
         } catch { /* ignore */ }
       }
     }).catch(() => setLoading(false));
-  }, [slug, specs, navigate, brand, quizStorageKey, isAuthenticated]);
+  }, [slug, specs, navigate, brand, quizStorageKey, isAuthenticated, location.state, location.pathname]);
 
   // Restore quiz state after login
   useEffect(() => {
