@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../services/api';
 import mobileDeviceImg from '../assets/devices/mobile.png';
 import tabletDeviceImg from '../assets/devices/tablet.png';
 import laptopDeviceImg from '../assets/devices/laptop.png';
