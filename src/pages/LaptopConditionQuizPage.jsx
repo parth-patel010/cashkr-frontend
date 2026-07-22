@@ -8,13 +8,13 @@ import {
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
-import { calculateLaptopPrice } from '../utils/priceCalculator';
+import { calculateLaptopPrice, isAppleMacDevice } from '../utils/priceCalculator';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
 import { setLoginContext } from '../utils/loginContext';
 
-const STEPS = [
+const ALL_STEPS = [
   { id: 'specs', label: 'Specs' },
   { id: 'power', label: 'Power Status' },
   { id: 'screenSize', label: 'Screen Size' },
@@ -24,6 +24,9 @@ const STEPS = [
   { id: 'accessories', label: 'Accessories' },
   { id: 'age', label: 'Device Age' },
 ];
+
+/** MacBooks use catalog base price — skip Windows-only screen size / GPU steps. */
+const MAC_STEPS = ALL_STEPS.filter((s) => s.id !== 'screenSize');
 
 const AGE_OPTIONS = [
   { key: 'lessThan1', label: 'Less than 1 year (in warranty)' },
@@ -105,6 +108,8 @@ export default function LaptopConditionQuizPage() {
   const [breakdown, setBreakdown] = useState(null);
 
   const quizStorageKey = `devicekart_laptop_quiz_${slug}`;
+  const isMac = isAppleMacDevice(device);
+  const STEPS = isMac ? MAC_STEPS : ALL_STEPS;
 
   const getQuizReturnPath = () => `/sell-old-laptops/${brand}/${slug}/quiz`;
 
