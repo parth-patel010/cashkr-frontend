@@ -376,16 +376,22 @@ function getMacCpuFactor(processorStr) {
   if (p.includes('m1 pro')) return 1.12;
   if (p.includes('m1') || p.includes('apple m')) return 1.00;
 
-  // Intel — relative to catalog i5 (most Intel MacBook basePrices are i5-listed).
-  // Cashify-style: i3 well below i5 (≈13k vs ≈19k). Our catalog i5 path often
-  // lands ~₹30k, so i3 uses 0.45 → ~₹13.5k before issue deductions.
-  if (p.includes('i9')) return 1.40;
-  if (p.includes('i7')) return 1.25;
+  // Intel — absolute vs i5 (=1.0), Cashify: i3≈13k, i5≈20k, i7≈24k
+  if (p.includes('i9')) return 1.35;
+  if (p.includes('i7')) return 1.20; // 24/20
   if (p.includes('i5')) return 1.00;
-  if (p.includes('i3')) return 0.45;
+  if (p.includes('i3')) return 0.65; // 13/20
 
   return 1;
 }
+
+function isIntelMacProcessor(processorStr) {
+  const p = (processorStr || '').toLowerCase();
+  return p.includes('intel') || /\bi[3579]\b/.test(p);
+}
+
+/** Align Intel Mac catalog quotes with Cashify (~₹30k listed i5 path → ~₹20k). */
+const MAC_INTEL_MARKET_FACTOR = 20 / 30;
 
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
@@ -440,17 +446,25 @@ export function calculateLaptopPrice(device, selections) {
       basePrice += (parseStorage(storage) - parseStorage(baseline.storage)) * 5;
     }
 
-    // Scale catalog price by selected CPU vs the model's listed CPU (usually i5 / M-series).
-    // Example: catalog i5 path ~₹30k → i3 ~₹13.5k (0.45×), i7 ~₹37.5k (1.25×).
+    // Intel Macs: catalog base is treated as i5-listed.
+    // Cashify targets — i5 ≈ ₹20k, i7 ≈ ₹24k (1.2×), i3 ≈ ₹13k (0.65×).
+    // Apple Silicon: only relative chip tier vs listed family (no Intel market cut).
     const catalogCpu =
       (variant && variant.processor) ||
       device.processorFamily ||
       '';
     const selectedCpu = selectedProcessor || catalogCpu;
-    const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
-    const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
-    if (catalogFactor > 0 && selectedFactor !== catalogFactor) {
-      basePrice = Math.round(basePrice * (selectedFactor / catalogFactor));
+
+    if (isIntelMacProcessor(selectedCpu) || isIntelMacProcessor(catalogCpu)) {
+      // Always scale vs i5=1.0 so selecting i7/i3 actually changes price
+      const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
+      basePrice = Math.round(basePrice * MAC_INTEL_MARKET_FACTOR * selectedFactor);
+    } else {
+      const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
+      const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
+      if (catalogFactor > 0 && selectedFactor !== catalogFactor) {
+        basePrice = Math.round(basePrice * (selectedFactor / catalogFactor));
+      }
     }
 
     // Apple age multipliers & deductions
