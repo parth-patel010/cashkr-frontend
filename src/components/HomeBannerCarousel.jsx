@@ -5,7 +5,16 @@ import api from '../services/api';
 import banner1 from '../assets/banners/banner1.png';
 import banner2 from '../assets/banners/banner2.png';
 
-/** Same creatives as the DeviceKart mobile app (Main_images/banner1 & banner2). */
+const REPAIR_BANNER = {
+  id: 'repair-banner',
+  imageUrl: '/bannerr.jpeg',
+  ctaLink: '/repair',
+  title: 'Book a Repair Now',
+  enabled: true,
+  sortOrder: 3,
+};
+
+/** Same creatives as the DeviceKart mobile app (Main_images/banner1 & banner2) + repair. */
 const APP_BANNERS = [
   {
     id: 'app-banner-1',
@@ -21,7 +30,19 @@ const APP_BANNERS = [
     enabled: true,
     sortOrder: 2,
   },
+  REPAIR_BANNER,
 ];
+
+function withRepairBanner(list) {
+  const hasRepair = list.some(
+    (b) =>
+      b.id === 'repair-banner' ||
+      b.ctaLink === '/repair' ||
+      String(b.imageUrl || '').includes('bannerr'),
+  );
+  if (hasRepair) return list;
+  return [...list, REPAIR_BANNER];
+}
 
 export async function fetchHomeBanners() {
   try {
@@ -29,8 +50,7 @@ export async function fetchHomeBanners() {
     const fromAdmin = (data.banners || [])
       .filter((b) => b.enabled !== false && b.imageUrl)
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    // Prefer admin-uploaded images; otherwise use app banner assets
-    if (fromAdmin.length) return fromAdmin;
+    if (fromAdmin.length) return withRepairBanner(fromAdmin);
   } catch {
     // fallback below
   }

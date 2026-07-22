@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Smartphone, CheckCircle2 } from 'lucide-react';
+import { Wrench, ChevronRight, Smartphone, CheckCircle2 } from 'lucide-react';
 import SEOHead from '../components/seo/SEOHead';
 import Loader from '../components/ui/Loader';
 import { repairService } from '../services/repair.service';
@@ -156,26 +156,19 @@ export default function RepairPage() {
         path="/repair"
       />
 
-      {/* Repair banner creative */}
-      <section className="w-full bg-[#E8F2FF]">
-        <button
-          type="button"
-          onClick={() => {
-            setStep(0);
-            document.getElementById('repair-booking')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }}
-          className="block w-full p-0 border-0 bg-transparent cursor-pointer"
-          aria-label="Book a repair now"
-        >
-          <img
-            src="/bannerr.jpeg"
-            alt="DeviceKart — Broken today? Fixed today! Book a repair now"
-            className="w-full max-h-[280px] sm:max-h-[360px] lg:max-h-[420px] object-contain object-center"
-          />
-        </button>
-      </section>
+      <div className="bg-gradient-to-br from-[#0565E6] to-[#0347A8] text-white">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="flex items-center gap-2 text-white/80 text-sm font-semibold mb-3">
+            <Wrench size={16} /> Doorstep repair
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">Repair your phone</h1>
+          <p className="text-white/85 max-w-xl text-sm sm:text-base">
+            Pick your model, see exact repair prices, and book a technician — no brand-average guessing.
+          </p>
+        </div>
+      </div>
 
-      <div id="repair-booking" className="max-w-[1100px] mx-auto px-4 sm:px-6 mt-6 mb-6 scroll-mt-24">
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 -mt-5 mb-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-wrap gap-2 sm:gap-4">
           {STEPS.map((label, i) => (
             <div
