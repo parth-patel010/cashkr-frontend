@@ -2,7 +2,7 @@
 // Floating WhatsApp button — place this component once in your root layout
 // (e.g. App.jsx, alongside <Navbar /> / <Footer />) so it appears on every page.
 
-const WHATSAPP_LINK = 'https://wa.link/4fr8mh';
+const WHATSAPP_LINK = 'https://wa.link/afi0q5';
 
 const WhatsAppIcon = () => (
   <svg
