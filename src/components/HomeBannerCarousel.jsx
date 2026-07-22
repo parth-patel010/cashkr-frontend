@@ -78,9 +78,9 @@ export default function HomeBannerCarousel() {
   );
 
   return (
-    <section className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
-      <div className="relative">
-        <div className="relative overflow-hidden rounded-2xl bg-gray-100 aspect-[100/44] sm:aspect-[21/9] max-h-[320px]">
+    <section className="w-full pt-3 sm:pt-4">
+      <div className="relative w-full">
+        <div className="relative overflow-hidden bg-gray-100 w-full aspect-[100/44] sm:aspect-[21/9] max-h-[380px] sm:max-h-[420px]">
           {banner.ctaLink ? (
             <Link to={banner.ctaLink} className="block w-full h-full no-underline">
               {slide}
@@ -98,7 +98,7 @@ export default function HomeBannerCarousel() {
                   e.preventDefault();
                   go(-1);
                 }}
-                className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -109,7 +109,7 @@ export default function HomeBannerCarousel() {
                   e.preventDefault();
                   go(1);
                 }}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 text-gray-800 flex items-center justify-center shadow hover:bg-white transition-colors"
               >
                 <ChevronRight size={18} />
               </button>
@@ -118,7 +118,7 @@ export default function HomeBannerCarousel() {
         </div>
 
         {count > 1 ? (
-          <div className="flex justify-center gap-1.5 mt-2.5">
+          <div className="flex justify-center gap-1.5 mt-2.5 px-4">
             {banners.map((b, i) => (
               <button
                 key={b.id}
