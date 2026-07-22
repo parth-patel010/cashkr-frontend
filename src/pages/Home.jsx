@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   Shield, Tag, Zap, Truck, ArrowRight,
-  ChevronDown, Star, Users
+  ChevronDown, Star, Users, Smartphone, Laptop, Tablet,
+  ShoppingBag, Tv, Headphones, Watch, Wrench, Refrigerator
 } from "lucide-react";
 import SEOHead from "../components/seo/SEOHead";
 import HomeBannerCarousel from "../components/HomeBannerCarousel";
@@ -220,15 +221,15 @@ export default function HomePage() {
   const buyCats = buyCategories(allCategories).slice(0, 4);
 
   const serviceTiles = [
-    { key: 'sell-phone', label: 'Sell Phone', to: '/sell-old-mobile-phones/brand', emoji: '📱' },
-    { key: 'sell-gadgets', label: 'Sell Gadgets', to: '/sell-tablet/brand', emoji: '💻' },
-    { key: 'buy-refurb', label: 'Buy Refurbished', to: '/buy', emoji: '📦' },
-    { key: 'buy-laptop', label: 'Buy Laptop', to: '/buy/laptop/brand', emoji: '🖥️' },
-    { key: 'sell-tv', label: 'Sell TV', to: '/sell/tv/brand', emoji: '📺' },
-    { key: 'sell-earbuds', label: 'Sell Earbuds', to: '/sell/earbuds/brand', emoji: '🎧' },
-    { key: 'sell-fridge', label: 'Sell Refrigerator', to: '/sell/refrigerator/brand', emoji: '🧊' },
-    { key: 'sell-watch', label: 'Sell Smartwatch', to: '/sell/smartwatch/brand', emoji: '⌚' },
-    { key: 'repair', label: 'Repair', to: '/contact-us', emoji: '🛠️' },
+    { key: 'sell-phone', label: 'Sell Phone', to: '/sell-old-mobile-phones/brand', Icon: Smartphone },
+    { key: 'sell-gadgets', label: 'Sell Gadgets', to: '/sell-tablet/brand', Icon: Tablet },
+    { key: 'buy-refurb', label: 'Buy Refurbished', to: '/buy', Icon: ShoppingBag },
+    { key: 'buy-laptop', label: 'Buy Laptop', to: '/buy/laptop/brand', Icon: Laptop },
+    { key: 'sell-tv', label: 'Sell TV', to: '/sell/tv/brand', Icon: Tv },
+    { key: 'sell-earbuds', label: 'Sell Earbuds', to: '/sell/earbuds/brand', Icon: Headphones },
+    { key: 'sell-fridge', label: 'Sell Refrigerator', to: '/sell/refrigerator/brand', Icon: Refrigerator },
+    { key: 'sell-watch', label: 'Sell Smartwatch', to: '/sell/smartwatch/brand', Icon: Watch },
+    { key: 'repair', label: 'Repair', to: '/contact-us', Icon: Wrench },
   ].filter((tile) => {
     // Hide sell tiles if that category is disabled in website settings
     const sellKeyMap = {
@@ -259,22 +260,23 @@ export default function HomePage() {
       <section id="our-services" className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-6 scroll-mt-28">
         <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-5">Our Services</h2>
         <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-3 no-scrollbar snap-x">
-          {serviceTiles.map((tile) => (
-            <Link
-              key={tile.key}
-              to={tile.to}
-              className="snap-start shrink-0 w-[100px] sm:w-[112px] flex flex-col items-center gap-2.5 no-underline group"
-            >
-              <div className="w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] rounded-2xl bg-[#E8F4F3] flex items-center justify-center group-hover:bg-[#D7EEEC] transition-colors">
-                <span className="text-4xl sm:text-5xl leading-none select-none group-hover:scale-110 transition-transform">
-                  {tile.emoji}
+          {serviceTiles.map((tile) => {
+            const Icon = tile.Icon;
+            return (
+              <Link
+                key={tile.key}
+                to={tile.to}
+                className="snap-start shrink-0 w-[100px] sm:w-[112px] flex flex-col items-center gap-2.5 no-underline group"
+              >
+                <div className="w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] rounded-2xl bg-[#E8F4F3] flex items-center justify-center text-[#0565E6] group-hover:bg-[#D7EEEC] transition-colors">
+                  <Icon size={36} strokeWidth={1.75} className="group-hover:scale-110 transition-transform" />
+                </div>
+                <span className="text-[11px] sm:text-xs font-bold text-gray-800 text-center leading-snug group-hover:text-[#0565E6] transition-colors">
+                  {tile.label}
                 </span>
-              </div>
-              <span className="text-[11px] sm:text-xs font-bold text-gray-800 text-center leading-snug group-hover:text-[#0565E6] transition-colors">
-                {tile.label}
-              </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
