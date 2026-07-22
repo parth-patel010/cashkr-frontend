@@ -124,10 +124,10 @@ export default function BrandSelectionPage() {
                 b.brand[0]
               )}
             </div>
-            <div className="text-center">
+            {/* <div className="text-center">
               <p className="text-sm sm:text-base font-bold text-text-primary">{b.brand}</p>
               <p className="text-xs text-text-muted mt-0.5">{b.modelCount} model{b.modelCount !== 1 ? 's' : ''}</p>
-            </div>
+            </div> */}
           </Link>
         ))}
       </div>
