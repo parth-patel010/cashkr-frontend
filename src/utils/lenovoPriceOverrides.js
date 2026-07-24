@@ -1,5 +1,6 @@
 /**
- * Lenovo model price overrides (Cashify + ₹1,000).
+ * Lenovo model price overrides.
+ * Prices = Cashify (from sheet) + ₹1,000.
  * Applied BEFORE the Windows Component_Base algorithm when series/CPU/RAM/storage/age match.
  */
 
@@ -14,7 +15,7 @@ export const LENOVO_PRICE_OVERRIDES = [
   { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 8, storageGb: 256, age: '1to3', price: 56350 },
   { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 8, storageGb: 256, age: '3plus', price: 52170 },
   { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 16, storageGb: 512, age: '1to3', price: 57990 },
-  { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 16, storageGb: 512, age: '3plus', price: 53700 },
+  { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 16, storageGb: 512, age: '3plus', price: 53690 },
   { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 64, storageGb: 1024, age: '1to3', price: 63920 },
   { series: 'Legion 9i', cpu: 'Intel Core i9-14', ramGb: 64, storageGb: 1024, age: '3plus', price: 59160 },
   // Legion 9i — i9-13
@@ -43,7 +44,7 @@ export const LENOVO_PRICE_OVERRIDES = [
   // Yoga 9i Gen 6
   { series: 'Yoga 9i Gen 6', cpu: 'Intel Core i7-11', ramGb: 16, storageGb: 512, age: '1to3', price: 33260 },
   { series: 'Yoga 9i Gen 6', cpu: 'Intel Core i7-11', ramGb: 16, storageGb: 512, age: '3plus', price: 30840 },
-  { series: 'Yoga 9i Gen 6', cpu: 'Intel Core i7-11', ramGb: 8, storageGb: 256, age: '1to3', price: 31700 },
+  { series: 'Yoga 9i Gen 6', cpu: 'Intel Core i7-11', ramGb: 8, storageGb: 256, age: '1to3', price: 31690 },
   { series: 'Yoga 9i Gen 6', cpu: 'Intel Core i7-11', ramGb: 8, storageGb: 256, age: '3plus', price: 29390 },
   // Yoga 9i Gen 7
   { series: 'Yoga 9i Gen 7', cpu: 'Intel Core i7-12', ramGb: 8, storageGb: 256, age: '1to3', price: 34290 },
