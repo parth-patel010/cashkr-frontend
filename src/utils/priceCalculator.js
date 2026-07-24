@@ -1,5 +1,7 @@
 import { isSpecialModel } from './specialModels';
 import { RAM_PRICES, STORAGE_PRICES, CPU_PRICES, CPU_GEN_FACTORS } from './laptopPricingData';
+import { findLenovoOverridePrice } from './lenovoPriceOverrides';
+import { findZbookPowerOverridePrice } from './hpZbookPowerOverrides';
 
 // ─── ISSUE DEDUCTION PERCENTAGES ────────────────────────────────────────────
 export const ISSUE_DEDUCTIONS = {
@@ -533,6 +535,62 @@ export function calculateLaptopPrice(device, selections) {
     // ── WINDOWS LAPTOPS ONLY — Component_Base algorithm (locked) ─────────────
     // Final = (Component_Base × Model × Gen × Gaming × 1.72 × Age × Condition × Screen) + Accessory
     // Component_Base is ALWAYS computed fresh from hardware tables — never reuse admin/catalog base.
+
+    // Lenovo override table (Cashify + ₹1,000) — exact series/CPU/RAM/storage/age match
+    const lenovoOverride = findLenovoOverridePrice(device, {
+      ...selections,
+      yearBracket,
+      ram,
+      storage,
+    });
+    if (lenovoOverride != null) {
+      let finalPrice = lenovoOverride;
+      if (powerStatus === 'off') {
+        finalPrice = Math.max(Math.round((finalPrice * 0.05) / 10) * 10, 0);
+      } else {
+        finalPrice = Math.max(Math.round(finalPrice / 10) * 10, 0);
+      }
+      return {
+        basePrice: lenovoOverride,
+        componentBase: lenovoOverride,
+        ageAdjustment: 0,
+        powerDeduction: powerStatus === 'off' ? -(lenovoOverride - finalPrice) : 0,
+        functionalDeduction: 0,
+        screenDeduction: 0,
+        bodyDeduction: 0,
+        accessoriesBonus: 0,
+        finalPrice,
+        priceSource: 'lenovo_override',
+      };
+    }
+
+    // HP ZBook Power override — Intel Core i5 configs only
+    const zbookOverride = findZbookPowerOverridePrice(device, {
+      ...selections,
+      yearBracket,
+      ram,
+      storage,
+    });
+    if (zbookOverride != null) {
+      let finalPrice = zbookOverride;
+      if (powerStatus === 'off') {
+        finalPrice = Math.max(Math.round((finalPrice * 0.05) / 10) * 10, 0);
+      } else {
+        finalPrice = Math.max(Math.round(finalPrice / 10) * 10, 0);
+      }
+      return {
+        basePrice: zbookOverride,
+        componentBase: zbookOverride,
+        ageAdjustment: 0,
+        powerDeduction: powerStatus === 'off' ? -(zbookOverride - finalPrice) : 0,
+        functionalDeduction: 0,
+        screenDeduction: 0,
+        bodyDeduction: 0,
+        accessoriesBonus: 0,
+        finalPrice,
+        priceSource: 'zbook_power_override',
+      };
+    }
 
     const MARKET_MULTIPLIER = 1.72;
     const ACCESSORY_CHARGER_BONUS = 300;
