@@ -34,7 +34,7 @@ const SERVICES = [
     desc: "Get the best value for your old devices in 60 seconds.",
     Icon: Tag,
     image: ASSETS.sell,
-    to: "/sell-old-mobile-phones/brand",
+    to: "/sell",
     cta: "Get Device Value",
     proof: "50,000+ devices sold last month",
     features: [
@@ -153,7 +153,7 @@ function AvatarStack() {
   );
 }
 
-export default function ServicesBenefits({ sellPath = "/sell-old-mobile-phones/brand" }) {
+export default function ServicesBenefits({ sellPath = "/sell" }) {
   const sectionRef = useRef(null);
   const [visible, setVisible] = useState(false);
 

@@ -1,4 +1,5 @@
 import api from '../services/api';
+import { sellCategoryImage, buyCategoryImage } from '../config/categoryImages';
 import mobileDeviceImg from '../assets/devices/mobile.png';
 import tabletDeviceImg from '../assets/devices/tablet.png';
 import laptopDeviceImg from '../assets/devices/laptop.png';
@@ -51,7 +52,10 @@ export function buyCategories(list = []) {
   return list.filter((c) => c.enabledBuy !== false).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 }
 
-export function categoryImage(cat) {
+export function categoryImage(cat, offer = 'sell') {
   if (cat?.imageUrl) return cat.imageUrl;
-  return CATEGORY_FALLBACK_IMAGES[cat?.key] || CATEGORY_FALLBACK_IMAGES.mobile;
+  if (offer === 'buy') {
+    return buyCategoryImage(cat?.key) || CATEGORY_FALLBACK_IMAGES[cat?.key] || CATEGORY_FALLBACK_IMAGES.mobile;
+  }
+  return sellCategoryImage(cat?.key) || CATEGORY_FALLBACK_IMAGES[cat?.key] || CATEGORY_FALLBACK_IMAGES.mobile;
 }

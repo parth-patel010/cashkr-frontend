@@ -38,6 +38,7 @@ import CityLandingPage from './pages/CityLandingPage.jsx';
 import CategoryHubPage from './pages/CategoryHubPage.jsx';
 import { CATEGORY_HUBS } from './data/categoryHubs.js';
 import BuyHubPage from './pages/BuyHubPage.jsx';
+import SellHubPage from './pages/SellHubPage.jsx';
 import BuyBrandSelectionPage from './pages/BuyBrandSelectionPage.jsx';
 import BuyProductListPage from './pages/BuyProductListPage.jsx';
 import BuyProductPage from './pages/BuyProductPage.jsx';
@@ -133,6 +134,7 @@ function App() {
           <Route path="/signup" element={<Login />} />
           {/* Buy flow */}
           <Route path="/buy" element={<BuyHubPage />} />
+          <Route path="/sell" element={<SellHubPage />} />
           <Route path="/repair" element={<RepairPage />} />
           <Route path="/buy/order-confirmation/:orderId" element={<ProtectedRoute><BuyOrderConfirmationPage /></ProtectedRoute>} />
           <Route path="/buy/:category/brand" element={<BuyBrandSelectionPage />} />

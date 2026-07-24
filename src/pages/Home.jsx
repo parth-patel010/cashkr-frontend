@@ -227,8 +227,8 @@ export default function HomePage() {
         schema={schema}
       />
 
-      <LandingHero sellPath={firstSellPath} />
-      <ServicesBenefits sellPath={firstSellPath} />
+      <LandingHero sellPath="/sell" />
+      <ServicesBenefits sellPath="/sell" />
       <MostQuotedDevices viewAllPath={firstSellPath} />
       <RecentlyAddedDevices viewAllPath="/buy" />
       <WhySellDeviceKart />

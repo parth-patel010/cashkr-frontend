@@ -152,7 +152,7 @@ function FadeUp({ children, delay = 0, className = "", as: Tag = "div" }) {
   );
 }
 
-export default function LandingHero({ sellPath = "/sell-old-mobile-phones/brand" }) {
+export default function LandingHero({ sellPath = "/sell" }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
