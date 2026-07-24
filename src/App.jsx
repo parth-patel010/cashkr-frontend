@@ -1,9 +1,10 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from './components/navbar.jsx';
 import Footer from './components/footer.jsx';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AdminProtectedRoute from './components/layout/AdminProtectedRoute';
+import Loader from './components/ui/Loader';
 import './index.css';
 
 // Pages
@@ -85,6 +86,25 @@ import SellCategoryVariantPage from './pages/SellCategoryVariantPage.jsx';
 
 function App() {
   const location = useLocation();
+  const [bootLoading, setBootLoading] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.classList.add("dk-booting");
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    const timer = setTimeout(() => {
+      setBootLoading(false);
+      document.documentElement.classList.remove("dk-booting");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    }, 1000);
+    return () => {
+      clearTimeout(timer);
+      document.documentElement.classList.remove("dk-booting");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -94,6 +114,14 @@ function App() {
   }, [location.pathname]);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (bootLoading) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white overflow-hidden overscroll-none">
+        <Loader fullScreen={false} />
+      </div>
+    );
+  }
 
   return (
     <>

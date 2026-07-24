@@ -9,4 +9,8 @@ export const deviceService = {
   calculatePrice: (data) => api.post('/devices/calculate-price', data),
   searchDevices: (query, category = 'all') =>
     api.get(`/devices/search?q=${encodeURIComponent(query)}&category=${category}`),
+  getMostQuoted: (limit = 8, category = 'all') =>
+    api.get(`/devices/most-quoted?limit=${limit}&category=${encodeURIComponent(category)}`),
+  /** Fire-and-forget: count a quiz start for ranking "Most Quoted" */
+  recordQuiz: (slug) => api.post(`/devices/${encodeURIComponent(slug)}/record-quiz`),
 };

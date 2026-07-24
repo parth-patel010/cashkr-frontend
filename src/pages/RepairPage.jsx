@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Wrench, ChevronRight, Smartphone, CheckCircle2 } from 'lucide-react';
 import SEOHead from '../components/seo/SEOHead';
 import Loader from '../components/ui/Loader';
@@ -12,6 +12,7 @@ const STEPS = ['Brand', 'Model', 'Issue', 'Book'];
 
 export default function RepairPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const auth = useAuth();
   const isLoggedIn = auth?.isAuthenticated;
 
@@ -42,15 +43,29 @@ export default function RepairPage() {
       repairService.getServices({ category: 'mobile' }),
     ])
       .then(([brandsRes, servicesRes]) => {
-        setBrands(Array.isArray(brandsRes.data) ? brandsRes.data : []);
+        const brandList = Array.isArray(brandsRes.data) ? brandsRes.data : [];
+        setBrands(brandList);
         setServices(Array.isArray(servicesRes.data) ? servicesRes.data : []);
+
+        const preselect = searchParams.get('brand');
+        if (preselect) {
+          const match = brandList.find(
+            (b) => b.brand?.toLowerCase() === preselect.toLowerCase()
+          );
+          if (match) {
+            setBrand(match);
+            setService(null);
+            setIssue(null);
+            setStep(1);
+          }
+        }
       })
       .catch(() => {
         setBrands([]);
         setServices([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [searchParams]);
 
   const modelsForBrand = useMemo(() => {
     if (!brand) return [];

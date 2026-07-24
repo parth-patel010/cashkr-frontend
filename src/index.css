@@ -25,9 +25,13 @@
     color: var(--color-text-primary);
     background: #fff;
     overflow-x: hidden;
+    max-width: 100%;
     -webkit-font-smoothing: antialiased;
   }
   body { margin: 0; }
+  img, video, canvas, svg {
+    max-width: 100%;
+  }
 }
 
 /* Animated price counter */
@@ -59,11 +63,28 @@
   animation: checkDraw 0.5s ease 0.3s forwards;
 }
 
-/* Scrollbar styles */
-::-webkit-scrollbar { width: 6px; }
+/* Hide scrollbars — scroll still works */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+::-webkit-scrollbar { width: 0; height: 0; display: none; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+::-webkit-scrollbar-thumb { background: transparent; }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 /* Search Results Dropdown */
 .search-results-dropdown {

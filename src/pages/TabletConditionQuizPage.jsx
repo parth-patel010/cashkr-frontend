@@ -11,6 +11,7 @@ import { calculatePrice } from '../utils/priceCalculator';
 import { formatCurrency } from '../utils/formatCurrency';
 import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
+import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -97,6 +98,7 @@ export default function TabletConditionQuizPage() {
       const dev = res.data;
       setDevice(dev);
       setLoading(false);
+      recordDeviceQuizOnce(slug);
       const selectedVariant = dev.variants.find(v => v.storage === storage) || dev.variants[0];
       setCurrentPrice(selectedVariant.basePrice);
     }).catch(() => setLoading(false));

@@ -15,6 +15,7 @@ import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneLead, trackPhoneInitiateCheckout } from '../utils/metaPixel';
 import { setLoginContext } from '../utils/loginContext';
+import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -210,6 +211,7 @@ export default function ConditionQuizPage() {
       const dev = res.data;
       setDevice(dev);
       setLoading(false);
+      recordDeviceQuizOnce(slug);
       const selectedVariant = dev.variants.find(v => v.storage === storage) || dev.variants[0];
       setCurrentPrice(selectedVariant.basePrice);
       

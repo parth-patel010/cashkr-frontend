@@ -14,6 +14,7 @@ import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
 import Modal from '../components/ui/Modal';
 import { setLoginContext } from '../utils/loginContext';
+import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 
 const STEPS = [
   { id: 'specs', label: 'Specs' },
@@ -163,6 +164,7 @@ export default function MacConditionQuizPage() {
       const dev = res.data;
       setDevice(dev);
       setLoading(false);
+      recordDeviceQuizOnce(slug);
 
       if (!quizRestoredRef.current) {
         quizRestoredRef.current = true;

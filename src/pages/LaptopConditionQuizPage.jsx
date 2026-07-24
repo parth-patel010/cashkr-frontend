@@ -13,6 +13,7 @@ import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
 import { setLoginContext } from '../utils/loginContext';
+import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 
 const ALL_STEPS = [
   { id: 'specs', label: 'Specs' },
@@ -216,6 +217,7 @@ export default function LaptopConditionQuizPage() {
       const dev = res.data;
       setDevice(dev);
       setLoading(false);
+      recordDeviceQuizOnce(slug);
 
       if (!quizRestoredRef.current) {
         quizRestoredRef.current = true;
