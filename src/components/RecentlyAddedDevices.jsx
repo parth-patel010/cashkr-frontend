@@ -139,11 +139,11 @@ function mapProduct(product, index) {
 
 function BuyCard({ item, liked, onToggleLike }) {
   return (
-    <article className="group flex flex-col h-full min-w-0 w-full snap-start bg-white rounded-[20px] border border-[#E5E7EB] p-4 transition-all duration-300 hover:shadow-[0_10px_28px_rgba(15,23,42,0.08)] hover:border-gray-300">
-      {/* Top row: badge + heart */}
-      <div className="flex items-center justify-between mb-2">
+    <article className="group flex flex-col w-full min-w-0 snap-start bg-white rounded-2xl border border-[#E5E7EB] p-3.5 transition-shadow duration-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+      {/* Top row */}
+      <div className="flex items-center justify-between gap-2">
         <span
-          className={`inline-flex items-center text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-md ${item.badge.className}`}
+          className={`inline-flex items-center text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded ${item.badge.className}`}
         >
           {item.badge.label}
         </span>
@@ -154,61 +154,57 @@ function BuyCard({ item, liked, onToggleLike }) {
             e.preventDefault();
             onToggleLike();
           }}
-          className={`p-1 transition-colors ${
+          className={`shrink-0 transition-colors ${
             liked ? "text-[#EF4444]" : "text-gray-400 hover:text-[#EF4444]"
           }`}
         >
-          <Heart size={18} strokeWidth={1.8} fill={liked ? "currentColor" : "none"} />
+          <Heart size={16} strokeWidth={1.8} fill={liked ? "currentColor" : "none"} />
         </button>
       </div>
 
-      {/* Image */}
-      <div className="flex items-center justify-center h-[140px] mb-3">
+      {/* Image — fixed compact box */}
+      <div className="flex items-center justify-center h-[110px] my-2.5">
         <img
           src={item.imageUrl || "/placeholder-device.png"}
           alt={item.name}
-          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
+          className="max-h-[110px] max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
           loading="lazy"
         />
       </div>
 
-      {/* Condition */}
-      <span className="inline-flex self-start text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#E8F8EF] text-[#15803D] mb-2">
+      <span className="inline-flex self-start text-[10px] font-bold px-2 py-0.5 rounded bg-[#E8F8EF] text-[#15803D]">
         {item.conditionLabel}
       </span>
 
-      {/* Title + specs */}
-      <h3 className="text-[15px] font-bold text-[#111827] leading-snug line-clamp-2">
+      <h3 className="mt-1.5 text-[14px] font-bold text-[#111827] leading-snug line-clamp-2 min-h-[2.4em]">
         {item.name}
       </h3>
-      <p className="text-[12px] text-[#9CA3AF] mt-1 line-clamp-1">{item.specs}</p>
+      <p className="mt-0.5 text-[11px] text-[#9CA3AF] truncate">{item.specs}</p>
 
-      {/* Pricing — match design: sale + cut MRP + OFF badge */}
-      <div className="mt-3 mb-4">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-[1.15rem] font-extrabold text-[#111827] tracking-tight leading-none">
+      <div className="mt-2.5">
+        <div className="flex items-baseline gap-1.5 flex-wrap">
+          <span className="text-base font-extrabold text-[#111827] tracking-tight">
             {formatCurrency(item.price)}
           </span>
           {item.mrp > item.price && (
-            <span className="text-[13px] text-[#9CA3AF] line-through leading-none">
+            <span className="text-xs text-[#9CA3AF] line-through">
               {formatCurrency(item.mrp)}
             </span>
           )}
         </div>
         {item.discount > 0 && (
-          <span className="inline-flex mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#E8F8EF] text-[#15803D]">
+          <span className="inline-flex mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E8F8EF] text-[#15803D]">
             {item.discount}% OFF
           </span>
         )}
       </div>
 
-      {/* Buy Now — light blue outlined (design default) */}
       <Link
         to={item.href}
-        className="mt-auto w-full box-border flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold no-underline bg-[#F0F6FF] text-[#0565E6] border border-[#BFD7FF] transition-all duration-200 hover:bg-[#0565E6] hover:text-white hover:border-[#0565E6]"
+        className="mt-3 w-full box-border flex items-center justify-center gap-1 rounded-xl py-2 text-[13px] font-bold no-underline bg-[#F0F6FF] text-[#0565E6] border border-[#BFD7FF] transition-all duration-200 hover:bg-[#0565E6] hover:text-white hover:border-[#0565E6]"
       >
         Buy Now
-        <ArrowRight size={14} strokeWidth={2.5} />
+        <ArrowRight size={13} strokeWidth={2.5} />
       </Link>
     </article>
   );
@@ -340,8 +336,8 @@ export default function RecentlyAddedDevices({ viewAllPath = "/buy" }) {
         {/* Cards */}
         {loading ? (
           <div className="flex gap-3.5 overflow-hidden">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-[360px] w-[220px] shrink-0 rounded-2xl bg-gray-200/70 animate-pulse" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-[340px] w-[220px] shrink-0 rounded-2xl bg-gray-200/70 animate-pulse" />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -367,7 +363,7 @@ export default function RecentlyAddedDevices({ viewAllPath = "/buy" }) {
               <div
                 key={item.id}
                 data-recent-card
-                className="w-[min(240px,82vw)] sm:w-[210px] lg:w-[196px] shrink-0"
+                className="w-[260px] sm:w-[240px] lg:w-[220px] shrink-0"
               >
                 <BuyCard
                   item={item}
