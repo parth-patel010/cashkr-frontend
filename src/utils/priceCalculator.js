@@ -393,26 +393,6 @@ function isIntelMacProcessor(processorStr) {
 /** Align Intel Mac catalog quotes with Cashify (~₹30k listed i5 path → ~₹20k). */
 const MAC_INTEL_MARKET_FACTOR = 20 / 30;
 
-/**
- * MacBook Pro 2020 — Cashify ~₹32k+. General Intel cut is softened and we add
- * a flat ₹3,000 so quotes sit at/above Cashify (e.g. ₹30k → ₹33k+).
- */
-function getMacIntelMarketFactor(device) {
-  const m = (device?.modelName || '').toLowerCase();
-  if (m.includes('macbook pro') && m.includes('2020')) {
-    // 19k → 32k vs previous path that used 20/30:  (32/19)*(20/30) ≈ 1.12
-    return (32 / 19) * (20 / 30);
-  }
-  return MAC_INTEL_MARKET_FACTOR;
-}
-
-function isMacBookPro2020(device) {
-  const m = (device?.modelName || '').toLowerCase();
-  return m.includes('macbook pro') && m.includes('2020');
-}
-
-const MACBOOK_PRO_2020_EXTRA = 3000;
-
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
     functionalIssues = [], screenIssues = [], bodyIssues = [],
@@ -478,8 +458,7 @@ export function calculateLaptopPrice(device, selections) {
     if (isIntelMacProcessor(selectedCpu) || isIntelMacProcessor(catalogCpu)) {
       // Always scale vs i5=1.0 so selecting i7/i3 actually changes price
       const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
-      const marketFactor = getMacIntelMarketFactor(device);
-      basePrice = Math.round(basePrice * marketFactor * selectedFactor);
+      basePrice = Math.round(basePrice * MAC_INTEL_MARKET_FACTOR * selectedFactor);
     } else {
       const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
       const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
@@ -491,9 +470,6 @@ export function calculateLaptopPrice(device, selections) {
     // Apple age multipliers & deductions
     const ageMult = device.ageMultipliers?.[yearBracket] || 1;
     let currentPrice = Math.round(basePrice * ageMult);
-    if (isMacBookPro2020(device)) {
-      currentPrice += MACBOOK_PRO_2020_EXTRA;
-    }
     const ageAdjustment = currentPrice - basePrice;
 
     let powerDeduction = 0;
