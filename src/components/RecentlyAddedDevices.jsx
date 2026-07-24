@@ -84,10 +84,28 @@ function productHref(product) {
   return `/buy/${product.category || "mobile"}/${brand}/${product.slug}`;
 }
 
+/** Stable ₹10k–₹20k bump from slug so original price doesn't flicker on re-render */
+function priceBumpFromSlug(slug = "") {
+  let hash = 0;
+  for (let i = 0; i < slug.length; i += 1) {
+    hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
+  }
+  const bump = 10000 + (hash % 11000); // 10,000 – 20,999
+  return Math.round(bump / 100) * 100;
+}
+
 function mapProduct(product, index) {
   const tier = pickBestCondition(product.conditions);
   const price = Number(tier?.price || product.minPrice || 0);
-  const mrp = Number(tier?.mrp || 0);
+  const apiMrp = Number(tier?.mrp || 0);
+  const bump = priceBumpFromSlug(product.slug || product._id || String(index));
+  // Prefer real MRP when higher; otherwise fabricate original as sale + ₹10k–₹20k
+  const mrp =
+    apiMrp > price
+      ? apiMrp
+      : price > 0
+        ? price + bump
+        : 0;
   const discount =
     mrp > price && price > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
   const created = product.createdAt ? new Date(product.createdAt).getTime() : 0;
@@ -105,7 +123,7 @@ function mapProduct(product, index) {
     specs: buildSpecs(product),
     conditionLabel: CONDITION_DISPLAY[tier?.key] || tier?.label || "Excellent",
     price,
-    mrp: mrp > price ? mrp : 0,
+    mrp,
     discount,
     badge: isRecent || index < 4 ? badge : discount >= 15 ? badge : { label: "NEW", className: "bg-[#DBE8FF] text-[#0565E6]" },
     createdAt: created,
@@ -164,23 +182,27 @@ function BuyCard({ item, active, onActivate, liked, onToggleLike }) {
       </h3>
       <p className="text-[11px] text-gray-500 mt-1 line-clamp-1">{item.specs}</p>
 
-      <div className="mt-3 mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="text-base font-extrabold text-gray-900">
-          {formatCurrency(item.price)}
-        </span>
-        {item.mrp > 0 && (
-          <span className="text-xs text-gray-400 line-through">
-            {formatCurrency(item.mrp)}
+      <div className="mt-3 mb-3">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-lg font-extrabold text-gray-900 tracking-tight">
+            {formatCurrency(item.price)}
           </span>
-        )}
+          {item.mrp > item.price && (
+            <span className="text-sm text-gray-400 line-through decoration-gray-400">
+              {formatCurrency(item.mrp)}
+            </span>
+          )}
+        </div>
         {item.discount > 0 && (
-          <span className="text-[11px] font-bold text-[#16A34A]">{item.discount}% OFF</span>
+          <span className="inline-flex mt-1.5 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#DCFCE7] text-[#15803D]">
+            {item.discount}% OFF
+          </span>
         )}
       </div>
 
       <Link
         to={item.href}
-        className={`mt-auto w-full inline-flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold no-underline transition-all duration-200 ${
+        className={`mt-auto w-full box-border flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold no-underline transition-all duration-200 ${
           active
             ? "bg-[#0565E6] text-white hover:bg-[#044BA8]"
             : "bg-[#EEF4FF] text-[#0565E6] border border-[#BFDBFE] hover:bg-[#0565E6] hover:text-white hover:border-[#0565E6]"
