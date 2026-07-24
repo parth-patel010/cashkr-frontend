@@ -530,23 +530,41 @@ export function calculateLaptopPrice(device, selections) {
       finalPrice,
     };
   } else {
-    // ── UNIFIED ALGORITHM FOR NON-APPLE LAPTOPS (algorithm-prd.md) ──
+    // ── WINDOWS LAPTOPS ONLY — Component_Base algorithm (locked) ─────────────
+    // Final = (Component_Base × Model × Gen × Gaming × 1.72 × Age × Condition × Screen) + Accessory
+    // Component_Base is ALWAYS computed fresh from hardware tables — never reuse admin/catalog base.
+
+    const MARKET_MULTIPLIER = 1.72;
+    const ACCESSORY_CHARGER_BONUS = 300;
 
     const totalIssueCount =
-      (functionalIssues || []).filter(i => i !== 'noIssues').length +
-      (screenIssues || []).filter(i => i !== 'noIssue').length +
+      (functionalIssues || []).filter((i) => i !== 'noIssues').length +
+      (screenIssues || []).filter((i) => i !== 'noIssue').length +
       (bodyIssues || []).length;
 
-    // 1. Component Base Price
-    let componentBase = 0;
+    const normalizeRamKey = (r) => {
+      if (!r) return '';
+      if (RAM_PRICES[r] != null) return r;
+      const spaced = String(r).replace(/^(\d+)\s*GB$/i, '$1 GB');
+      if (RAM_PRICES[spaced] != null) return spaced;
+      return r;
+    };
 
-    // 1.1 CPU
+    const normalizeStorageKey = (s) => {
+      if (!s) return '';
+      if (STORAGE_PRICES[s] != null) return s;
+      const compact = String(s).replace(/\s+/g, ' ').trim();
+      if (STORAGE_PRICES[compact] != null) return compact;
+      return s;
+    };
+
+    // 1. Component_Base = CPU + RAM + Storage + GPU + Chassis (fresh every quote)
     const getCpuPrice = (cpu) => {
       if (!cpu) return 3000;
-      // Exact lookup
-      if (CPU_PRICES[cpu]) return CPU_PRICES[cpu];
-
-      // Fallback fuzz matching
+      if (CPU_PRICES[cpu] != null) return CPU_PRICES[cpu];
+      // Tolerate "i5 12th Gen" vs "i5 - 12th Gen"
+      const dashed = String(cpu).replace(/\s+(\d+(?:st|nd|rd|th)\s+Gen)/i, ' - $1');
+      if (CPU_PRICES[dashed] != null) return CPU_PRICES[dashed];
       const c = cpu.toLowerCase();
       let base = 3000;
       if (c.includes('i3')) base = 3500;
@@ -560,57 +578,58 @@ export function calculateLaptopPrice(device, selections) {
       return base;
     };
 
-    const deviceProcessor = selections.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
-    componentBase += getCpuPrice(deviceProcessor);
+    const deviceProcessor =
+      selections.processor ||
+      (device.generation
+        ? `${device.processorFamily || ''} - ${device.generation}`
+        : device.processorFamily || '');
 
-    // 1.2 RAM
     const getRamPrice = (r) => {
       if (!r) return 1500;
-      if (RAM_PRICES[r]) return RAM_PRICES[r];
-
-      const num = parseInt(r);
+      const key = normalizeRamKey(r);
+      if (RAM_PRICES[key] != null) return RAM_PRICES[key];
+      const num = parseInt(r, 10);
       if (num <= 4) return 800;
       if (num <= 8) return 1500;
       if (num <= 16) return 2800;
       if (num <= 32) return 5000;
       return 6000;
     };
-    componentBase += getRamPrice(ram);
 
-    // 1.3 Storage
     const getStoragePrice = (s) => {
       if (!s) return 1500;
-      if (STORAGE_PRICES[s]) return STORAGE_PRICES[s];
-
-      if (s.includes('512') && s.toLowerCase().includes('ssd')) return 2800;
-      if (s.includes('1 TB') || s.includes('1TB')) return 4000;
-      if (s.includes('256')) return 1500;
+      const key = normalizeStorageKey(s);
+      if (STORAGE_PRICES[key] != null) return STORAGE_PRICES[key];
+      const lower = String(s).toLowerCase();
+      if (lower.includes('512') && lower.includes('ssd')) return 2800;
+      if (lower.includes('1 tb') || lower.includes('1tb')) return 4000;
+      if (lower.includes('256')) return 1500;
       return 1500;
     };
-    componentBase += getStoragePrice(storage);
 
-    // 1.4 GPU
-    const getGpuPrice = (hasGpu, isGpuWorking) => {
-      if (hasGpu && isGpuWorking) return 4000;
-      return 0;
-    };
-    componentBase += getGpuPrice(selections.hasGpu, selections.isGpuWorking);
+    // Integrated = 0; dedicated mid-range = 4000
+    const getGpuPrice = (hasGpu, isGpuWorking) =>
+      hasGpu && isGpuWorking ? 4000 : 0;
 
-    // 1.5 Chassis (Screen Size)
+    // 12–14" class → 5000; 15+ → 6000
     const getChassisPrice = (size) => {
-      if (size === 'above15') return 6000;
-      return 5000; // 12-14 inches
+      if (size === 'above15' || size === '15' || size === '15+' || size === '16+') return 6000;
+      return 5000;
     };
-    componentBase += getChassisPrice(screenSize);
 
-    // Ensure strict bottom-up calculation per latest rule update
-    // No manual overrides allowed.
+    const cpuPrice = getCpuPrice(deviceProcessor);
+    const ramPrice = getRamPrice(ram);
+    const storagePrice = getStoragePrice(storage);
+    const gpuPrice = getGpuPrice(selections.hasGpu, selections.isGpuWorking);
+    const chassisPrice = getChassisPrice(screenSize);
+    const componentBase = cpuPrice + ramPrice + storagePrice + gpuPrice + chassisPrice;
 
-    // 2. Generation Factor
+    // 2. Generation Factor (per CPU)
     const getGenFactor = (cpuStr, gen) => {
-      if (CPU_GEN_FACTORS[cpuStr]) return CPU_GEN_FACTORS[cpuStr];
-      if (!gen) return 1.00;
-      const g = gen.toLowerCase();
+      if (CPU_GEN_FACTORS[cpuStr] != null) return CPU_GEN_FACTORS[cpuStr];
+      const dashed = String(cpuStr || '').replace(/\s+(\d+(?:st|nd|rd|th)\s+Gen)/i, ' - $1');
+      if (CPU_GEN_FACTORS[dashed] != null) return CPU_GEN_FACTORS[dashed];
+      const g = String(gen || cpuStr || '').toLowerCase();
       if (g.includes('10th')) return 0.95;
       if (g.includes('11th')) return 1.00;
       if (g.includes('12th')) return 1.08;
@@ -620,71 +639,82 @@ export function calculateLaptopPrice(device, selections) {
     };
     const genFactor = getGenFactor(deviceProcessor, device.generation || selections.generation);
 
-    // 3. Gaming Factor
-    const gamingFactor = device.isGamingLaptop ? 1.02 : 1.00;
+    // 3. Gaming Factor — 1.02 for gaming series, else 1.00
+    const seriesText = `${device.brand || ''} ${device.modelName || ''}`.toLowerCase();
+    const isGamingSeries =
+      !!device.isGamingLaptop ||
+      /\b(victus|g15|g3|g5|g7|legion|tuf|rog|strix|predator|nitro|omen|alienware|inspiron\s+gaming|gaming)\b/.test(
+        seriesText,
+      );
+    const gamingFactor = isGamingSeries ? 1.02 : 1.00;
 
-    // 4. Model Factor
+    // 4. Model Factor (by series) — default 1.000
     const getModelFactor = (brand, series) => {
       const b = (brand || '').toLowerCase();
       const s = (series || '').toLowerCase();
-      if (b === 'hp' && s.includes('15')) return 1.000;
-      if (b === 'asus' && (s.includes('zenbook') || s.includes('vivobook s'))) return 1.000;
-      if (b === 'hp' && s.includes('victus')) return 1.000;
+      if (b === 'hp' && s.includes('15')) return 1.0;
+      if (b === 'asus' && (s.includes('zenbook') || s.includes('vivobook s'))) return 1.0;
+      if (b === 'hp' && s.includes('victus')) return 1.0;
       if (b === 'dell' && s.includes('vostro')) return 1.068;
       if (b === 'dell' && s.includes('g15')) return 1.027;
       if (b === 'lenovo' && s.includes('ideapad 5')) return 1.108;
       if (b === 'dell' && s.includes('inspiron') && s.includes('gaming')) return 1.3804;
-      return 1.000;
+      return 1.0;
     };
     const modelFactor = getModelFactor(device.brand, device.modelName);
 
-    // 5. Market Multiplier
-    const marketMultiplier = 1.72;
-    const marketValue = componentBase * modelFactor * genFactor * gamingFactor * marketMultiplier;
-
-    // 6. Age Factor
+    // 5–8. Age / Condition / Screen
+    // Age: <1 = 0.90, 1–2 = 0.80, 2–3 = 0.70
     const getAgeFactor = (bracket) => {
-      if (bracket === 'lessThan1') return 0.90;
-      if (bracket === 'oneToTwo') return 0.80;
-      if (bracket === 'twoToThree') return 0.70;
-      return 0.60;
+      if (bracket === 'lessThan1') return 0.9;
+      if (bracket === 'oneToTwo') return 0.8;
+      if (bracket === 'twoToThree') return 0.7;
+      return 0.6;
     };
     const ageFactor = getAgeFactor(yearBracket);
 
-    // 7. Condition Factor
+    // Perfect (no issues) = 0.95
     const getConditionFactor = (issueCount) => {
       if (issueCount === 0) return 0.95;
-      if (issueCount <= 2) return 0.80;
+      if (issueCount <= 2) return 0.8;
       if (issueCount <= 4) return 0.65;
-      return 0.50;
+      return 0.5;
     };
     const conditionFactor = getConditionFactor(totalIssueCount);
 
-    // 8. Screen Size Factor
+    // 12–14" = 1.00, 15+ = 1.02
     const getScreenSizeFactor = (size) => {
-      if (size === 'above15' || size === '15') return 1.02;
-      return 1.00;
+      if (size === 'above15' || size === '15' || size === '15+' || size === '16+') return 1.02;
+      return 1.0;
     };
     const screenFactor = getScreenSizeFactor(screenSize);
 
-    // 9. Depreciated Value
-    let depreciatedValue = marketValue * ageFactor * conditionFactor * screenFactor;
+    // Final Price = (Component_Base × Model × Gen × Gaming × 1.72 × Age × Condition × Screen) + Accessory
+    let finalRaw =
+      componentBase *
+      modelFactor *
+      genFactor *
+      gamingFactor *
+      MARKET_MULTIPLIER *
+      ageFactor *
+      conditionFactor *
+      screenFactor;
 
-    // 10. Power status deduction (dead laptop)
     if (powerStatus === 'off') {
-      depreciatedValue = depreciatedValue * 0.05;
+      finalRaw *= 0.05;
     }
 
-    // 11. Accessories Bonus
-    const accList = Array.isArray(accessories) ? [...accessories] : [];
-    const accessoryBonus = accList.includes('charger') ? 300 : 0;
+    const accList = Array.isArray(accessories) ? accessories : [];
+    const accessoryBonus = accList.includes('charger') ? ACCESSORY_CHARGER_BONUS : 0;
+    const finalPrice = Math.max(Math.round((finalRaw + accessoryBonus) / 10) * 10, 0);
 
-    const finalPrice = Math.max(Math.round((depreciatedValue + accessoryBonus) / 10) * 10, 0);
+    const marketValue = componentBase * modelFactor * genFactor * gamingFactor * MARKET_MULTIPLIER;
 
     return {
-      basePrice: Math.round(marketValue),
+      basePrice: Math.round(componentBase),
+      componentBase: Math.round(componentBase),
       ageAdjustment: Math.round(marketValue * (ageFactor - 1)),
-      powerDeduction: powerStatus === 'off' ? Math.round(depreciatedValue * -19) : 0,
+      powerDeduction: powerStatus === 'off' ? -Math.round(finalRaw) : 0,
       functionalDeduction: 0,
       screenDeduction: 0,
       bodyDeduction: 0,
