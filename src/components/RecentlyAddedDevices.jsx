@@ -94,12 +94,20 @@ function priceBumpFromSlug(slug = "") {
   return Math.round(bump / 100) * 100;
 }
 
+function cleanProductName(product) {
+  const raw = String(product.title || product.modelName || "").trim();
+  const brand = String(product.brand || "").trim();
+  if (!brand) return raw;
+  // Avoid "Dell DELL LATITUDE…" style duplication
+  const re = new RegExp(`^${brand}\\s+${brand}\\b`, "i");
+  return raw.replace(re, brand).replace(/\s+/g, " ").trim();
+}
+
 function mapProduct(product, index) {
   const tier = pickBestCondition(product.conditions);
   const price = Number(tier?.price || product.minPrice || 0);
   const apiMrp = Number(tier?.mrp || 0);
   const bump = priceBumpFromSlug(product.slug || product._id || String(index));
-  // Prefer real MRP when higher; otherwise fabricate original as sale + ₹10k–₹20k
   const mrp =
     apiMrp > price
       ? apiMrp
@@ -108,16 +116,15 @@ function mapProduct(product, index) {
         : 0;
   const discount =
     mrp > price && price > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
-  const created = product.createdAt ? new Date(product.createdAt).getTime() : 0;
-  const isRecent = Date.now() - created < 1000 * 60 * 60 * 24 * 21; // 21 days
+
   const badge =
-    discount >= 18
+    discount >= 20
       ? { label: "HOT DEAL", className: "bg-[#FFEDD5] text-[#C2410C]" }
-      : { label: "NEW", className: "bg-[#DBE8FF] text-[#0565E6]" };
+      : { label: "NEW", className: "bg-[#E8F1FF] text-[#0565E6]" };
 
   return {
     id: product._id || product.slug,
-    name: product.title || product.modelName,
+    name: cleanProductName(product),
     imageUrl: product.imageUrl,
     href: productHref(product),
     specs: buildSpecs(product),
@@ -125,25 +132,18 @@ function mapProduct(product, index) {
     price,
     mrp,
     discount,
-    badge: isRecent || index < 4 ? badge : discount >= 15 ? badge : { label: "NEW", className: "bg-[#DBE8FF] text-[#0565E6]" },
-    createdAt: created,
+    badge,
+    createdAt: product.createdAt ? new Date(product.createdAt).getTime() : 0,
   };
 }
 
-function BuyCard({ item, active, onActivate, liked, onToggleLike }) {
+function BuyCard({ item, liked, onToggleLike }) {
   return (
-    <article
-      onMouseEnter={onActivate}
-      onFocus={onActivate}
-      className={`group flex flex-col h-full min-w-0 w-full snap-start bg-white rounded-2xl border p-3.5 sm:p-4 transition-all duration-300 ${
-        active
-          ? "border-[#0565E6] shadow-[0_12px_28px_rgba(5,101,230,0.12)]"
-          : "border-gray-100 shadow-sm hover:border-[#0565E6]/35 hover:shadow-md"
-      }`}
-    >
-      <div className="flex items-start justify-between mb-1">
+    <article className="group flex flex-col h-full min-w-0 w-full snap-start bg-white rounded-[20px] border border-[#E5E7EB] p-4 transition-all duration-300 hover:shadow-[0_10px_28px_rgba(15,23,42,0.08)] hover:border-gray-300">
+      {/* Top row: badge + heart */}
+      <div className="flex items-center justify-between mb-2">
         <span
-          className={`inline-flex text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md ${item.badge.className}`}
+          className={`inline-flex items-center text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-md ${item.badge.className}`}
         >
           {item.badge.label}
         </span>
@@ -154,59 +154,58 @@ function BuyCard({ item, active, onActivate, liked, onToggleLike }) {
             e.preventDefault();
             onToggleLike();
           }}
-          className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors ${
-            liked
-              ? "border-[#FECACA] bg-[#FEF2F2] text-[#EF4444]"
-              : "border-gray-100 bg-white text-gray-400 hover:text-[#EF4444] hover:border-[#FECACA]"
+          className={`p-1 transition-colors ${
+            liked ? "text-[#EF4444]" : "text-gray-400 hover:text-[#EF4444]"
           }`}
         >
-          <Heart size={15} strokeWidth={2.2} fill={liked ? "currentColor" : "none"} />
+          <Heart size={18} strokeWidth={1.8} fill={liked ? "currentColor" : "none"} />
         </button>
       </div>
 
-      <div className="flex items-center justify-center h-[130px] sm:h-[140px] mb-3">
+      {/* Image */}
+      <div className="flex items-center justify-center h-[140px] mb-3">
         <img
           src={item.imageUrl || "/placeholder-device.png"}
           alt={item.name}
-          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
           loading="lazy"
         />
       </div>
 
-      <span className="inline-flex self-start text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] mb-2">
+      {/* Condition */}
+      <span className="inline-flex self-start text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#E8F8EF] text-[#15803D] mb-2">
         {item.conditionLabel}
       </span>
 
-      <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 min-h-[2.4rem]">
+      {/* Title + specs */}
+      <h3 className="text-[15px] font-bold text-[#111827] leading-snug line-clamp-2">
         {item.name}
       </h3>
-      <p className="text-[11px] text-gray-500 mt-1 line-clamp-1">{item.specs}</p>
+      <p className="text-[12px] text-[#9CA3AF] mt-1 line-clamp-1">{item.specs}</p>
 
-      <div className="mt-3 mb-3">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-lg font-extrabold text-gray-900 tracking-tight">
+      {/* Pricing — match design: sale + cut MRP + OFF badge */}
+      <div className="mt-3 mb-4">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-[1.15rem] font-extrabold text-[#111827] tracking-tight leading-none">
             {formatCurrency(item.price)}
           </span>
           {item.mrp > item.price && (
-            <span className="text-sm text-gray-400 line-through decoration-gray-400">
+            <span className="text-[13px] text-[#9CA3AF] line-through leading-none">
               {formatCurrency(item.mrp)}
             </span>
           )}
         </div>
         {item.discount > 0 && (
-          <span className="inline-flex mt-1.5 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#DCFCE7] text-[#15803D]">
+          <span className="inline-flex mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#E8F8EF] text-[#15803D]">
             {item.discount}% OFF
           </span>
         )}
       </div>
 
+      {/* Buy Now — light blue outlined (design default) */}
       <Link
         to={item.href}
-        className={`mt-auto w-full box-border flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold no-underline transition-all duration-200 ${
-          active
-            ? "bg-[#0565E6] text-white hover:bg-[#044BA8]"
-            : "bg-[#EEF4FF] text-[#0565E6] border border-[#BFDBFE] hover:bg-[#0565E6] hover:text-white hover:border-[#0565E6]"
-        }`}
+        className="mt-auto w-full box-border flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold no-underline bg-[#F0F6FF] text-[#0565E6] border border-[#BFD7FF] transition-all duration-200 hover:bg-[#0565E6] hover:text-white hover:border-[#0565E6]"
       >
         Buy Now
         <ArrowRight size={14} strokeWidth={2.5} />
@@ -219,7 +218,6 @@ export default function RecentlyAddedDevices({ viewAllPath = "/buy" }) {
   const scrollerRef = useRef(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeIdx, setActiveIdx] = useState(0);
   const [liked, setLiked] = useState(() => new Set());
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -244,7 +242,6 @@ export default function RecentlyAddedDevices({ viewAllPath = "/buy" }) {
           .slice(0, 12)
           .map(mapProduct);
         setItems(merged);
-        setActiveIdx(Math.min(3, Math.max(0, merged.length - 1)));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -366,16 +363,14 @@ export default function RecentlyAddedDevices({ viewAllPath = "/buy" }) {
             className="flex gap-3.5 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0"
             style={{ scrollbarWidth: "none" }}
           >
-            {items.map((item, i) => (
+            {items.map((item) => (
               <div
                 key={item.id}
                 data-recent-card
-                className="w-[min(220px,78vw)] sm:w-[190px] lg:w-[178px] shrink-0"
+                className="w-[min(240px,82vw)] sm:w-[210px] lg:w-[196px] shrink-0"
               >
                 <BuyCard
                   item={item}
-                  active={activeIdx === i}
-                  onActivate={() => setActiveIdx(i)}
                   liked={liked.has(item.id)}
                   onToggleLike={() => toggleLike(item.id)}
                 />
