@@ -11,10 +11,10 @@ export default function Input({ label, icon, type = 'text', error, className = '
         {icon && <span className="absolute left-3 text-gray-400 flex pointer-events-none">{icon}</span>}
         <input
           type={isPassword && show ? 'text' : type}
-          className={`w-full py-2.5 pr-11 border-[1.5px] rounded-xl text-sm font-[DM_Sans] text-text-primary outline-none bg-[#fafbff] transition-all duration-200
+          className={`w-full py-2.5 pr-11 border-[1.5px] rounded-xl text-sm font-[DM_Sans] text-text-primary outline-none bg-[#F7F9FC] transition-all duration-200
             focus:border-primary focus:shadow-[0_0_0_3px_rgba(5,101,230,0.10)] focus:bg-white
             ${icon ? 'pl-10' : 'pl-4'}
-            ${error ? 'border-red-400' : 'border-border'}`}
+            ${error ? 'border-red-400' : 'border-[#E8EEF5]'}`}
           {...props}
         />
         {isPassword && (

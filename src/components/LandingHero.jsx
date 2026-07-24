@@ -371,8 +371,8 @@ export default function LandingHero({ sellPath = "/sell" }) {
               </p>
             </FadeUp>
 
-            <FadeUp delay={500} className="relative mb-4">
-              <div ref={searchRef} className="relative">
+            <FadeUp delay={500} className={`relative mb-4 ${showResults ? "z-50" : "z-10"}`}>
+              <div ref={searchRef} className="relative isolate">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full pl-4 pr-1.5 py-1.5 shadow-[0_8px_30px_rgba(5,101,230,0.08)] focus-within:border-[#0565E6]/50 focus-within:shadow-[0_8px_30px_rgba(5,101,230,0.14)] transition-shadow">
                   <Search size={18} className="text-gray-400 shrink-0" />
                   <input
@@ -385,6 +385,8 @@ export default function LandingHero({ sellPath = "/sell" }) {
                     }}
                     placeholder="Search device (e.g. iPhone 15)"
                     className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-gray-800 placeholder:text-gray-400 py-2.5"
+                    autoComplete="off"
+                    spellCheck={false}
                   />
                   <button
                     type="button"
@@ -397,7 +399,10 @@ export default function LandingHero({ sellPath = "/sell" }) {
                 </div>
 
                 {showResults && (
-                  <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-30 max-h-72 overflow-y-auto animate-[heroFadeUp_0.25s_ease]">
+                  <div
+                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.16)] z-[60] max-h-72 overflow-y-auto"
+                    role="listbox"
+                  >
                     {searching ? (
                       <div className="px-4 py-3 text-sm text-gray-400">Searching…</div>
                     ) : results.length === 0 ? (
@@ -409,13 +414,14 @@ export default function LandingHero({ sellPath = "/sell" }) {
                         <button
                           key={r.slug}
                           type="button"
+                          role="option"
                           onClick={() => goToResult(r)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#F4F8FF] border-b border-gray-50 last:border-0 bg-white"
                         >
                           {r.imageUrl ? (
-                            <img src={r.imageUrl} alt="" className="w-9 h-9 object-contain rounded" />
+                            <img src={r.imageUrl} alt="" className="w-9 h-9 object-contain rounded shrink-0" />
                           ) : (
-                            <div className="w-9 h-9 rounded bg-gray-100" />
+                            <div className="w-9 h-9 rounded bg-gray-100 shrink-0" />
                           )}
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">{r.modelName}</p>
@@ -429,6 +435,12 @@ export default function LandingHero({ sellPath = "/sell" }) {
               </div>
             </FadeUp>
 
+            <div
+              className={`relative z-0 transition-opacity duration-200 ${
+                showResults ? "opacity-25 pointer-events-none select-none" : "opacity-100"
+              }`}
+              aria-hidden={showResults}
+            >
             <FadeUp delay={580}>
               <div className="flex flex-wrap items-center gap-2 mb-6">
                 <span className="text-xs text-gray-400 font-medium">Popular searches:</span>
@@ -484,6 +496,7 @@ export default function LandingHero({ sellPath = "/sell" }) {
                 ))}
               </div>
             </FadeUp>
+            </div>
           </div>
 
           {/* Right visual */}

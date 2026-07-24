@@ -1,16 +1,4 @@
-/** Category images copied from DeviceKart Application */
-export const SELL_CATEGORY_IMAGES = {
-  mobile: "/category_assets/sell/phone.png",
-  tablet: "/category_assets/sell/tablet.png",
-  laptop: "/category_assets/sell/laptop.png",
-  mac: "/category_assets/service/imac.png",
-  tv: "/category_assets/sell/tv.png",
-  earbuds: "/category_assets/sell/earbuds.png",
-  refrigerator: "/category_assets/service/refri.png",
-  smartwatch: "/category_assets/sell/smart-watch.png",
-  speaker: "/category_assets/sell/speaker.png",
-};
-
+/** Category images copied from DeviceKart Application (Buy set used for both) */
 export const BUY_CATEGORY_IMAGES = {
   mobile: "/category_assets/buy/phone.png",
   tablet: "/category_assets/buy/tablet.png",
@@ -23,6 +11,9 @@ export const BUY_CATEGORY_IMAGES = {
   gaming: "/category_assets/buy/gaming_console.png",
   camera: "/category_assets/buy/camera.png",
 };
+
+/** Sell uses the same images as Buy */
+export const SELL_CATEGORY_IMAGES = { ...BUY_CATEGORY_IMAGES };
 
 export const SELL_CATEGORY_DESCS = {
   mobile: "Get the best price for your old smartphone in minutes",

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { getLoginContext, clearLoginContext } from "../utils/loginContext";
 import SEOHead from "../components/seo/SEOHead";
+import Button from "../components/ui/Button";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,9 @@ const EditIcon = () => (
   </svg>
 );
 
+const fieldClass =
+  "w-full py-2.5 border-[1.5px] border-border rounded-xl text-sm font-[DM_Sans] text-text-primary outline-none bg-[#fafbff] transition-all duration-200 focus:border-primary focus:shadow-[0_0_0_3px_rgba(5,101,230,0.10)] focus:bg-white";
+
 // ─── Step 1: Phone Number ─────────────────────────────────────────────────────
 
 function PhoneStep({ onNext, loading, error, isSignup }) {
@@ -37,12 +41,12 @@ function PhoneStep({ onNext, loading, error, isSignup }) {
 
   return (
     <>
-      <div className="inline-flex items-center gap-2 bg-[#0565E6]/5 text-[#0565E6] text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-6 border border-gray-100">
-        <div className="w-1.5 h-1.5 bg-[#0565E6] rounded-full" />
+      <div className="inline-flex items-center gap-2 bg-primary-light text-primary text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-6 border border-border-light">
+        <div className="w-1.5 h-1.5 bg-primary rounded-full" />
         {isSignup ? 'Get Started' : 'Welcome Back'}
       </div>
 
-      <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">
+      <h1 className="text-3xl font-extrabold text-text-primary tracking-tight mb-2">
         {isSignup ? 'Sign Up' : 'Login'}
       </h1>
       <p className="text-sm text-text-muted mb-8">Enter your phone number to receive a one-time password.</p>
@@ -55,7 +59,7 @@ function PhoneStep({ onNext, loading, error, isSignup }) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5 ml-1 block">Phone Number</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
           <div className="relative flex items-center">
             <span className="absolute left-4 text-gray-400 flex pointer-events-none">
               <PhoneIcon />
@@ -69,19 +73,21 @@ function PhoneStep({ onNext, loading, error, isSignup }) {
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
               autoComplete="tel"
-              className="w-full pl-[4.5rem] pr-4 py-3 border-[1.5px] border-gray-200 rounded-xl text-sm font-sans text-text-primary outline-none bg-gray-50 focus:border-[#0565E6] focus:ring-4 focus:ring-[#0565E6]/10 focus:bg-white transition-all tracking-widest"
+              className={`${fieldClass} pl-[4.5rem] pr-4 tracking-widest`}
             />
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={phone.length !== 10 || loading}
-          className="w-full bg-[#0565E6] hover:bg-[#0452B9] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-[#0565E6]/30 hover:shadow-xl transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          loading={loading}
+          className="w-full py-4 rounded-xl"
+          size="lg"
         >
           {loading ? "Sending OTP..." : "Send OTP"}
           {!loading && <ArrowRightIcon />}
-        </button>
+        </Button>
       </form>
     </>
   );
@@ -131,12 +137,12 @@ function OtpStep({ phone, onVerify, onBack, loading, error, onResend }) {
 
   return (
     <>
-      <div className="inline-flex items-center gap-2 bg-[#0565E6]/5 text-[#0565E6] text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-6 border border-gray-100">
-        <div className="w-1.5 h-1.5 bg-[#0565E6] rounded-full animate-pulse" />
+      <div className="inline-flex items-center gap-2 bg-primary-light text-primary text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-6 border border-border-light">
+        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
         OTP Sent
       </div>
 
-      <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">Enter OTP</h1>
+      <h1 className="text-3xl font-extrabold text-text-primary tracking-tight mb-2">Enter OTP</h1>
       <div className="flex items-center gap-2 mb-8">
         <p className="text-sm text-text-muted">
           Sent to <span className="font-bold text-gray-700">{maskedPhone}</span>
@@ -144,7 +150,7 @@ function OtpStep({ phone, onVerify, onBack, loading, error, onResend }) {
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1 text-[11px] font-bold text-[#0565E6] hover:underline bg-transparent border-none cursor-pointer p-0"
+          className="flex items-center gap-1 text-[11px] font-bold text-primary hover:underline bg-transparent border-none cursor-pointer p-0"
         >
           <EditIcon /> Edit
         </button>
@@ -158,7 +164,7 @@ function OtpStep({ phone, onVerify, onBack, loading, error, onResend }) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="text-xs sm:text-sm font-bold text-gray-700 mb-4 ml-1 block">6-Digit OTP</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-4">6-Digit OTP</label>
           <div className="flex gap-2 justify-between" onPaste={handlePaste}>
             {otp.map((digit, index) => (
               <input
@@ -170,22 +176,24 @@ function OtpStep({ phone, onVerify, onBack, loading, error, onResend }) {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className={`w-full aspect-square text-center text-xl font-black border-[2px] rounded-xl outline-none transition-all bg-gray-50 focus:bg-white
-                  ${digit ? "border-[#0565E6] text-[#0565E6] bg-[#0565E6]/5" : "border-gray-200 text-text-primary"}
-                  focus:border-[#0565E6] focus:ring-4 focus:ring-[#0565E6]/10`}
+                className={`w-full aspect-square text-center text-xl font-extrabold border-[1.5px] rounded-xl outline-none transition-all bg-[#fafbff] focus:bg-white
+                  ${digit ? "border-primary text-primary bg-primary-light" : "border-border text-text-primary"}
+                  focus:border-primary focus:shadow-[0_0_0_3px_rgba(5,101,230,0.10)]`}
               />
             ))}
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={otp.join("").length !== 6 || loading}
-          className="w-full bg-[#0565E6] hover:bg-[#0452B9] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-[#0565E6]/30 hover:shadow-xl transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          loading={loading}
+          className="w-full py-4 rounded-xl"
+          size="lg"
         >
           {loading ? "Verifying..." : "Verify & Login"}
           {!loading && <ArrowRightIcon />}
-        </button>
+        </Button>
       </form>
 
       <ResendTimer onResend={onResend} />
@@ -206,12 +214,12 @@ function NameStep({ onSubmit, loading, error, isSignup }) {
 
   return (
     <>
-      <div className="inline-flex items-center gap-2 bg-[#0565E6]/5 text-[#0565E6] text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-6 border border-gray-100">
-        <div className="w-1.5 h-1.5 bg-[#0565E6] rounded-full" />
+      <div className="inline-flex items-center gap-2 bg-primary-light text-primary text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-6 border border-border-light">
+        <div className="w-1.5 h-1.5 bg-primary rounded-full" />
         {isSignup ? 'Almost there' : 'One more step'}
       </div>
 
-      <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">
+      <h1 className="text-3xl font-extrabold text-text-primary tracking-tight mb-2">
         {isSignup ? 'Create your account' : 'What\'s your name?'}
       </h1>
       <p className="text-sm text-text-muted mb-8">
@@ -226,27 +234,29 @@ function NameStep({ onSubmit, loading, error, isSignup }) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="text-xs sm:text-sm font-bold text-gray-700 mb-1.5 ml-1 block">Full Name</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
           <input
             type="text"
             placeholder="Enter your full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
-            className="w-full px-4 py-3 border-[1.5px] border-gray-200 rounded-xl text-sm font-sans text-text-primary outline-none bg-gray-50 focus:border-[#0565E6] focus:ring-4 focus:ring-[#0565E6]/10 focus:bg-white transition-all"
+            className={`${fieldClass} px-4`}
             required
             minLength={2}
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={name.trim().length < 2 || loading}
-          className="w-full bg-[#0565E6] hover:bg-[#0452B9] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-[#0565E6]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={loading}
+          className="w-full py-4 rounded-xl"
+          size="lg"
         >
           {loading ? 'Saving...' : 'Continue'}
           {!loading && <ArrowRightIcon />}
-        </button>
+        </Button>
       </form>
     </>
   );
@@ -285,7 +295,7 @@ function ResendTimer({ onResend }) {
         <button
           type="button"
           onClick={handleResend}
-          className="text-sm font-bold text-[#0565E6] hover:underline bg-transparent border-none cursor-pointer"
+          className="text-sm font-bold text-primary hover:underline bg-transparent border-none cursor-pointer"
         >
           Resend OTP
         </button>
@@ -366,87 +376,90 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[90vh] bg-gradient-to-br from-[#0565E6]/5 via-white to-[#0565E6]/5 flex items-center justify-center p-4 sm:p-8">
+    <div className="min-h-[90vh] bg-[#F7F9FC] flex items-center justify-center p-4 sm:p-8">
       <SEOHead
         title={location.pathname === '/signup' ? 'Sign Up' : 'Login'}
         description="Login to DeviceKart to track your device sale orders and manage pickups."
         path={location.pathname}
         noindex
       />
-      <div className="w-full max-w-[440px] bg-white rounded-[32px] shadow-2xl shadow-[#0565E6]/10 border border-gray-100 p-8 sm:p-12 animate-in fade-in zoom-in-95 duration-300">
-
-        {/* Step indicators */}
-        <div className="flex items-center gap-2 mb-8">
-          {["Phone", "OTP", ...(step === "name" || isSignupFlow ? ["Name"] : [])].map((label, i) => {
-            const steps = step === "name" ? ["phone", "otp", "name"] : ["phone", "otp"];
-            const stepIndex = steps.indexOf(step);
-            const isActive = i === stepIndex;
-            const isDone = i < stepIndex;
-            return (
-              <div key={label} className="flex items-center gap-2">
-                <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider transition-all
-                  ${isActive ? "text-[#0565E6]" : isDone ? "text-green-500" : "text-gray-300"}`}>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black
-                    ${isActive ? "bg-[#0565E6] text-white" : isDone ? "bg-green-500 text-white" : "bg-gray-100 text-gray-400"}`}>
-                    {isDone ? "✓" : i + 1}
+      <div className="w-full max-w-[440px] bg-white rounded-2xl sm:rounded-[28px] shadow-[0_8px_30px_rgba(15,23,42,0.04)] border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        <div className="px-8 sm:px-10 pt-7 sm:pt-9 pb-5 border-b border-[#E8EEF5] bg-[#F4F7FB]">
+          {/* Step indicators */}
+          <div className="flex items-center gap-2">
+            {["Phone", "OTP", ...(step === "name" || isSignupFlow ? ["Name"] : [])].map((label, i) => {
+              const steps = step === "name" ? ["phone", "otp", "name"] : ["phone", "otp"];
+              const stepIndex = steps.indexOf(step);
+              const isActive = i === stepIndex;
+              const isDone = i < stepIndex;
+              return (
+                <div key={label} className="flex items-center gap-2">
+                  <div className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider transition-all
+                    ${isActive ? "text-primary" : isDone ? "text-green-500" : "text-gray-300"}`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold
+                      ${isActive ? "bg-primary text-white" : isDone ? "bg-green-500 text-white" : "bg-gray-100 text-gray-400"}`}>
+                      {isDone ? "✓" : i + 1}
+                    </div>
+                    {label}
                   </div>
-                  {label}
+                  {i < (step === "name" ? 2 : 1) && (
+                    <div className={`w-8 h-px transition-all ${isDone || isActive ? "bg-primary/30" : "bg-gray-100"}`} />
+                  )}
                 </div>
-                {i < (step === "name" ? 2 : 1) && (
-                  <div className={`w-8 h-px transition-all ${isDone || isActive ? "bg-[#0565E6]/30" : "bg-gray-100"}`} />
-                )}
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="p-8 sm:p-10">
+          {step === "phone" && (
+            <PhoneStep
+              onNext={handleSendOtp}
+              loading={loading}
+              error={error}
+              isSignup={isSignupPage}
+            />
+          )}
+
+          {step === "otp" && (
+            <OtpStep
+              phone={phone}
+              onVerify={handleVerifyOtp}
+              onBack={() => { setStep("phone"); setError(""); }}
+              onResend={() => handleSendOtp(phone)}
+              loading={loading}
+              error={error}
+            />
+          )}
+
+          {step === "name" && (
+            <NameStep
+              onSubmit={handleSaveName}
+              loading={loading}
+              error={error}
+              isSignup={isSignupFlow}
+            />
+          )}
+
+          {/* <div className="flex items-center gap-4 my-8">
+            <div className="flex-1 h-px bg-gray-100" />
+            <span className="text-[10px] font-extrabold text-gray-300 uppercase tracking-widest">OR</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+
+          <p className="text-center text-sm text-text-muted font-medium">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary font-bold hover:underline">Sign up</Link>
+          </p> */}
+
+          <div className="flex justify-center gap-5 mt-10">
+            {["SSL Secure", "No Spam", "Free Pickup"].map((t) => (
+              <div key={t} className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                {t}
               </div>
-            );
-          })}
-        </div>
-
-        {step === "phone" && (
-          <PhoneStep
-            onNext={handleSendOtp}
-            loading={loading}
-            error={error}
-            isSignup={isSignupPage}
-          />
-        )}
-
-        {step === "otp" && (
-          <OtpStep
-            phone={phone}
-            onVerify={handleVerifyOtp}
-            onBack={() => { setStep("phone"); setError(""); }}
-            onResend={() => handleSendOtp(phone)}
-            loading={loading}
-            error={error}
-          />
-        )}
-
-        {step === "name" && (
-          <NameStep
-            onSubmit={handleSaveName}
-            loading={loading}
-            error={error}
-            isSignup={isSignupFlow}
-          />
-        )}
-
-        {/* <div className="flex items-center gap-4 my-8">
-          <div className="flex-1 h-px bg-gray-100" />
-          <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">OR</span>
-          <div className="flex-1 h-px bg-gray-100" />
-        </div>
-
-        <p className="text-center text-sm text-text-muted font-medium">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-[#0565E6] font-bold hover:underline">Sign up</Link>
-        </p> */}
-
-        <div className="flex justify-center gap-5 mt-10">
-          {["SSL Secure", "No Spam", "Free Pickup"].map((t) => (
-            <div key={t} className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-              <div className="w-1.5 h-1.5 bg-[#0565E6]/40 rounded-full" />
-              {t}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

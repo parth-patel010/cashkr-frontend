@@ -370,23 +370,23 @@ export default function LaptopConditionQuizPage() {
   };
 
   if (loading) return <Loader />;
-  if (!device) return <div className="text-center py-20 font-black text-gray-700">Device not found</div>;
+  if (!device) return <div className="text-center py-20 font-extrabold text-gray-700">Device not found</div>;
 
   // --- RESULT VIEW ---
   if (showResult) {
     return (
-      <div className="bg-[#F9FAFB] min-h-screen py-10 px-4 sm:px-8">
+      <div className="bg-[#F7F9FC] min-h-[70vh] py-10 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto space-y-10">
           
           {/* Header Progress */}
           <div className="flex justify-center gap-12 border-b border-gray-100 pb-8">
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-[#0565E6] text-white flex items-center justify-center font-black">1</span>
-              <span className="text-[#111827] font-black">Offer Details</span>
+              <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-extrabold">1</span>
+              <span className="text-gray-900 font-extrabold">Offer Details</span>
             </div>
             <div className="flex items-center gap-3 opacity-30">
-              <span className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-black">2</span>
-              <span className="text-gray-500 font-black">Pickup & Payment</span>
+              <span className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-extrabold">2</span>
+              <span className="text-gray-500 font-extrabold">Pickup & Payment</span>
             </div>
           </div>
 
@@ -395,24 +395,24 @@ export default function LaptopConditionQuizPage() {
             <div className="flex-1 space-y-8">
               
               {/* Offer Card */}
-              <div className="bg-white rounded-[40px] border border-gray-100 p-10 sm:p-14 shadow-sm relative overflow-hidden">
+              <div className="bg-white rounded-2xl sm:rounded-[28px] border border-gray-100 p-10 sm:p-14 shadow-[0_8px_30px_rgba(15,23,42,0.04)] relative overflow-hidden">
                 <div className="flex flex-col sm:flex-row items-center gap-12">
-                  <div className="w-44 h-44 bg-gray-50 rounded-[40px] flex items-center justify-center p-8">
+                  <div className="w-44 h-44 bg-gray-50 rounded-2xl sm:rounded-[28px] flex items-center justify-center p-8">
                     <img src={device.imageUrl} alt={device.modelName} className="max-h-full object-contain" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <span className="text-[#0565E6] text-xs font-black uppercase tracking-wider mb-2 block">Offer ready — instant payout</span>
-                    <h1 className="text-xl sm:text-2xl font-black text-[#111827] mb-4">
+                    <span className="text-primary text-xs font-extrabold uppercase tracking-wider mb-2 block">Offer ready — instant payout</span>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">
                       {device.modelName} {specs.ram && specs.storage && <span className="text-gray-600 font-bold text-sm">({specs.ram}/{specs.storage})</span>}
                     </h1>
                     <div className="flex items-center justify-center sm:justify-start gap-5 mb-6">
-                      <span className="text-4xl font-black text-[#111827] tracking-tighter">{formatCurrency(currentPrice)}</span>
-                      <div className="flex items-center gap-2 bg-[#0565E6]/5 text-[#0565E6] px-3 py-1.5 rounded-xl border border-[#0565E6]/10">
+                      <span className="text-4xl font-extrabold text-gray-900 tracking-tighter">{formatCurrency(currentPrice)}</span>
+                      <div className="flex items-center gap-2 bg-primary/5 text-primary px-3 py-1.5 rounded-xl border border-primary/10">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                        <span className="text-xs font-black uppercase tracking-widest">Guaranteed</span>
+                        <span className="text-xs font-extrabold uppercase tracking-widest">Guaranteed</span>
                       </div>
                     </div>
-                    <button onClick={handleRecalculate} className="text-[#0565E6] font-black text-sm underline underline-offset-8 hover:text-[#0452B9] transition-all">Recalculate</button>
+                    <button onClick={handleRecalculate} className="text-primary font-extrabold text-sm underline underline-offset-8 hover:text-[#0452B9] transition-all">Recalculate</button>
                   </div>
                 </div>
 
@@ -423,22 +423,22 @@ export default function LaptopConditionQuizPage() {
 
                 <button 
                   onClick={handleSchedulePickup}
-                  className="w-full mt-12 bg-[#0565E6] text-white font-black py-7 rounded-[32px] hover:bg-[#0452B9] transition-all shadow-2xl shadow-[#0565E6]/20 text-xl flex items-center justify-center gap-3 group"
+                  className="w-full mt-12 bg-primary text-white font-extrabold py-7 rounded-2xl sm:rounded-[28px] hover:bg-[#0452B9] transition-all shadow-2xl shadow-[#0565E6]/20 text-xl flex items-center justify-center gap-3 group"
                 >
                   Get My {formatCurrency(currentPrice)} Now
                   <svg className="transition-transform group-hover:translate-x-2" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
 
-                <div className="mt-10 flex flex-wrap justify-center gap-x-12 gap-y-4 text-[13px] font-black text-gray-600">
-                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0565E6]" /> Free doorstep pickup</span>
-                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0565E6]" /> Instant payment at pickup</span>
-                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0565E6]" /> Price locked for 24h</span>
+                <div className="mt-10 flex flex-wrap justify-center gap-x-12 gap-y-4 text-[13px] font-extrabold text-gray-600">
+                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Free doorstep pickup</span>
+                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Instant payment at pickup</span>
+                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Price locked for 24h</span>
                 </div>
               </div>
 
               {/* Evaluation Detail (Specs Added Here) */}
-              <div className="bg-white rounded-[40px] border border-gray-100 p-12 shadow-sm">
-                <h3 className="text-2xl font-black text-[#111827] mb-12">Laptop Evaluation Detail</h3>
+              <div className="bg-white rounded-2xl sm:rounded-[28px] border border-gray-100 p-12 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+                <h3 className="text-2xl font-extrabold text-gray-900 mb-12">Laptop Evaluation Detail</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
                    <EvaluationDetailRow label="Device" value={device.modelName} color="#0565E6" />
                    <EvaluationDetailRow label="Processor" value={specs.processor || 'Standard'} color="#0565E6" />
@@ -463,8 +463,8 @@ export default function LaptopConditionQuizPage() {
 
             {/* Sidebars */}
             <div className="w-full lg:w-[400px] space-y-8">
-              <div className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm">
-                 <h3 className="text-xl font-black text-[#111827] mb-8">Offer Summary</h3>
+              <div className="bg-white rounded-2xl sm:rounded-[28px] border border-gray-100 p-10 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+                 <h3 className="text-xl font-extrabold text-gray-900 mb-8">Offer Summary</h3>
                  <div className="space-y-6">
                     <SummaryPriceRow label="Base Price" value={breakdown?.basePrice} />
                     {breakdown?.powerDeduction < 0 && (
@@ -473,15 +473,15 @@ export default function LaptopConditionQuizPage() {
                     <SummaryPriceRow label="Pickup Fee" value={0} original={100} isFree />
                     <SummaryPriceRow label="Processing" value={0} original={150} isFree />
                     <div className="pt-8 border-t border-gray-50 flex justify-between items-center">
-                      <span className="text-lg font-black text-[#111827]">Final Payout</span>
-                      <span className="text-3xl font-black text-[#0565E6]">{formatCurrency(currentPrice)}</span>
+                      <span className="text-lg font-extrabold text-gray-900">Final Payout</span>
+                      <span className="text-3xl font-extrabold text-primary">{formatCurrency(currentPrice)}</span>
                     </div>
                  </div>
               </div>
 
               {/* Policy */}
-              <div className="bg-[#111827] rounded-[40px] p-10 text-white">
-                 <h4 className="text-lg font-black mb-4">Pickup Policy</h4>
+              <div className="bg-[#111827] rounded-2xl sm:rounded-[28px] p-10 text-white">
+                 <h4 className="text-lg font-extrabold mb-4">Pickup Policy</h4>
                  <p className="text-gray-300 text-sm font-bold leading-relaxed">
                    Our technician will verify the laptop at your doorstep. Please ensure the laptop is charged and all data is backed up. Payment is instant.
                  </p>
@@ -495,17 +495,17 @@ export default function LaptopConditionQuizPage() {
 
   // --- QUIZ VIEW ---
   return (
-    <div className="bg-[#F9FAFB] min-h-screen py-8 px-4 sm:px-10">
+    <div className="bg-[#F7F9FC] min-h-[70vh] py-8 px-4 sm:px-10">
       <div className="max-w-[1400px] mx-auto">
         
         {/* Header summary of current device */}
-        <div className="bg-white rounded-[32px] p-8 mb-8 border border-gray-100 flex items-center gap-8 shadow-sm">
+        <div className="bg-white rounded-2xl sm:rounded-[28px] p-8 mb-8 border border-gray-100 flex items-center gap-8 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
           <div className="w-24 h-24 bg-gray-50 rounded-2xl flex items-center justify-center p-3">
              <img src={device.imageUrl} alt={device.modelName} className="max-h-full object-contain" />
           </div>
           <div>
-            <p className="text-[#0565E6] text-[10px] font-black uppercase tracking-widest mb-1">Evaluating</p>
-            <h1 className="text-xl font-black text-[#111827]">{device.modelName}</h1>
+            <p className="text-primary text-[10px] font-extrabold uppercase tracking-widest mb-1">Evaluating</p>
+            <h1 className="text-xl font-extrabold text-gray-900">{device.modelName}</h1>
           </div>
         </div>
 
@@ -514,11 +514,11 @@ export default function LaptopConditionQuizPage() {
           <div className="flex-1 space-y-8">
             
             {/* Stepper tracker */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
                 {STEPS.map((s, idx) => (
                   <div key={s.id} className="flex items-center gap-2">
-                    <span className={`text-xs font-black uppercase tracking-tight ${idx === currentStepIndex ? 'text-[#0565E6]' : 'text-gray-500'}`}>
+                    <span className={`text-xs font-extrabold uppercase tracking-tight ${idx === currentStepIndex ? 'text-primary' : 'text-gray-500'}`}>
                       {s.label}
                     </span>
                     {idx < STEPS.length - 1 && <span className="text-gray-400 text-xs font-bold">&gt;</span>}
@@ -527,40 +527,40 @@ export default function LaptopConditionQuizPage() {
               </div>
               <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-[#0565E6] transition-all duration-500" 
+                  className="h-full bg-primary transition-all duration-500" 
                   style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }}
                 />
               </div>
             </div>
 
             {/* Active Question Card */}
-            <div className="bg-white rounded-[24px] p-8 border border-gray-100 shadow-sm transition-all duration-500">
+            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.04)] transition-all duration-500">
               
               {/* STEP: Specs */}
               {STEPS[currentStepIndex]?.id === 'specs' && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-black text-[#111827]">1. Confirm Device Specifications</h3>
+                  <h3 className="text-lg font-extrabold text-gray-900">1. Confirm Device Specifications</h3>
                   <div className="bg-gray-50 rounded-3xl p-8 space-y-4 mb-6 border border-gray-100">
                     <div className="flex justify-between items-center border-b border-gray-200/50 pb-3">
                       <span className="text-sm font-bold text-gray-700">Processor</span>
-                      <span className="text-sm font-black text-gray-900">{specs.processor || 'Standard'}</span>
+                      <span className="text-sm font-extrabold text-gray-900">{specs.processor || 'Standard'}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-gray-200/50 pb-3">
                       <span className="text-sm font-bold text-gray-700">Generation</span>
-                      <span className="text-sm font-black text-gray-900">{specs.generation || 'Standard'}</span>
+                      <span className="text-sm font-extrabold text-gray-900">{specs.generation || 'Standard'}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-gray-200/50 pb-3">
                       <span className="text-sm font-bold text-gray-700">RAM</span>
-                      <span className="text-sm font-black text-gray-900">{specs.ram || 'Standard'}</span>
+                      <span className="text-sm font-extrabold text-gray-900">{specs.ram || 'Standard'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-bold text-gray-700">Storage</span>
-                      <span className="text-sm font-black text-gray-900">{specs.storage || 'Standard'}</span>
+                      <span className="text-sm font-extrabold text-gray-900">{specs.storage || 'Standard'}</span>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsSpecsModalOpen(true)}
-                    className="w-full py-4 border-2 border-gray-200 hover:border-[#0565E6] hover:bg-[#E8F1FF] hover:text-[#0565E6] rounded-2xl text-sm font-black text-gray-700 transition-all"
+                    className="w-full py-4 border-2 border-gray-200 hover:border-[#0565E6] hover:bg-primary-light hover:text-primary rounded-2xl text-sm font-extrabold text-gray-700 transition-all"
                   >
                     Modify Specifications
                   </button>
@@ -570,23 +570,23 @@ export default function LaptopConditionQuizPage() {
               {/* STEP: Power Status */}
               {STEPS[currentStepIndex]?.id === 'power' && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-black text-[#111827]">2. Does the laptop turn on successfully?</h3>
-                  <p className="text-xs font-black text-gray-600 uppercase tracking-widest -mt-2">Select the current power state</p>
+                  <h3 className="text-lg font-extrabold text-gray-900">2. Does the laptop turn on successfully?</h3>
+                  <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest -mt-2">Select the current power state</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button
                       onClick={() => setPowerStatus('on')}
-                      className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                      className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                         ${powerStatus === 'on' 
-                          ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                          ? 'border-primary bg-primary-light text-primary' 
                           : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                     >
                       Yes, Turns On
                     </button>
                     <button
                       onClick={() => setPowerStatus('off')}
-                      className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                      className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                         ${powerStatus === 'off' 
-                          ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                          ? 'border-primary bg-primary-light text-primary' 
                           : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                     >
                       No, Does Not Turn On (Off)
@@ -601,17 +601,17 @@ export default function LaptopConditionQuizPage() {
                   {/* Screen Size Question */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-black text-[#111827]">3. What is the screen size of the laptop?</h3>
-                      <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Select the screen size</p>
+                      <h3 className="text-lg font-extrabold text-gray-900">3. What is the screen size of the laptop?</h3>
+                      <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Select the screen size</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {SCREEN_SIZE_OPTIONS.map(opt => (
                         <button
                           key={opt.key}
                           onClick={() => setScreenSize(opt.key)}
-                          className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                          className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                             ${screenSize === opt.key 
-                              ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                              ? 'border-primary bg-primary-light text-primary' 
                               : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                         >
                           {opt.label}
@@ -623,8 +623,8 @@ export default function LaptopConditionQuizPage() {
                   {/* Dedicated Graphics Card Question */}
                   <div className="space-y-4 pt-6 border-t border-gray-100">
                     <div>
-                      <h3 className="text-lg font-black text-[#111827]">Does the laptop have a dedicated graphic card?</h3>
-                      <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Select option to proceed</p>
+                      <h3 className="text-lg font-extrabold text-gray-900">Does the laptop have a dedicated graphic card?</h3>
+                      <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Select option to proceed</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button
@@ -632,9 +632,9 @@ export default function LaptopConditionQuizPage() {
                           setHasGpu('yes');
                           setIsGpuWorking(null); // Reset working status when toggling hasGpu
                         }}
-                        className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                        className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                           ${hasGpu === 'yes' 
-                            ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                            ? 'border-primary bg-primary-light text-primary' 
                             : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                       >
                         Yes, Dedicated Graphic Card Available
@@ -644,9 +644,9 @@ export default function LaptopConditionQuizPage() {
                           setHasGpu('no');
                           setIsGpuWorking(null);
                         }}
-                        className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                        className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                           ${hasGpu === 'no' 
-                            ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                            ? 'border-primary bg-primary-light text-primary' 
                             : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                       >
                         No Dedicated Graphic Card
@@ -658,24 +658,24 @@ export default function LaptopConditionQuizPage() {
                   {hasGpu === 'yes' && (
                     <div className="space-y-4 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div>
-                        <h3 className="text-lg font-black text-[#111827]">Is the dedicated graphic card working properly?</h3>
-                        <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Confirm graphic card is working</p>
+                        <h3 className="text-lg font-extrabold text-gray-900">Is the dedicated graphic card working properly?</h3>
+                        <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Confirm graphic card is working</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
                           onClick={() => setIsGpuWorking('yes')}
-                          className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                          className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                             ${isGpuWorking === 'yes' 
-                              ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                              ? 'border-primary bg-primary-light text-primary' 
                               : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                         >
                           Yes, Working Properly
                         </button>
                         <button
                           onClick={() => setIsGpuWorking('no')}
-                          className={`py-6 rounded-2xl border-2 font-black text-base transition-all
+                          className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
                             ${isGpuWorking === 'no' 
-                              ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' 
+                              ? 'border-primary bg-primary-light text-primary' 
                               : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
                         >
                           No, Graphic Card Issue / Not Working
@@ -690,8 +690,8 @@ export default function LaptopConditionQuizPage() {
               {STEPS[currentStepIndex]?.id === 'functional' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-black text-[#111827]">4. Select functional issues (if any)</h3>
-                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
+                    <h3 className="text-lg font-extrabold text-gray-900">4. Select functional issues (if any)</h3>
+                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 text-xl gap-4 max-h-[350px] overflow-y-auto pr-2 no-scrollbar">
                     {functionalOptions.map(i => {
@@ -704,10 +704,10 @@ export default function LaptopConditionQuizPage() {
                             setIssuesList(prev => prev.includes(i.id) ? prev.filter(x => x !== i.id) : [...prev, i.id]);
                           }} 
                           className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-between gap-2 transition-all relative h-36
-                            ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
+                            ${isSelected ? 'border-primary bg-primary-light text-primary' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
                         >
-                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
-                          <span className="text-[15px] font-black text-center leading-tight">{i.label}</span>
+                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-primary' : 'text-gray-500'} />
+                          <span className="text-[15px] font-extrabold text-center leading-tight">{i.label}</span>
                         </button>
                       );
                     })}
@@ -719,8 +719,8 @@ export default function LaptopConditionQuizPage() {
               {STEPS[currentStepIndex]?.id === 'screen' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-black text-[#111827]">5. Select screen issues (if any)</h3>
-                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
+                    <h3 className="text-lg font-extrabold text-gray-900">5. Select screen issues (if any)</h3>
+                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {screenOptions.map(i => {
@@ -733,10 +733,10 @@ export default function LaptopConditionQuizPage() {
                             setScreenIssuesList(prev => prev.includes(i.id) ? prev.filter(x => x !== i.id) : [...prev, i.id]);
                           }} 
                           className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-between gap-3 transition-all h-36
-                            ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
+                            ${isSelected ? 'border-primary bg-primary-light text-primary' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
                         >
-                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
-                          <span className="text-[15px] font-black text-center leading-tight">{i.label}</span>
+                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-primary' : 'text-gray-500'} />
+                          <span className="text-[15px] font-extrabold text-center leading-tight">{i.label}</span>
                         </button>
                       );
                     })}
@@ -748,8 +748,8 @@ export default function LaptopConditionQuizPage() {
               {STEPS[currentStepIndex]?.id === 'body' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-black text-[#111827]">6. Select body damage/scratches (if any)</h3>
-                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
+                    <h3 className="text-lg font-extrabold text-gray-900">6. Select body damage/scratches (if any)</h3>
+                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[350px] overflow-y-auto pr-2 no-scrollbar">
                     {bodyOptions.map(i => {
@@ -762,10 +762,10 @@ export default function LaptopConditionQuizPage() {
                             setBodyIssuesList(prev => prev.includes(i.id) ? prev.filter(x => x !== i.id) : [...prev, i.id]);
                           }} 
                           className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-between gap-2 transition-all h-36
-                            ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF] text-[#0565E6]' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
+                            ${isSelected ? 'border-primary bg-primary-light text-primary' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
                         >
-                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
-                          <span className="text-[15px] font-black text-center leading-tight">{i.label}</span>
+                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-primary' : 'text-gray-500'} />
+                          <span className="text-[15px] font-extrabold text-center leading-tight">{i.label}</span>
                         </button>
                       );
                     })}
@@ -777,8 +777,8 @@ export default function LaptopConditionQuizPage() {
               {STEPS[currentStepIndex]?.id === 'accessories' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-black text-[#111827]">7. Which original accessories do you have?</h3>
-                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Select the accessories present with the laptop</p>
+                    <h3 className="text-lg font-extrabold text-gray-900">7. Which original accessories do you have?</h3>
+                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Select the accessories present with the laptop</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     {accessoryOptions.map(i => {
@@ -790,18 +790,18 @@ export default function LaptopConditionQuizPage() {
                           onClick={() => {
                             setAccessories(prev => prev.includes(i.id) ? prev.filter(x => x !== i.id) : [...prev, i.id]);
                           }} 
-                          className={`p-6 rounded-[24px] border-2 text-left transition-all flex flex-col justify-between h-40 group
-                            ${isSelected ? 'border-[#0565E6] bg-[#E8F1FF]' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+                          className={`p-6 rounded-2xl border-2 text-left transition-all flex flex-col justify-between h-40 group
+                            ${isSelected ? 'border-primary bg-primary-light' : 'border-gray-100 bg-white hover:border-gray-200'}`}
                         >
                           <div className="flex justify-between items-start w-full">
-                            <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-[#0565E6]' : 'text-gray-500'} />
+                            <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-primary' : 'text-gray-500'} />
                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
-                              ${isSelected ? 'border-[#0565E6] bg-[#0565E6]' : 'border-gray-300'}`}>
+                              ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
                               {isSelected && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>}
                             </div>
                           </div>
                           <div>
-                            <p className={`font-black text-[15px] ${isSelected ? 'text-[#0565E6]' : 'text-[#111827]'}`}>{i.label}</p>
+                            <p className={`font-extrabold text-[15px] ${isSelected ? 'text-primary' : 'text-gray-900'}`}>{i.label}</p>
                             <p className="text-[15px] text-gray-600 font-bold mt-1">{i.desc}</p>
                           </div>
                         </button>
@@ -815,8 +815,8 @@ export default function LaptopConditionQuizPage() {
               {STEPS[currentStepIndex]?.id === 'age' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-black text-[#111827]">8. How old is your laptop?</h3>
-                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest mt-1">Age determines final multiplier value</p>
+                    <h3 className="text-lg font-extrabold text-gray-900">8. How old is your laptop?</h3>
+                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Age determines final multiplier value</p>
                   </div>
                   <div className="flex flex-col gap-4">
                     {AGE_OPTIONS.map(opt => (
@@ -824,13 +824,13 @@ export default function LaptopConditionQuizPage() {
                         key={opt.key} 
                         onClick={() => setAge(opt.key)} 
                         className={`flex items-center gap-4 px-6 py-5 rounded-2xl border-[1.5px] font-semibold text-left transition-all w-full
-                          ${age === opt.key ? 'border-[#0565E6] bg-[#0565E6]/5 text-[#0565E6]' : 'border-gray-100 text-gray-800 bg-white hover:border-gray-200'}`}
+                          ${age === opt.key ? 'border-primary bg-primary/5 text-primary' : 'border-gray-100 text-gray-800 bg-white hover:border-gray-200'}`}
                       >
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
                           ${age === opt.key ? 'border-[#0565E6]' : 'border-gray-300'}`}
                         >
                           {age === opt.key && (
-                            <div className="w-3 h-3 rounded-full bg-[#0565E6]" />
+                            <div className="w-3 h-3 rounded-full bg-primary" />
                           )}
                         </div>
                         <span className="text-base font-bold">{opt.label}</span>
@@ -861,7 +861,7 @@ export default function LaptopConditionQuizPage() {
                         (hasGpu === 'yes' && isGpuWorking === null)
                       ))
                     }
-                    className="bg-[#0565E6] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#044BA8] transition-all disabled:opacity-50"
+                    className="bg-primary text-white font-bold px-8 py-4 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50"
                   >
                     Next Step →
                   </button>
@@ -869,9 +869,9 @@ export default function LaptopConditionQuizPage() {
                   <button
                     onClick={handleGetBestPrice}
                     disabled={age === null}
-                    className="bg-[#16A34A] text-white font-black px-10 py-5 rounded-2xl shadow-xl shadow-green-100 hover:bg-[#15803D] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-primary text-white font-extrabold px-6 py-3.5 rounded-xl hover:bg-primary-dark shadow-[0_4px_14px_rgba(5,101,230,0.25)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    GET BEST PRICE <span className="text-lg">›</span>
+                    Get Best Price <span className="text-lg">›</span>
                   </button>
                 )}
               </div>
@@ -882,8 +882,8 @@ export default function LaptopConditionQuizPage() {
           {/* Right Sidebar Summary */}
           <div className="w-full lg:w-[400px]">
             <div className="sticky top-8 space-y-8">
-              <div className="bg-white rounded-[32px] p-10 border border-gray-100 shadow-sm space-y-8">
-                <h4 className="text-sm font-black text-gray-700 uppercase tracking-widest mb-6">Summary</h4>
+              <div className="bg-white rounded-2xl sm:rounded-[28px] p-10 border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.04)] space-y-8">
+                <h4 className="text-sm font-extrabold text-gray-700 uppercase tracking-widest mb-6">Summary</h4>
                 <div className="space-y-5">
                    <SummaryItem label="Processor" value={specs.processor || '-'} active={true} />
                    <SummaryItem label="RAM" value={specs.ram || '-'} active={true} />
@@ -919,10 +919,10 @@ function CheckboxRow({ label, checked }) {
     <label className="flex items-start gap-5 cursor-pointer group">
       <div className="relative mt-1">
         <input type="checkbox" defaultChecked={checked} className="sr-only peer" />
-        <div className="w-7 h-7 border-2 border-gray-200 rounded-xl peer-checked:bg-[#0565E6] peer-checked:border-[#0565E6] transition-all shadow-sm" />
+        <div className="w-7 h-7 border-2 border-gray-200 rounded-xl peer-checked:bg-primary peer-checked:border-primary transition-all shadow-[0_8px_30px_rgba(15,23,42,0.04)]" />
         <svg className="absolute top-1.5 left-1.5 w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <span className="text-sm font-bold text-gray-700 leading-relaxed group-hover:text-[#111827] transition-colors">{label}</span>
+      <span className="text-sm font-bold text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors">{label}</span>
     </label>
   );
 }
@@ -930,10 +930,10 @@ function CheckboxRow({ label, checked }) {
 function EvaluationDetailRow({ label, value, color }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs font-black text-gray-600 uppercase tracking-widest">{label}</p>
+      <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest">{label}</p>
       <div className="flex items-center gap-3">
         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-        <span className="font-black text-[#111827]">{value || 'N/A'}</span>
+        <span className="font-extrabold text-gray-900">{value || 'N/A'}</span>
       </div>
     </div>
   );
@@ -942,10 +942,10 @@ function EvaluationDetailRow({ label, value, color }) {
 function SummaryPriceRow({ label, value, original, isFree }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-sm font-black text-gray-600 uppercase tracking-widest">{label}</span>
+      <span className="text-sm font-extrabold text-gray-600 uppercase tracking-widest">{label}</span>
       <div className="flex items-center gap-3">
         {original && <span className="text-sm text-gray-400 font-bold line-through">₹{original}</span>}
-        <span className={`font-black ${isFree ? 'text-[#0565E6]' : 'text-[#111827]'}`}>{isFree ? 'Free' : formatCurrency(value)}</span>
+        <span className={`font-extrabold ${isFree ? 'text-primary' : 'text-gray-900'}`}>{isFree ? 'Free' : formatCurrency(value)}</span>
       </div>
     </div>
   );
@@ -954,9 +954,9 @@ function SummaryPriceRow({ label, value, original, isFree }) {
 function SummaryItem({ label, value, active }) {
   return (
     <div className="space-y-1">
-      <h4 className="text-sm font-bold text-[#111827]">{label}</h4>
+      <h4 className="text-sm font-bold text-gray-900">{label}</h4>
       <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${active ? 'bg-[#0565E6]' : 'bg-gray-300'}`} />
+        <div className={`w-2 h-2 rounded-full ${active ? 'bg-primary' : 'bg-gray-300'}`} />
         <p className={`text-[13px] font-bold ${active ? 'text-gray-800' : 'text-gray-500'}`}>{value}</p>
       </div>
     </div>
