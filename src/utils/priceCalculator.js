@@ -2,6 +2,7 @@ import { isSpecialModel } from './specialModels';
 import { RAM_PRICES, STORAGE_PRICES, CPU_PRICES, CPU_GEN_FACTORS } from './laptopPricingData';
 import { findLenovoOverridePrice } from './lenovoPriceOverrides';
 import { findZbookPowerOverridePrice } from './hpZbookPowerOverrides';
+import { findRogChromebookOverridePrice } from './rogChromebookOverrides';
 
 // ─── ISSUE DEDUCTION PERCENTAGES ────────────────────────────────────────────
 export const ISSUE_DEDUCTIONS = {
@@ -561,6 +562,34 @@ export function calculateLaptopPrice(device, selections) {
         accessoriesBonus: 0,
         finalPrice,
         priceSource: 'lenovo_override',
+      };
+    }
+
+    // ASUS ROG / Asus Chromebook override — i3 / i5 / i7 / i9 (Cashify + ₹1,000)
+    const rogChromebookOverride = findRogChromebookOverridePrice(device, {
+      ...selections,
+      yearBracket,
+      ram,
+      storage,
+    });
+    if (rogChromebookOverride != null) {
+      let finalPrice = rogChromebookOverride;
+      if (powerStatus === 'off') {
+        finalPrice = Math.max(Math.round((finalPrice * 0.05) / 10) * 10, 0);
+      } else {
+        finalPrice = Math.max(Math.round(finalPrice / 10) * 10, 0);
+      }
+      return {
+        basePrice: rogChromebookOverride,
+        componentBase: rogChromebookOverride,
+        ageAdjustment: 0,
+        powerDeduction: powerStatus === 'off' ? -(rogChromebookOverride - finalPrice) : 0,
+        functionalDeduction: 0,
+        screenDeduction: 0,
+        bodyDeduction: 0,
+        accessoriesBonus: 0,
+        finalPrice,
+        priceSource: 'rog_chromebook_override',
       };
     }
 
