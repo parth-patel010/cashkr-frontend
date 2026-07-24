@@ -393,160 +393,287 @@ function isIntelMacProcessor(processorStr) {
 /** Align Intel Mac catalog quotes with Cashify (~₹30k listed i5 path → ~₹20k). */
 const MAC_INTEL_MARKET_FACTOR = 20 / 30;
 
+function normalizeSpecToken(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
+    .trim();
+}
+
+function ramMatches(a, b) {
+  if (!a || !b) return !a && !b;
+  const na = normalizeSpecToken(a);
+  const nb = normalizeSpecToken(b);
+  if (na === nb) return true;
+  const ga = parseInt(a, 10);
+  const gb = parseInt(b, 10);
+  return Number.isFinite(ga) && Number.isFinite(gb) && ga === gb;
+}
+
+function storageMatches(a, b) {
+  if (!a || !b) return !a && !b;
+  return normalizeSpecToken(a) === normalizeSpecToken(b);
+}
+
+function processorMatches(a, b) {
+  if (!a || !b) return false;
+  return normalizeSpecToken(a) === normalizeSpecToken(b);
+}
+
+function parseRamGb(value) {
+  const n = parseInt(String(value || ''), 10);
+  return Number.isFinite(n) ? n : 8;
+}
+
+function parseStorageGb(value) {
+  if (!value) return 0;
+  let totalGB = 0;
+  String(value)
+    .split('+')
+    .forEach((part) => {
+      const p = part.trim();
+      const val = parseInt(p, 10) || 0;
+      const isTB = p.toUpperCase().includes('TB');
+      totalGB += isTB ? val * 1024 : val;
+    });
+  return totalGB;
+}
+
+/**
+ * Resolve buyback base from admin device variants (processor / RAM / storage).
+ * Returns 0 when no usable admin basePrice exists.
+ */
+function resolveAdminLaptopBase(device, selections = {}) {
+  const variants = (device?.variants || []).filter((v) => Number(v?.basePrice) > 0);
+  if (!variants.length) return { basePrice: 0, variant: null };
+
+  const selectedProcessor = selections.processor || '';
+  const ram = selections.ram || '';
+  const storage = selections.storage || '';
+
+  let variant =
+    variants.find(
+      (v) =>
+        v.processor &&
+        selectedProcessor &&
+        processorMatches(v.processor, selectedProcessor) &&
+        (!v.ram || ramMatches(v.ram, ram)) &&
+        (!v.storage || storageMatches(v.storage, storage)),
+    ) ||
+    variants.find(
+      (v) =>
+        v.ram &&
+        v.storage &&
+        ramMatches(v.ram, ram) &&
+        storageMatches(v.storage, storage),
+    ) ||
+    variants.find(
+      (v) =>
+        selectedProcessor &&
+        v.processor &&
+        processorMatches(v.processor, selectedProcessor),
+    );
+
+  if (!variant && variants.length === 1) {
+    variant = variants[0];
+  }
+
+  if (!variant) {
+    // Closest catalog row, then adjust RAM/storage deltas lightly
+    variant = variants[0];
+  }
+
+  let basePrice = Number(variant.basePrice) || 0;
+  if (variant && variants.length > 0) {
+    const exact =
+      (variant.processor &&
+        selectedProcessor &&
+        processorMatches(variant.processor, selectedProcessor) &&
+        (!variant.ram || ramMatches(variant.ram, ram)) &&
+        (!variant.storage || storageMatches(variant.storage, storage))) ||
+      (variant.ram &&
+        variant.storage &&
+        ramMatches(variant.ram, ram) &&
+        storageMatches(variant.storage, storage));
+
+    if (!exact) {
+      basePrice += (parseRamGb(ram) - parseRamGb(variant.ram)) * 200;
+      basePrice += (parseStorageGb(storage) - parseStorageGb(variant.storage)) * 5;
+    }
+  }
+
+  return { basePrice: Math.max(Math.round(basePrice), 0), variant };
+}
+
+function mapScreenSizeMultiplierKey(screenSize) {
+  if (!screenSize) return null;
+  if (screenSize === '10-11' || screenSize === '10-12') return '10-12';
+  if (screenSize === '12-13' || screenSize === '13-14') return '13-14';
+  if (screenSize === '14-15' || screenSize === '15-16' || screenSize === '15') return '15-16';
+  if (screenSize === 'above15' || screenSize === '16+') return '16+';
+  return null;
+}
+
+/**
+ * Apply admin age / power / issue / accessory adjustments on a catalog base.
+ * Functional deductions = flat INR (admin). Screen/body = % (admin).
+ */
+function applyAdminLaptopConditionPricing(basePrice, device, selections = {}) {
+  const {
+    yearBracket,
+    functionalIssues = [],
+    screenIssues = [],
+    bodyIssues = [],
+    accessories,
+    powerStatus,
+    screenSize,
+    hasGpu,
+    isGpuWorking,
+    gpuModel,
+  } = selections;
+
+  const ageMult = device?.ageMultipliers?.[yearBracket] ?? 1;
+  let currentPrice = Math.round(basePrice * ageMult);
+  const ageAdjustment = currentPrice - basePrice;
+
+  const sizeKey = mapScreenSizeMultiplierKey(screenSize);
+  const screenSizeMult = sizeKey ? device?.screenSizeMultipliers?.[sizeKey] : null;
+  if (screenSizeMult != null && Number(screenSizeMult) > 0) {
+    currentPrice = Math.round(currentPrice * Number(screenSizeMult));
+  }
+
+  if (hasGpu && isGpuWorking) {
+    const bonusMap = device?.dedicatedGpuBonus || {};
+    if (gpuModel && Number(bonusMap[gpuModel]) > 0) {
+      currentPrice += Number(bonusMap[gpuModel]);
+    }
+  }
+
+  let powerDeduction = 0;
+  if (powerStatus === 'off') {
+    powerDeduction = Math.round(basePrice * 0.95);
+    currentPrice = Math.max(currentPrice - powerDeduction, 0);
+  }
+
+  let functionalDeduction = 0;
+  const funcIssues = (functionalIssues || []).filter((i) => i !== 'noIssues');
+  for (const issue of funcIssues) {
+    const amount = Number(device?.functionalDeductions?.[issue] || 0);
+    if (amount > 0) {
+      // Admin stores laptop functional deductions as flat INR
+      const deduction = amount <= 100 ? Math.round(currentPrice * (amount / 100)) : Math.round(amount);
+      functionalDeduction += deduction;
+      currentPrice -= deduction;
+    }
+  }
+
+  let screenDeduction = 0;
+  const scrIssues = (screenIssues || []).filter((i) => i !== 'noIssue');
+  for (const issue of scrIssues) {
+    const pct = Number(device?.screenDeductions?.[issue] || 0);
+    if (pct > 0) {
+      const deduction = Math.round(currentPrice * (pct / 100));
+      screenDeduction += deduction;
+      currentPrice -= deduction;
+    }
+  }
+
+  let bodyDeduction = 0;
+  for (const issue of bodyIssues || []) {
+    const pct = Number(device?.bodyDeductions?.[issue] || 0);
+    if (pct > 0) {
+      const deduction = Math.round(currentPrice * (pct / 100));
+      bodyDeduction += deduction;
+      currentPrice -= deduction;
+    }
+  }
+
+  const accList = Array.isArray(accessories) ? [...accessories] : [];
+  if (yearBracket && yearBracket !== 'lessThan1' && !accList.includes('bill')) {
+    // Older devices without bill already priced via age; keep Mac parity of forcing bill key off bonus
+  }
+  const accBonus = accList.reduce(
+    (sum, item) => sum + (Number(device?.accessoriesBonus?.[item] || 0)),
+    0,
+  );
+  currentPrice += accBonus;
+
+  const finalPrice = Math.max(Math.round(currentPrice / 100) * 100, 0);
+
+  return {
+    basePrice,
+    ageAdjustment,
+    powerDeduction: -powerDeduction,
+    functionalDeduction: -functionalDeduction,
+    screenDeduction: -screenDeduction,
+    bodyDeduction: -bodyDeduction,
+    accessoriesBonus: accBonus,
+    finalPrice,
+  };
+}
+
 export function calculateLaptopPrice(device, selections) {
   const { ram, storage, yearBracket,
     functionalIssues = [], screenIssues = [], bodyIssues = [],
     accessories, powerStatus, screenSize } = selections;
 
-  let basePrice = 0;
+  const { basePrice: adminBase, variant } = resolveAdminLaptopBase(device, selections);
+  const hasAdminCatalog = adminBase > 0;
 
-  if (isAppleMacDevice(device)) {
-    // ── MacBook / Apple logic (catalog base → CPU tier → age → deductions) ──
-    const variants = device.variants || [];
+  // ── Prefer admin catalog pricing for ALL laptops/Macs when variants exist ──
+  if (hasAdminCatalog) {
+    let basePrice = adminBase;
     const selectedProcessor = selections.processor || '';
 
-    // Prefer exact variant match including processor when catalog has CPU-specific rows
-    let variant =
-      variants.find(v =>
-        v.processor &&
-        selectedProcessor &&
-        v.processor === selectedProcessor &&
-        (!v.ram || v.ram === ram) &&
-        (!v.storage || v.storage === storage)
-      ) ||
-      variants.find(v =>
-        v.ram && v.storage && v.ram === ram && v.storage === storage
-      );
+    if (isAppleMacDevice(device)) {
+      // Intel Macs: catalog base is treated as i5-listed; scale by selected CPU tier
+      const catalogCpu =
+        (variant && variant.processor) ||
+        device.processorFamily ||
+        '';
+      const selectedCpu = selectedProcessor || catalogCpu;
 
-    if (!variant && variants.length === 1) {
-      variant = variants[0];
-    }
-
-    if (variant) {
-      basePrice = variant.basePrice;
-    } else if (variants.length > 0) {
-      const baseline = variants[0];
-      basePrice = baseline.basePrice;
-
-      const ramVal = (r) => parseInt(r) || 8;
-      basePrice += (ramVal(ram) - ramVal(baseline.ram)) * 200;
-
-      const parseStorage = (s) => {
-        if (!s) return 0;
-        let totalGB = 0;
-        const parts = s.split('+');
-        parts.forEach(p => {
-          const val = parseInt(p.trim()) || 0;
-          const isTB = p.toUpperCase().includes('TB');
-          totalGB += isTB ? val * 1024 : val;
-        });
-        return totalGB;
-      };
-
-      basePrice += (parseStorage(storage) - parseStorage(baseline.storage)) * 5;
-    }
-
-    // Intel Macs: catalog base is treated as i5-listed.
-    // Cashify targets — i5 ≈ ₹20k, i7 ≈ ₹24k (1.2×), i3 ≈ ₹13k (0.65×).
-    // Apple Silicon: only relative chip tier vs listed family (no Intel market cut).
-    const catalogCpu =
-      (variant && variant.processor) ||
-      device.processorFamily ||
-      '';
-    const selectedCpu = selectedProcessor || catalogCpu;
-
-    if (isIntelMacProcessor(selectedCpu) || isIntelMacProcessor(catalogCpu)) {
-      // Always scale vs i5=1.0 so selecting i7/i3 actually changes price
-      const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
-      basePrice = Math.round(basePrice * MAC_INTEL_MARKET_FACTOR * selectedFactor);
-    } else {
-      const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
-      const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
-      if (catalogFactor > 0 && selectedFactor !== catalogFactor) {
-        basePrice = Math.round(basePrice * (selectedFactor / catalogFactor));
+      if (isIntelMacProcessor(selectedCpu) || isIntelMacProcessor(catalogCpu)) {
+        const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
+        basePrice = Math.round(basePrice * MAC_INTEL_MARKET_FACTOR * selectedFactor);
+      } else {
+        const catalogFactor = getMacCpuFactor(catalogCpu) || 1;
+        const selectedFactor = getMacCpuFactor(selectedCpu) || 1;
+        if (catalogFactor > 0 && selectedFactor !== catalogFactor) {
+          basePrice = Math.round(basePrice * (selectedFactor / catalogFactor));
+        }
       }
     }
 
-    // Apple age multipliers & deductions
-    const ageMult = device.ageMultipliers?.[yearBracket] || 1;
-    let currentPrice = Math.round(basePrice * ageMult);
-    const ageAdjustment = currentPrice - basePrice;
+    return applyAdminLaptopConditionPricing(basePrice, device, selections);
+  }
 
-    let powerDeduction = 0;
-    if (powerStatus === 'off') {
-      powerDeduction = Math.round(basePrice * 0.95);
-      currentPrice = Math.max(currentPrice - powerDeduction, 0);
-    }
-
-    let functionalDeduction = 0;
-    const funcIssues = (functionalIssues || []).filter(i => i !== 'noIssues');
-    for (const issue of funcIssues) {
-      const pct = device.functionalDeductions?.[issue] || 0;
-      if (pct > 0) {
-        const deduction = Math.round(currentPrice * (pct / 100));
-        functionalDeduction += deduction;
-        currentPrice -= deduction;
-      }
-    }
-
-    let screenDeduction = 0;
-    const scrIssues = (screenIssues || []).filter(i => i !== 'noIssue');
-    for (const issue of scrIssues) {
-      const pct = device.screenDeductions?.[issue] || 0;
-      if (pct > 0) {
-        const deduction = Math.round(currentPrice * (pct / 100));
-        screenDeduction += deduction;
-        currentPrice -= deduction;
-      }
-    }
-
-    let bodyDeduction = 0;
-    for (const issue of (bodyIssues || [])) {
-      const pct = device.bodyDeductions?.[issue] || 0;
-      if (pct > 0) {
-        const deduction = Math.round(currentPrice * (pct / 100));
-        bodyDeduction += deduction;
-        currentPrice -= deduction;
-      }
-    }
-
-    const accList = Array.isArray(accessories) ? [...accessories] : [];
-    if (yearBracket && yearBracket !== 'lessThan1' && !accList.includes('bill')) {
-      accList.push('bill');
-    }
-    const accBonus = accList.reduce((sum, item) => sum + (device.accessoriesBonus?.[item] || 0), 0);
-    currentPrice += accBonus;
-
-    const finalPrice = Math.max(Math.round(currentPrice / 100) * 100, 0);
-
+  if (isAppleMacDevice(device)) {
+    // Apple device without usable admin variants — nothing to quote
     return {
-      basePrice,
-      ageAdjustment,
-      powerDeduction: -powerDeduction,
-      functionalDeduction: -functionalDeduction,
-      screenDeduction: -screenDeduction,
-      bodyDeduction: -bodyDeduction,
-      accessoriesBonus: accBonus,
-      finalPrice,
+      basePrice: 0,
+      ageAdjustment: 0,
+      powerDeduction: 0,
+      functionalDeduction: 0,
+      screenDeduction: 0,
+      bodyDeduction: 0,
+      accessoriesBonus: 0,
+      finalPrice: 0,
     };
-  } else {
-    // ── UNIFIED ALGORITHM FOR NON-APPLE LAPTOPS (algorithm-prd.md) ──
+  }
 
+  // ── Fallback only when admin has no variant basePrice ──
+  {
     const totalIssueCount =
       (functionalIssues || []).filter(i => i !== 'noIssues').length +
       (screenIssues || []).filter(i => i !== 'noIssue').length +
       (bodyIssues || []).length;
 
-    // 1. Component Base Price
     let componentBase = 0;
 
-    // 1.1 CPU
     const getCpuPrice = (cpu) => {
       if (!cpu) return 3000;
-      // Exact lookup
       if (CPU_PRICES[cpu]) return CPU_PRICES[cpu];
-
-      // Fallback fuzz matching
       const c = cpu.toLowerCase();
       let base = 3000;
       if (c.includes('i3')) base = 3500;
@@ -563,12 +690,10 @@ export function calculateLaptopPrice(device, selections) {
     const deviceProcessor = selections.processor || (device.generation ? `${device.processorFamily || ''} - ${device.generation}` : (device.processorFamily || ''));
     componentBase += getCpuPrice(deviceProcessor);
 
-    // 1.2 RAM
     const getRamPrice = (r) => {
       if (!r) return 1500;
       if (RAM_PRICES[r]) return RAM_PRICES[r];
-
-      const num = parseInt(r);
+      const num = parseInt(r, 10);
       if (num <= 4) return 800;
       if (num <= 8) return 1500;
       if (num <= 16) return 2800;
@@ -577,11 +702,9 @@ export function calculateLaptopPrice(device, selections) {
     };
     componentBase += getRamPrice(ram);
 
-    // 1.3 Storage
     const getStoragePrice = (s) => {
       if (!s) return 1500;
       if (STORAGE_PRICES[s]) return STORAGE_PRICES[s];
-
       if (s.includes('512') && s.toLowerCase().includes('ssd')) return 2800;
       if (s.includes('1 TB') || s.includes('1TB')) return 4000;
       if (s.includes('256')) return 1500;
@@ -589,24 +712,9 @@ export function calculateLaptopPrice(device, selections) {
     };
     componentBase += getStoragePrice(storage);
 
-    // 1.4 GPU
-    const getGpuPrice = (hasGpu, isGpuWorking) => {
-      if (hasGpu && isGpuWorking) return 4000;
-      return 0;
-    };
-    componentBase += getGpuPrice(selections.hasGpu, selections.isGpuWorking);
+    componentBase += (selections.hasGpu && selections.isGpuWorking) ? 4000 : 0;
+    componentBase += screenSize === 'above15' ? 6000 : 5000;
 
-    // 1.5 Chassis (Screen Size)
-    const getChassisPrice = (size) => {
-      if (size === 'above15') return 6000;
-      return 5000; // 12-14 inches
-    };
-    componentBase += getChassisPrice(screenSize);
-
-    // Ensure strict bottom-up calculation per latest rule update
-    // No manual overrides allowed.
-
-    // 2. Generation Factor
     const getGenFactor = (cpuStr, gen) => {
       if (CPU_GEN_FACTORS[cpuStr]) return CPU_GEN_FACTORS[cpuStr];
       if (!gen) return 1.00;
@@ -619,11 +727,8 @@ export function calculateLaptopPrice(device, selections) {
       return 1.00;
     };
     const genFactor = getGenFactor(deviceProcessor, device.generation || selections.generation);
-
-    // 3. Gaming Factor
     const gamingFactor = device.isGamingLaptop ? 1.02 : 1.00;
 
-    // 4. Model Factor
     const getModelFactor = (brand, series) => {
       const b = (brand || '').toLowerCase();
       const s = (series || '').toLowerCase();
@@ -637,12 +742,9 @@ export function calculateLaptopPrice(device, selections) {
       return 1.000;
     };
     const modelFactor = getModelFactor(device.brand, device.modelName);
-
-    // 5. Market Multiplier
     const marketMultiplier = 1.72;
     const marketValue = componentBase * modelFactor * genFactor * gamingFactor * marketMultiplier;
 
-    // 6. Age Factor
     const getAgeFactor = (bracket) => {
       if (bracket === 'lessThan1') return 0.90;
       if (bracket === 'oneToTwo') return 0.80;
@@ -651,7 +753,6 @@ export function calculateLaptopPrice(device, selections) {
     };
     const ageFactor = getAgeFactor(yearBracket);
 
-    // 7. Condition Factor
     const getConditionFactor = (issueCount) => {
       if (issueCount === 0) return 0.95;
       if (issueCount <= 2) return 0.80;
@@ -659,26 +760,15 @@ export function calculateLaptopPrice(device, selections) {
       return 0.50;
     };
     const conditionFactor = getConditionFactor(totalIssueCount);
+    const screenFactor = (screenSize === 'above15' || screenSize === '15') ? 1.02 : 1.00;
 
-    // 8. Screen Size Factor
-    const getScreenSizeFactor = (size) => {
-      if (size === 'above15' || size === '15') return 1.02;
-      return 1.00;
-    };
-    const screenFactor = getScreenSizeFactor(screenSize);
-
-    // 9. Depreciated Value
     let depreciatedValue = marketValue * ageFactor * conditionFactor * screenFactor;
-
-    // 10. Power status deduction (dead laptop)
     if (powerStatus === 'off') {
       depreciatedValue = depreciatedValue * 0.05;
     }
 
-    // 11. Accessories Bonus
     const accList = Array.isArray(accessories) ? [...accessories] : [];
     const accessoryBonus = accList.includes('charger') ? 300 : 0;
-
     const finalPrice = Math.max(Math.round((depreciatedValue + accessoryBonus) / 10) * 10, 0);
 
     return {
