@@ -30,6 +30,31 @@ function BannerEditor({
     setBanners((list) => list.map((b) => (b.id === id ? { ...b, ...patch } : b)));
   };
 
+  const checkAspect = (file, onDone) => {
+    if (!file || typeof window === 'undefined' || !window.Image) {
+      onDone('');
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      const ratio = img.width / Math.max(img.height, 1);
+      // Target ~ width × 0.44 → ratio ≈ 2.27 (also accept classic ~1400×400 = 3.5)
+      const ok = ratio >= 1.8 && ratio <= 4.0;
+      URL.revokeObjectURL(url);
+      onDone(
+        ok
+          ? ''
+          : `Image is ${img.width}×${img.height} (ratio ${ratio.toFixed(2)}). Recommended ~1400×400–616 (wide banner).`,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      onDone('Could not read image dimensions. Prefer ~1400×400–616.');
+    };
+    img.src = url;
+  };
+
   const addBanner = () => {
     setBanners((list) => {
       if (max != null && list.length >= max) return list;
@@ -97,7 +122,14 @@ function BannerEditor({
                   className="hidden"
                   disabled={uploadingKey === `banner-${banner.id}`}
                   onChange={(e) => {
-                    onUpload(banner.id, e.target.files?.[0]);
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    checkAspect(file, (warn) => {
+                      if (warn && typeof window !== 'undefined') {
+                        window.alert(warn);
+                      }
+                      onUpload(banner.id, file);
+                    });
                     e.target.value = '';
                   }}
                 />
@@ -270,7 +302,7 @@ export default function AdminWebsiteSettings() {
           enabledBuy: c.enabledBuy === true,
           sortOrder: Number(c.sortOrder) || 0,
         })),
-        banners: mapBanners(banners),
+        banners: mapBanners(banners).slice(0, MAX_SLOT),
         sellBanners: mapBanners(sellBanners).slice(0, MAX_SLOT),
         repairBanners: mapBanners(repairBanners).slice(0, MAX_SLOT),
       };
@@ -321,11 +353,12 @@ export default function AdminWebsiteSettings() {
 
       <BannerEditor
         title="Homepage Banners"
-        hint="Image-only banners. Recommended ~1400×400. Optional link opens when the banner is clicked."
+        hint="Max 6. Recommended ~1400×400 (wide banner). Upload warns if aspect is off. Optional link opens when tapped in the app."
         banners={banners}
         setBanners={setBanners}
         uploadingKey={uploadingKey}
         onUpload={makeBannerUploader(setBanners)}
+        max={MAX_SLOT}
       />
 
       <BannerEditor
