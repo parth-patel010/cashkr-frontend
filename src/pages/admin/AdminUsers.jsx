@@ -105,6 +105,7 @@ export default function AdminUsers() {
                   <th>User Details</th>
                   <th>Contact Info</th>
                   <th>Referral Code</th>
+                  <th>Login From</th>
                   <th>Last Quiz Device</th>
                   <th>Joined Date</th>
                   <th>Orders Count</th>
@@ -132,6 +133,15 @@ export default function AdminUsers() {
                     <td>
                       <span className="font-mono text-xs bg-blue-50 border border-blue-200 text-blue-600 py-0.5 px-1.5 rounded">
                         {user.referralCode || 'N/A'}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`admin-badge ${
+                          user.loginFrom === 'App' ? 'admin-badge-blue' : 'admin-badge-gray'
+                        }`}
+                      >
+                        {user.loginFrom || 'Website'}
                       </span>
                     </td>
                     <td>
@@ -269,7 +279,13 @@ export default function AdminUsers() {
                     <div>
                       <div className="text-[10px] uppercase font-bold text-slate-400">Used Referral</div>
                       <div className="text-sm font-semibold text-slate-700 mt-1">
-                        {selectedUser.usedReferralCode || 'None'}
+                        {selectedUser.referredBy || selectedUser.usedReferralCode || 'None'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase font-bold text-slate-400">Login From</div>
+                      <div className="text-sm font-semibold text-slate-700 mt-1">
+                        {selectedUser.loginFrom || 'Website'}
                       </div>
                     </div>
                   </div>

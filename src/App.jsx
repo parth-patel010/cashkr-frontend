@@ -75,6 +75,10 @@ import AdminBuyDevices from './pages/admin/AdminBuyDevices.jsx';
 import AdminVendors from './pages/admin/AdminVendors.jsx';
 import AdminAppSettings from './pages/admin/AdminAppSettings.jsx';
 import AdminWebsiteSettings from './pages/admin/AdminWebsiteSettings.jsx';
+import AdminOffers from './pages/admin/AdminOffers.jsx';
+import AdminCategoryQuiz from './pages/admin/AdminCategoryQuiz.jsx';
+import AdminNotifications from './pages/admin/AdminNotifications.jsx';
+import AdminSecurityAudit from './pages/admin/AdminSecurityAudit.jsx';
 import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
 import AdminChat from './pages/admin/AdminChat.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
@@ -202,6 +206,10 @@ function App() {
             <Route path="vendors" element={<AdminVendors />} />
             <Route path="app-settings" element={<AdminAppSettings />} />
             <Route path="website-settings" element={<AdminWebsiteSettings />} />
+            <Route path="offers" element={<AdminOffers />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="category-quizzes" element={<AdminCategoryQuiz />} />
+            <Route path="security-audit" element={<AdminSecurityAudit />} />
             <Route path="repair-services" element={<AdminRepairServices />} />
             <Route path="chat" element={<AdminChat />} />
             <Route path="partners" element={<AdminPartners />} />

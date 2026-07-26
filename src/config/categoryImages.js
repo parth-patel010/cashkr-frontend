@@ -24,6 +24,7 @@ export const SELL_CATEGORY_DESCS = {
   earbuds: "Quick quotes for earbuds and audio devices",
   refrigerator: "Sell refrigerators with verified pickup partners",
   smartwatch: "Sell smartwatches at the best market value",
+  gaming: "Sell gaming consoles with free doorstep pickup",
 };
 
 export const BUY_CATEGORY_DESCS = {
@@ -35,6 +36,7 @@ export const BUY_CATEGORY_DESCS = {
   tv: "Refurbished TVs tested and ready for home",
   earbuds: "Certified refurbished audio devices",
   refrigerator: "Refurbished refrigerators with warranty",
+  gaming: "Refurbished gaming consoles tested and ready to play",
 };
 
 export function sellCategoryImage(key) {

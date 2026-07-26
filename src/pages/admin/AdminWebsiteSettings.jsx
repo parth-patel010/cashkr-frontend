@@ -4,10 +4,170 @@ import { Globe, Save, Upload, Plus, Trash2, Image as ImageIcon } from 'lucide-re
 import './admin.css';
 
 const newBannerId = () => `banner-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+const MAX_SLOT = 6;
+
+const emptyBanner = (sortOrder = 1) => ({
+  id: newBannerId(),
+  title: '',
+  subtitle: '',
+  ctaText: '',
+  ctaLink: '/',
+  imageUrl: '',
+  enabled: true,
+  sortOrder,
+});
+
+function BannerEditor({
+  title,
+  hint,
+  banners,
+  setBanners,
+  uploadingKey,
+  onUpload,
+  max = null,
+}) {
+  const updateBanner = (id, patch) => {
+    setBanners((list) => list.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  };
+
+  const addBanner = () => {
+    setBanners((list) => {
+      if (max != null && list.length >= max) return list;
+      return [...list, emptyBanner(list.length + 1)];
+    });
+  };
+
+  const removeBanner = (id) => {
+    setBanners((list) => list.filter((b) => b.id !== id));
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+          <ImageIcon size={18} className="text-blue-600" />
+          {title}
+          {max != null ? (
+            <span className="text-xs font-bold text-slate-400">
+              ({banners.length}/{max})
+            </span>
+          ) : null}
+        </h3>
+        <button
+          type="button"
+          className="admin-btn admin-btn-ghost text-sm"
+          onClick={addBanner}
+          disabled={max != null && banners.length >= max}
+        >
+          <Plus size={14} />
+          Add banner
+        </button>
+      </div>
+      <p className="text-xs text-slate-500 font-semibold">{hint}</p>
+
+      <div className="space-y-4">
+        {banners.map((banner) => (
+          <div
+            key={banner.id}
+            className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-4 items-center"
+          >
+            <div className="space-y-2">
+              {banner.imageUrl ? (
+                <img
+                  src={banner.imageUrl}
+                  alt="Banner"
+                  className="w-full h-24 object-contain rounded-lg border border-slate-200 bg-slate-50"
+                />
+              ) : (
+                <div className="w-full h-24 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400 font-bold">
+                  No image
+                </div>
+              )}
+              <label className="admin-btn admin-btn-ghost text-xs cursor-pointer w-full justify-center">
+                {uploadingKey === `banner-${banner.id}` ? (
+                  'Uploading…'
+                ) : (
+                  <>
+                    <Upload size={14} /> Upload image
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingKey === `banner-${banner.id}`}
+                  onChange={(e) => {
+                    onUpload(banner.id, e.target.files?.[0]);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              {banner.imageUrl ? (
+                <button
+                  type="button"
+                  className="text-xs text-red-500 font-bold"
+                  onClick={() => updateBanner(banner.id, { imageUrl: '' })}
+                >
+                  Clear image
+                </button>
+              ) : null}
+            </div>
+
+            <div className="admin-field mb-0">
+              <label>Click link (optional)</label>
+              <input
+                type="text"
+                value={banner.ctaLink || ''}
+                onChange={(e) => updateBanner(banner.id, { ctaLink: e.target.value })}
+                placeholder="/sell-old-mobile-phones/brand"
+              />
+            </div>
+
+            <div className="flex flex-col items-end gap-3">
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={banner.enabled !== false}
+                  onChange={(e) => updateBanner(banner.id, { enabled: e.target.checked })}
+                />
+                <span className="text-xs font-bold text-slate-600">
+                  {banner.enabled !== false ? 'On' : 'Off'}
+                </span>
+              </label>
+              <div className="admin-field mb-0 w-20">
+                <label>Order</label>
+                <input
+                  type="number"
+                  value={banner.sortOrder ?? 0}
+                  onChange={(e) =>
+                    updateBanner(banner.id, { sortOrder: Number(e.target.value) || 0 })
+                  }
+                />
+              </div>
+              <button
+                type="button"
+                className="text-red-500 hover:text-red-600"
+                onClick={() => removeBanner(banner.id)}
+                title="Remove banner"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {banners.length === 0 ? (
+          <div className="text-sm text-slate-400 font-semibold py-4">No banners yet.</div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
 
 export default function AdminWebsiteSettings() {
   const [categories, setCategories] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [sellBanners, setSellBanners] = useState([]);
+  const [repairBanners, setRepairBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState('');
@@ -30,6 +190,18 @@ export default function AdminWebsiteSettings() {
           enabled: b.enabled !== false,
         })),
       );
+      setSellBanners(
+        (data.sellBanners || []).map((b) => ({
+          ...b,
+          enabled: b.enabled !== false,
+        })),
+      );
+      setRepairBanners(
+        (data.repairBanners || []).map((b) => ({
+          ...b,
+          enabled: b.enabled !== false,
+        })),
+      );
     } catch (e) {
       console.error(e);
       setMessage('Failed to load website settings');
@@ -44,30 +216,6 @@ export default function AdminWebsiteSettings() {
 
   const updateCategory = (key, patch) => {
     setCategories((list) => list.map((c) => (c.key === key ? { ...c, ...patch } : c)));
-  };
-
-  const updateBanner = (id, patch) => {
-    setBanners((list) => list.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-  };
-
-  const addBanner = () => {
-    setBanners((list) => [
-      ...list,
-      {
-        id: newBannerId(),
-        title: '',
-        subtitle: '',
-        ctaText: '',
-        ctaLink: '/',
-        imageUrl: '',
-        enabled: true,
-        sortOrder: list.length + 1,
-      },
-    ]);
-  };
-
-  const removeBanner = (id) => {
-    setBanners((list) => list.filter((b) => b.id !== id));
   };
 
   const onUploadCategoryImage = async (key, file) => {
@@ -87,7 +235,7 @@ export default function AdminWebsiteSettings() {
     }
   };
 
-  const onUploadBannerImage = async (id, file) => {
+  const makeBannerUploader = (setter) => async (id, file) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
       alert('Image must be 10MB or less');
@@ -96,13 +244,20 @@ export default function AdminWebsiteSettings() {
     setUploadingKey(`banner-${id}`);
     try {
       const { data } = await adminService.uploadImage(file);
-      updateBanner(id, { imageUrl: data.imageUrl });
+      setter((list) => list.map((b) => (b.id === id ? { ...b, imageUrl: data.imageUrl } : b)));
     } catch (err) {
       alert(err.response?.data?.message || 'Image upload failed');
     } finally {
       setUploadingKey('');
     }
   };
+
+  const mapBanners = (list) =>
+    list.map((b, index) => ({
+      ...b,
+      enabled: b.enabled === true,
+      sortOrder: b.sortOrder != null ? Number(b.sortOrder) || 0 : index + 1,
+    }));
 
   const onSave = async () => {
     setSaving(true);
@@ -115,15 +270,15 @@ export default function AdminWebsiteSettings() {
           enabledBuy: c.enabledBuy === true,
           sortOrder: Number(c.sortOrder) || 0,
         })),
-        banners: banners.map((b, index) => ({
-          ...b,
-          enabled: b.enabled === true,
-          sortOrder: b.sortOrder != null ? Number(b.sortOrder) || 0 : index + 1,
-        })),
+        banners: mapBanners(banners),
+        sellBanners: mapBanners(sellBanners).slice(0, MAX_SLOT),
+        repairBanners: mapBanners(repairBanners).slice(0, MAX_SLOT),
       };
       const { data } = await adminService.saveAppSettings(payload);
       setCategories(data.categories || []);
       setBanners(data.banners || []);
+      setSellBanners(data.sellBanners || []);
+      setRepairBanners(data.repairBanners || []);
       setMessage('Website settings saved');
     } catch (e) {
       setMessage(e.response?.data?.message || 'Save failed');
@@ -149,8 +304,7 @@ export default function AdminWebsiteSettings() {
             Website Settings
           </h2>
           <p className="text-sm text-slate-500 font-semibold mt-1 max-w-2xl">
-            Manage homepage banners (image only) and sell/buy categories. Upload banner images for
-            the home carousel, and toggle category visibility.
+            Manage homepage, sell, and repair banners plus sell/buy categories.
           </p>
         </div>
         <button type="button" className="admin-btn admin-btn-primary" disabled={saving} onClick={onSave}>
@@ -165,116 +319,35 @@ export default function AdminWebsiteSettings() {
         </div>
       ) : null}
 
-      {/* ── Homepage Banners ── */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-            <ImageIcon size={18} className="text-blue-600" />
-            Homepage Banners
-          </h3>
-          <button type="button" className="admin-btn admin-btn-ghost text-sm" onClick={addBanner}>
-            <Plus size={14} />
-            Add banner
-          </button>
-        </div>
-        <p className="text-xs text-slate-500 font-semibold">
-          Image-only banners. Upload a wide image (recommended ~1400×400). Optional link opens when
-          the banner is clicked. Toggle Off to hide a slide. If no admin images are set, the site
-          uses the default app banners.
-        </p>
+      <BannerEditor
+        title="Homepage Banners"
+        hint="Image-only banners. Recommended ~1400×400. Optional link opens when the banner is clicked."
+        banners={banners}
+        setBanners={setBanners}
+        uploadingKey={uploadingKey}
+        onUpload={makeBannerUploader(setBanners)}
+      />
 
-        <div className="space-y-4">
-          {banners.map((banner) => (
-            <div
-              key={banner.id}
-              className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-4 items-center"
-            >
-              <div className="space-y-2">
-                {banner.imageUrl ? (
-                  <img
-                    src={banner.imageUrl}
-                    alt="Banner"
-                    className="w-full h-24 object-contain rounded-lg border border-slate-200 bg-slate-50"
-                  />
-                ) : (
-                  <div className="w-full h-24 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400 font-bold">
-                    No image
-                  </div>
-                )}
-                <label className="admin-btn admin-btn-ghost text-xs cursor-pointer w-full justify-center">
-                  {uploadingKey === `banner-${banner.id}` ? 'Uploading…' : (
-                    <>
-                      <Upload size={14} /> Upload image
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={uploadingKey === `banner-${banner.id}`}
-                    onChange={(e) => {
-                      onUploadBannerImage(banner.id, e.target.files?.[0]);
-                      e.target.value = '';
-                    }}
-                  />
-                </label>
-                {banner.imageUrl ? (
-                  <button
-                    type="button"
-                    className="text-xs text-red-500 font-bold"
-                    onClick={() => updateBanner(banner.id, { imageUrl: '' })}
-                  >
-                    Clear image
-                  </button>
-                ) : null}
-              </div>
+      <BannerEditor
+        title="Sell banners"
+        hint="Max 6. Recommended aspect ~ width × 0.44 (e.g. 1400×616)."
+        banners={sellBanners}
+        setBanners={setSellBanners}
+        uploadingKey={uploadingKey}
+        onUpload={makeBannerUploader(setSellBanners)}
+        max={MAX_SLOT}
+      />
 
-              <div className="admin-field mb-0">
-                <label>Click link (optional)</label>
-                <input
-                  type="text"
-                  value={banner.ctaLink || ''}
-                  onChange={(e) => updateBanner(banner.id, { ctaLink: e.target.value })}
-                  placeholder="/sell-old-mobile-phones/brand"
-                />
-              </div>
+      <BannerEditor
+        title="Repair banners"
+        hint="Max 6. Recommended aspect ~ width × 0.44 (e.g. 1400×616)."
+        banners={repairBanners}
+        setBanners={setRepairBanners}
+        uploadingKey={uploadingKey}
+        onUpload={makeBannerUploader(setRepairBanners)}
+        max={MAX_SLOT}
+      />
 
-              <div className="flex flex-col items-end gap-3">
-                <label className="inline-flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={banner.enabled !== false}
-                    onChange={(e) => updateBanner(banner.id, { enabled: e.target.checked })}
-                  />
-                  <span className="text-xs font-bold text-slate-600">
-                    {banner.enabled !== false ? 'On' : 'Off'}
-                  </span>
-                </label>
-                <div className="admin-field mb-0 w-20">
-                  <label>Order</label>
-                  <input
-                    type="number"
-                    value={banner.sortOrder ?? 0}
-                    onChange={(e) =>
-                      updateBanner(banner.id, { sortOrder: Number(e.target.value) || 0 })
-                    }
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="text-red-500 hover:text-red-600"
-                  onClick={() => removeBanner(banner.id)}
-                  title="Remove banner"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Categories ── */}
       <section className="space-y-4">
         <h3 className="text-base font-black text-slate-900">Categories</h3>
         <div className="admin-table-wrapper overflow-x-auto">

@@ -6,6 +6,7 @@ import './admin.css';
 export default function AdminAppSettings() {
   const [pages, setPages] = useState([]);
   const [requireAddressFor, setRequireAddressFor] = useState(['sell', 'buy', 'repair']);
+  const [referralBonusAmount, setReferralBonusAmount] = useState(100);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -16,6 +17,9 @@ export default function AdminAppSettings() {
       const { data } = await adminService.getAppSettings();
       setPages(data.pages || []);
       setRequireAddressFor(data.requireAddressFor || ['sell', 'buy', 'repair']);
+      setReferralBonusAmount(
+        data.referralBonusAmount != null ? Number(data.referralBonusAmount) : 100,
+      );
     } catch (e) {
       console.error(e);
       setMessage('Failed to load settings');
@@ -42,9 +46,16 @@ export default function AdminAppSettings() {
     setSaving(true);
     setMessage('');
     try {
-      const { data } = await adminService.saveAppSettings({ pages, requireAddressFor });
+      const { data } = await adminService.saveAppSettings({
+        pages,
+        requireAddressFor,
+        referralBonusAmount: Number(referralBonusAmount) || 0,
+      });
       setPages(data.pages || []);
       setRequireAddressFor(data.requireAddressFor || []);
+      setReferralBonusAmount(
+        data.referralBonusAmount != null ? Number(data.referralBonusAmount) : 100,
+      );
       setMessage('Settings saved');
     } catch (e) {
       setMessage(e.response?.data?.message || 'Save failed');
@@ -86,6 +97,25 @@ export default function AdminAppSettings() {
           {message}
         </div>
       ) : null}
+
+      <div className="admin-card mb-6">
+        <h3 className="text-sm font-800 text-slate-500 uppercase tracking-wider mb-3">
+          Refer &amp; Earn bonus
+        </h3>
+        <p className="text-xs text-slate-500 mb-3">
+          Amount credited when a referred user completes a sell/buy. Default 100 if unset.
+        </p>
+        <div className="admin-field max-w-xs mb-0">
+          <label>Referral bonus amount (₹)</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={referralBonusAmount}
+            onChange={(e) => setReferralBonusAmount(Number(e.target.value))}
+          />
+        </div>
+      </div>
 
       <div className="admin-card mb-6">
         <h3 className="text-sm font-800 text-slate-500 uppercase tracking-wider mb-3">

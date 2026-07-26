@@ -13,7 +13,11 @@ import {
   BarChart3,
   MessageCircle,
   Globe,
-  Settings
+  Settings,
+  Tag,
+  Bell,
+  Shield,
+  ListChecks
 } from 'lucide-react';
 import './admin.css';
 
@@ -38,6 +42,10 @@ export default function AdminLayout() {
     if (path.includes('/vendors')) return 'Vendor Management';
     if (path.includes('/website-settings')) return 'Website Settings';
     if (path.includes('/app-settings')) return 'App Settings';
+    if (path.includes('/offers')) return 'Offers';
+    if (path.includes('/notifications')) return 'Notifications';
+    if (path.includes('/category-quizzes')) return 'Category Quizzes';
+    if (path.includes('/security-audit')) return 'Security Audit';
     if (path.includes('/repair-services')) return 'Repair Prices (Model-wise)';
     if (path.includes('/chat')) return 'Live Chat';
     if (path.includes('/partners')) return 'Partners';
@@ -113,6 +121,30 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink 
+            to="/admin/offers" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Tag />
+            <span>Offers</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/notifications" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Bell />
+            <span>Notifications</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/category-quizzes" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <ListChecks />
+            <span>Category Quizzes</span>
+          </NavLink>
+
+          <NavLink 
             to="/admin/chat" 
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
           >
@@ -150,6 +182,14 @@ export default function AdminLayout() {
           >
             <Settings />
             <span>App Settings</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/security-audit" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Shield />
+            <span>Security Audit</span>
           </NavLink>
 
           <NavLink 

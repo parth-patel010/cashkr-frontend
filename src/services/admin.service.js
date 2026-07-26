@@ -116,6 +116,26 @@ export const adminService = {
   getAppSettings: () => adminApi.get('/admin/app-settings'),
   saveAppSettings: (data) => adminApi.put('/admin/app-settings', data),
 
+  // Offers
+  getOffers: () => adminApi.get('/admin/offers'),
+  createOffer: (data) => adminApi.post('/admin/offers', data),
+  updateOffer: (id, data) => adminApi.put(`/admin/offers/${id}`, data),
+  deleteOffer: (id) => adminApi.delete(`/admin/offers/${id}`),
+
+  // Category quizzes
+  getCategoryQuizzes: () => adminApi.get('/admin/category-quizzes'),
+  getCategoryQuiz: (id) => adminApi.get(`/admin/category-quizzes/${id}`),
+  createCategoryQuiz: (data) => adminApi.post('/admin/category-quizzes', data),
+  updateCategoryQuiz: (id, data) => adminApi.put(`/admin/category-quizzes/${id}`, data),
+  deleteCategoryQuiz: (id) => adminApi.delete(`/admin/category-quizzes/${id}`),
+
+  // Notifications
+  getNotifications: (params) => adminApi.get('/admin/notifications', { params }),
+  sendNotification: (data) => adminApi.post('/admin/notifications/send', data),
+
+  // Security
+  getSecurityAudit: () => adminApi.get('/admin/security-audit'),
+
   // Orders
   getOrders: (params) => adminApi.get('/admin/orders', { params }),
   exportOrders: (params) => adminApi.get('/admin/orders/export', { params, responseType: 'blob' }),
