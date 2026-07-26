@@ -36,12 +36,31 @@ export default function AdminCategoryQuiz() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [categoryOptions, setCategoryOptions] = useState([
+    { key: 'tablet', label: 'Tablet' },
+    { key: 'earbuds', label: 'Earbuds' },
+    { key: 'smartwatch', label: 'Smartwatch' },
+    { key: 'tv', label: 'TV' },
+    { key: 'speakers', label: 'Speakers' },
+    { key: 'gaming', label: 'Gaming' },
+    { key: 'refrigerator', label: 'Refrigerator' },
+  ]);
 
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await adminService.getCategoryQuizzes();
+      const [{ data }, settingsRes] = await Promise.all([
+        adminService.getCategoryQuizzes(),
+        adminService.getAppSettings().catch(() => null),
+      ]);
       setQuizzes(Array.isArray(data) ? data : []);
+      const cats = settingsRes?.data?.categories;
+      if (Array.isArray(cats) && cats.length) {
+        const options = cats
+          .filter((c) => c?.key && !['mobile', 'phone', 'laptop', 'mac'].includes(String(c.key).toLowerCase()))
+          .map((c) => ({ key: c.key, label: c.label || c.key }));
+        if (options.length) setCategoryOptions(options);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -283,12 +302,22 @@ export default function AdminCategoryQuiz() {
         <div className="space-y-6">
           <div className="admin-card grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="admin-field mb-0">
-              <label>Category key</label>
-              <input
+              <label>Category</label>
+              <select
                 value={form.category}
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                placeholder="tv / earbuds / gaming"
-              />
+              >
+                <option value="">Select category</option>
+                {categoryOptions.map((opt) => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </option>
+                ))}
+                {form.category &&
+                !categoryOptions.some((o) => o.key === form.category) ? (
+                  <option value={form.category}>{form.category}</option>
+                ) : null}
+              </select>
             </div>
             <div className="admin-field mb-0">
               <label>Deduction mode</label>

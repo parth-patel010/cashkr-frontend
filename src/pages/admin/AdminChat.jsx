@@ -19,6 +19,7 @@ export default function AdminChat() {
   const [online, setOnline] = useState(false);
   const bottomRef = useRef(null);
   const selectedIdRef = useRef(null);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     selectedIdRef.current = selectedId;
@@ -78,9 +79,15 @@ export default function AdminChat() {
     const socket = io(SOCKET_URL, {
       auth: { token, role: 'admin' },
       transports: ['websocket', 'polling'],
+      path: '/socket.io',
     });
 
-    socket.on('connect', () => setOnline(true));
+    socket.on('connect', () => {
+      setOnline(true);
+      if (selectedIdRef.current) {
+        socket.emit('chat:join', String(selectedIdRef.current));
+      }
+    });
     socket.on('disconnect', () => setOnline(false));
 
     socket.on('chat:conversation', (conversation) => {
@@ -113,13 +120,18 @@ export default function AdminChat() {
       }
     });
 
+    socketRef.current = socket;
+
     return () => {
       socket.disconnect();
+      socketRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    // Optionally join room when selection changes — history still via REST
+    const socket = socketRef.current;
+    if (!socket || !selectedId) return;
+    socket.emit('chat:join', String(selectedId));
   }, [selectedId]);
 
   const sendMessage = async (e) => {
