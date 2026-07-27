@@ -3,23 +3,50 @@ import { adminService } from '../../services/admin.service';
 import { Settings, Save } from 'lucide-react';
 import './admin.css';
 
+const DEFAULT_ANDROID_DOWNLOAD =
+  'https://play.google.com/store/apps/details?id=com.devicekart.app';
+const DEFAULT_MAINTENANCE_MESSAGE =
+  "We're working to improve your experience. Please try again later.";
+
 export default function AdminAppSettings() {
   const [pages, setPages] = useState([]);
   const [requireAddressFor, setRequireAddressFor] = useState(['sell', 'buy', 'repair']);
   const [referralBonusAmount, setReferralBonusAmount] = useState(100);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState(DEFAULT_MAINTENANCE_MESSAGE);
+  const [maintenanceContact, setMaintenanceContact] = useState('');
+  const [androidMinVersion, setAndroidMinVersion] = useState('');
+  const [androidDownloadUrl, setAndroidDownloadUrl] = useState(DEFAULT_ANDROID_DOWNLOAD);
+  const [iosMinVersion, setIosMinVersion] = useState('');
+  const [iosDownloadUrl, setIosDownloadUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  const applyData = (data) => {
+    setPages(data.pages || []);
+    setRequireAddressFor(data.requireAddressFor || ['sell', 'buy', 'repair']);
+    setReferralBonusAmount(
+      data.referralBonusAmount != null ? Number(data.referralBonusAmount) : 100,
+    );
+    setMaintenanceMode(data.maintenanceMode === true);
+    setMaintenanceMessage(data.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE);
+    setMaintenanceContact(data.maintenanceContact || '');
+    setAndroidMinVersion(data.versionControl?.android?.minVersion || data.androidMinVersion || '');
+    setAndroidDownloadUrl(
+      data.versionControl?.android?.downloadUrl ||
+        data.androidDownloadUrl ||
+        DEFAULT_ANDROID_DOWNLOAD,
+    );
+    setIosMinVersion(data.versionControl?.ios?.minVersion || data.iosMinVersion || '');
+    setIosDownloadUrl(data.versionControl?.ios?.downloadUrl || data.iosDownloadUrl || '');
+  };
 
   const load = async () => {
     setLoading(true);
     try {
       const { data } = await adminService.getAppSettings();
-      setPages(data.pages || []);
-      setRequireAddressFor(data.requireAddressFor || ['sell', 'buy', 'repair']);
-      setReferralBonusAmount(
-        data.referralBonusAmount != null ? Number(data.referralBonusAmount) : 100,
-      );
+      applyData(data);
     } catch (e) {
       console.error(e);
       setMessage('Failed to load settings');
@@ -50,12 +77,15 @@ export default function AdminAppSettings() {
         pages,
         requireAddressFor,
         referralBonusAmount: Number(referralBonusAmount) || 0,
+        maintenanceMode,
+        maintenanceMessage,
+        maintenanceContact,
+        androidMinVersion,
+        androidDownloadUrl,
+        iosMinVersion,
+        iosDownloadUrl,
       });
-      setPages(data.pages || []);
-      setRequireAddressFor(data.requireAddressFor || []);
-      setReferralBonusAmount(
-        data.referralBonusAmount != null ? Number(data.referralBonusAmount) : 100,
-      );
+      applyData(data);
       setMessage('Settings saved');
     } catch (e) {
       setMessage(e.response?.data?.message || 'Save failed');
@@ -81,9 +111,8 @@ export default function AdminAppSettings() {
             App Settings
           </h2>
           <p className="text-sm text-slate-500 font-semibold mt-1 max-w-2xl">
-            Turn pages on/off (Coming Soon). Mark pages that hide for users whose saved address
-            pincode is not serviceable. Guests without an address can still browse. Sell / Buy /
-            Repair always need a serviceable address before checkout.
+            Turn pages on/off (Coming Soon). Maintenance locks the app. Force update triggers when
+            the installed app version is below the platform minimum.
           </p>
         </div>
         <button type="button" className="admin-btn admin-btn-primary" disabled={saving} onClick={onSave}>
@@ -97,6 +126,96 @@ export default function AdminAppSettings() {
           {message}
         </div>
       ) : null}
+
+      <div className="admin-card mb-6">
+        <h3 className="text-sm font-800 text-slate-500 uppercase tracking-wider mb-3">
+          Maintenance mode
+        </h3>
+        <p className="text-xs text-slate-500 mb-3">
+          When on, the mobile app shows a blocking maintenance screen (EatnSay-style).
+        </p>
+        <label className="flex items-center gap-2 mb-4 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={maintenanceMode}
+            onChange={(e) => setMaintenanceMode(e.target.checked)}
+          />
+          <span className="text-sm font-bold text-slate-800">
+            {maintenanceMode ? 'Maintenance ON' : 'Maintenance OFF'}
+          </span>
+        </label>
+        <div className="admin-field mb-3">
+          <label>Message</label>
+          <textarea
+            rows={2}
+            value={maintenanceMessage}
+            onChange={(e) => setMaintenanceMessage(e.target.value)}
+          />
+        </div>
+        <div className="admin-field max-w-sm mb-0">
+          <label>Support contact (phone)</label>
+          <input
+            type="text"
+            value={maintenanceContact}
+            onChange={(e) => setMaintenanceContact(e.target.value)}
+            placeholder="e.g. 9876543210"
+          />
+        </div>
+      </div>
+
+      <div className="admin-card mb-6">
+        <h3 className="text-sm font-800 text-slate-500 uppercase tracking-wider mb-3">
+          Force update (version control)
+        </h3>
+        <p className="text-xs text-slate-500 mb-4">
+          If the app&apos;s current version is lower than the min version for that platform, users
+          see a non-dismissible Update Required modal. Leave min version empty to disable.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-sm font-bold text-slate-700 mb-2">Android</h4>
+            <div className="admin-field">
+              <label>Min version</label>
+              <input
+                type="text"
+                value={androidMinVersion}
+                onChange={(e) => setAndroidMinVersion(e.target.value)}
+                placeholder="e.g. 1.0.1"
+              />
+            </div>
+            <div className="admin-field mb-0">
+              <label>Download URL</label>
+              <input
+                type="text"
+                value={androidDownloadUrl}
+                onChange={(e) => setAndroidDownloadUrl(e.target.value)}
+                placeholder={DEFAULT_ANDROID_DOWNLOAD}
+              />
+            </div>
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-slate-700 mb-2">iOS</h4>
+            <div className="admin-field">
+              <label>Min version</label>
+              <input
+                type="text"
+                value={iosMinVersion}
+                onChange={(e) => setIosMinVersion(e.target.value)}
+                placeholder="e.g. 1.0.1"
+              />
+            </div>
+            <div className="admin-field mb-0">
+              <label>Download URL</label>
+              <input
+                type="text"
+                value={iosDownloadUrl}
+                onChange={(e) => setIosDownloadUrl(e.target.value)}
+                placeholder="App Store URL"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="admin-card mb-6">
         <h3 className="text-sm font-800 text-slate-500 uppercase tracking-wider mb-3">
