@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
-import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, CreditCard, Download, Camera, ClipboardCheck } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, CreditCard, Download, Camera, ClipboardCheck, AlertTriangle } from 'lucide-react';
 import './admin.css';
 
 const ORDER_TYPES = [
@@ -82,6 +82,35 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
             <InfoRow label="Time Slot" value={p.timeSlot || p.preferredSlot} />
             {orderType === 'sell' ? <InfoRow label="Payment Mode" value={p.paymentMethod} /> : null}
           </Section>
+
+          {orderType === 'sell' &&
+          (order.cancelReason || order.rescheduleReason || order.failedReason) ? (
+            <Section icon={AlertTriangle} title="Vendor / Status Reasons">
+              <InfoRow label="Failed Reason" value={order.failedReason || null} />
+              <InfoRow label="Cancel Reason" value={order.cancelReason || null} />
+              <InfoRow label="Cancelled By" value={order.cancelledBy || null} />
+              <InfoRow
+                label="Cancelled At"
+                value={
+                  order.cancelledAt
+                    ? new Date(order.cancelledAt).toLocaleString('en-IN')
+                    : null
+                }
+              />
+              <InfoRow label="Reschedule Reason" value={order.rescheduleReason || null} />
+              <InfoRow label="Rescheduled By" value={order.rescheduledBy || null} />
+              <InfoRow
+                label="Rescheduled At"
+                value={
+                  order.rescheduledAt
+                    ? new Date(order.rescheduledAt).toLocaleString('en-IN')
+                    : null
+                }
+              />
+              <InfoRow label="Current Pickup Date" value={p.date || null} />
+              <InfoRow label="Current Time Slot" value={p.timeSlot || null} />
+            </Section>
+          ) : null}
 
           {orderType === 'sell' ? (
             <>
@@ -635,6 +664,11 @@ export default function AdminOrders() {
                     </td>
                     <td>
                       <span className={getStatusBadgeClass(order.status)}>{order.status}</span>
+                      {orderType === 'sell' && (order.cancelReason || order.failedReason || order.rescheduleReason) ? (
+                        <div className="text-[10px] text-slate-500 mt-1 max-w-[140px] truncate" title={order.cancelReason || order.failedReason || order.rescheduleReason}>
+                          {order.cancelReason || order.failedReason || order.rescheduleReason}
+                        </div>
+                      ) : null}
                     </td>
                     {orderType === 'sell' ? (
                       <td className="text-xs">
