@@ -36,6 +36,20 @@ const ACCESSORY_ICONS = {
   acc_bill: FileText,
 };
 
+const REQUIRED_WINDOW_IDS = ['power', 'screen', 'physical', 'functional', 'accessories'];
+
+function resolveSmartwatchQuiz(apiQuiz) {
+  const windows = apiQuiz?.windows;
+  if (!Array.isArray(windows) || windows.length < REQUIRED_WINDOW_IDS.length) {
+    return DEFAULT_SMARTWATCH_QUIZ;
+  }
+  const ids = new Set(windows.map((w) => w.id));
+  if (!REQUIRED_WINDOW_IDS.every((id) => ids.has(id))) {
+    return DEFAULT_SMARTWATCH_QUIZ;
+  }
+  return apiQuiz;
+}
+
 export default function SmartwatchConditionQuizPage() {
   const { brand, slug } = useParams();
   const navigate = useNavigate();
@@ -73,7 +87,7 @@ export default function SmartwatchConditionQuizPage() {
         const dev = devRes.data;
         setDevice(dev);
         recordDeviceQuizOnce(slug);
-        if (quizRes?.data?.windows?.length) setQuiz(quizRes.data);
+        if (quizRes?.data) setQuiz(resolveSmartwatchQuiz(quizRes.data));
         const variant = dev.variants?.find((v) => v.storage === storage) || dev.variants?.[0];
         setCurrentPrice(variant?.basePrice || 0);
       } catch {
