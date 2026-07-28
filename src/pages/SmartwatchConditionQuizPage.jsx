@@ -12,6 +12,8 @@ import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import PageCanvas from '../components/layout/PageCanvas';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
+import { setLoginContext } from '../utils/loginContext';
+import { reportLastQuizDevice } from '../utils/reportLastQuiz';
 import {
   DEFAULT_SMARTWATCH_QUIZ,
   SMARTWATCH_SCREEN_DETAILS,
@@ -174,6 +176,14 @@ export default function SmartwatchConditionQuizPage() {
       answers: finalAnswers,
       deviceSlug: device.slug,
     });
+    const quizCtx = {
+      category: 'smartwatch',
+      brand: device.brand,
+      modelName: device.modelName,
+      slug: device.slug,
+      storage: storage || device.variants?.[0]?.storage || '',
+      quizPath: `/sell/smartwatch/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+    };
     updateQuote({
       device: {
         brand: device.brand,
@@ -181,17 +191,29 @@ export default function SmartwatchConditionQuizPage() {
         slug: device.slug,
         category: 'smartwatch',
         imageUrl: device.imageUrl || '',
-        storage: storage || device.variants?.[0]?.storage,
+        storage: quizCtx.storage,
         quizAnswers: finalAnswers,
       },
       priceBreakdown: result,
     });
+    setLoginContext(quizCtx);
+    if (isAuthenticated) reportLastQuizDevice(quizCtx);
     setCurrentPrice(result.finalPrice);
     setBreakdown(result);
     setShowResult(true);
   };
 
   const handleSchedulePickup = () => {
+    const quizCtx = {
+      category: 'smartwatch',
+      brand: device.brand,
+      modelName: device.modelName,
+      slug: device.slug,
+      storage: storage || device.variants?.[0]?.storage || '',
+      quizPath: `/sell/smartwatch/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+    };
+    setLoginContext(quizCtx);
+    if (isAuthenticated) reportLastQuizDevice(quizCtx);
     if (!isAuthenticated) {
       navigate('/login?returnUrl=/schedule-pickup');
     } else {

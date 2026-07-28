@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { Search, ArrowRight } from "lucide-react";
 import { deviceService } from "../services/device.service";
@@ -10,18 +10,24 @@ import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
 import { formatCurrency } from "../utils/formatCurrency";
 import { getSellCategoryMeta } from "../constants/sellCategories";
+import {
+  availablePlaystationSeries,
+  filterModelsByPlaystationSeries,
+} from "../utils/playstationSeries";
 
 export default function SellCategoryModelPage() {
   const { category, brand } = useParams();
   const meta = getSellCategoryMeta(category);
   const [models, setModels] = useState([]);
   const [search, setSearch] = useState("");
+  const [seriesFilter, setSeriesFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const brandName = brand ? brand.charAt(0).toUpperCase() + brand.slice(1) : "";
 
   useEffect(() => {
     if (!meta || !brand) return;
     setLoading(true);
+    setSeriesFilter("");
     deviceService
       .getModels(brand, category)
       .then((res) => setModels(res.data || []))
@@ -29,12 +35,20 @@ export default function SellCategoryModelPage() {
       .finally(() => setLoading(false));
   }, [brand, category, meta]);
 
+  const psSeriesOptions = useMemo(() => {
+    if (category !== "gaming") return [];
+    return availablePlaystationSeries(models);
+  }, [category, models]);
+
   if (!meta) return <Navigate to="/" replace />;
   if (loading) return <Loader />;
 
-  const filtered = models.filter((m) =>
+  let filtered = models.filter((m) =>
     m.modelName.toLowerCase().includes(search.toLowerCase()),
   );
+  if (category === "gaming" && seriesFilter) {
+    filtered = filterModelsByPlaystationSeries(filtered, seriesFilter);
+  }
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -66,6 +80,43 @@ export default function SellCategoryModelPage() {
             className="w-full pl-11 pr-4 py-3 border-[1.5px] border-[#E8EEF5] rounded-xl text-sm bg-[#F7F9FC] focus:border-primary focus:bg-white focus:shadow-[0_0_0_3px_rgba(5,101,230,0.12)] outline-none transition-all"
           />
         </div>
+
+        {psSeriesOptions.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
+            <button
+              type="button"
+              onClick={() => setSeriesFilter("")}
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all ${
+                !seriesFilter
+                  ? "bg-primary text-white border-primary"
+                  : "bg-white text-gray-700 border-[#E8EEF5] hover:border-primary/40"
+              }`}
+            >
+              All Series
+            </button>
+            {psSeriesOptions.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSeriesFilter(s.id)}
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all ${
+                  seriesFilter === s.id
+                    ? "bg-primary text-white border-primary"
+                    : "bg-white text-gray-700 border-[#E8EEF5] hover:border-primary/40"
+                }`}
+              >
+                {s.label}
+                <span
+                  className={`ml-1.5 ${
+                    seriesFilter === s.id ? "text-white/80" : "text-gray-400"
+                  }`}
+                >
+                  ({s.count})
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="text-center py-14 text-gray-500">

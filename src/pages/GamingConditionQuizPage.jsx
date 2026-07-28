@@ -12,6 +12,8 @@ import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import PageCanvas from '../components/layout/PageCanvas';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
+import { setLoginContext } from '../utils/loginContext';
+import { reportLastQuizDevice } from '../utils/reportLastQuiz';
 import {
   DEFAULT_GAMING_QUIZ,
   GAMING_PHYSICAL_DETAILS,
@@ -49,7 +51,7 @@ function resolveGamingQuiz(apiQuiz) {
 }
 
 export default function GamingConditionQuizPage() {
-  const { slug } = useParams();
+  const { brand, slug } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const storage = searchParams.get('storage');
@@ -162,6 +164,14 @@ export default function GamingConditionQuizPage() {
       answers: finalAnswers,
       deviceSlug: device.slug,
     });
+    const quizCtx = {
+      category: 'gaming',
+      brand: device.brand,
+      modelName: device.modelName,
+      slug: device.slug,
+      storage: storage || device.variants?.[0]?.storage || '',
+      quizPath: `/sell/gaming/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+    };
     updateQuote({
       device: {
         brand: device.brand,
@@ -169,11 +179,13 @@ export default function GamingConditionQuizPage() {
         slug: device.slug,
         category: 'gaming',
         imageUrl: device.imageUrl || '',
-        storage: storage || device.variants?.[0]?.storage,
+        storage: quizCtx.storage,
         quizAnswers: finalAnswers,
       },
       priceBreakdown: result,
     });
+    setLoginContext(quizCtx);
+    if (isAuthenticated) reportLastQuizDevice(quizCtx);
     setCurrentPrice(result.finalPrice);
     setBreakdown(result);
     setShowResult(true);
@@ -189,6 +201,16 @@ export default function GamingConditionQuizPage() {
   };
 
   const handleSchedulePickup = () => {
+    const quizCtx = {
+      category: 'gaming',
+      brand: device.brand,
+      modelName: device.modelName,
+      slug: device.slug,
+      storage: storage || device.variants?.[0]?.storage || '',
+      quizPath: `/sell/gaming/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+    };
+    setLoginContext(quizCtx);
+    if (isAuthenticated) reportLastQuizDevice(quizCtx);
     if (!isAuthenticated) {
       navigate('/login?returnUrl=/schedule-pickup');
     } else {
