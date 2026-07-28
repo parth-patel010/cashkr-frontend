@@ -1,5 +1,5 @@
 /** Sell flow categories that use /sell/:category/... routes */
-export const GENERIC_SELL_CATEGORIES = ['tv', 'earbuds', 'refrigerator', 'smartwatch'];
+export const GENERIC_SELL_CATEGORIES = ['tv', 'earbuds', 'refrigerator', 'smartwatch', 'gaming'];
 
 export const SELL_CATEGORY_META = {
   tv: {
@@ -37,6 +37,15 @@ export const SELL_CATEGORY_META = {
     title: 'Sell Old Smartwatches Online — Instant Cash | DeviceKart',
     description:
       'Sell your used smartwatch online. Instant quotes, free pickup, and secure payment with DeviceKart.',
+  },
+  gaming: {
+    key: 'gaming',
+    label: 'Gaming Console',
+    plural: 'Gaming Consoles',
+    pathPrefix: '/sell/gaming',
+    title: 'Sell Old Gaming Consoles Online — Instant Cash | DeviceKart',
+    description:
+      'Sell your used PlayStation, Xbox, Nintendo Switch and other gaming consoles online. Instant quotes, free pickup, and secure payment with DeviceKart.',
   },
 };
 

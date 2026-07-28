@@ -13,4 +13,5 @@ export const deviceService = {
     api.get(`/devices/most-quoted?limit=${limit}&category=${encodeURIComponent(category)}`),
   /** Fire-and-forget: count a quiz start for ranking "Most Quoted" */
   recordQuiz: (slug) => api.post(`/devices/${encodeURIComponent(slug)}/record-quiz`),
+  getCategoryQuiz: (category) => api.get(`/category-quizzes/${encodeURIComponent(category)}`),
 };

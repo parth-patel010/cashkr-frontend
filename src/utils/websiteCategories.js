@@ -29,8 +29,8 @@ export const FALLBACK_WEBSITE_CATEGORIES = [
   { key: 'tv', label: 'TV', sellPath: '/sell/tv/brand', buyPath: '/buy/tv/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 5 },
   { key: 'earbuds', label: 'Earbuds', sellPath: '/sell/earbuds/brand', buyPath: '/buy/earbuds/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 6 },
   { key: 'refrigerator', label: 'Refrigerator', sellPath: '/sell/refrigerator/brand', buyPath: '/buy/refrigerator/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 7 },
-  { key: 'smartwatch', label: 'Smartwatch', sellPath: '/sell/smartwatch/brand', buyPath: '/buy/smartwatch/brand', enabledSell: false, enabledBuy: true, imageUrl: '', sortOrder: 8 },
-  { key: 'gaming', label: 'Gaming', sellPath: '/sell/gaming/brand', buyPath: '/buy/gaming/brand', enabledSell: false, enabledBuy: true, imageUrl: '', sortOrder: 9 },
+  { key: 'smartwatch', label: 'Smartwatch', sellPath: '/sell/smartwatch/brand', buyPath: '/buy/smartwatch/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 8 },
+  { key: 'gaming', label: 'Gaming Console', sellPath: '/sell/gaming/brand', buyPath: '/buy/gaming/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 9 },
 ];
 
 export async function fetchWebsiteCategories() {

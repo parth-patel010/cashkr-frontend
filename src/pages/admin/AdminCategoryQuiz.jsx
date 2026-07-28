@@ -42,7 +42,7 @@ export default function AdminCategoryQuiz() {
     { key: 'smartwatch', label: 'Smartwatch' },
     { key: 'tv', label: 'TV' },
     { key: 'speakers', label: 'Speakers' },
-    { key: 'gaming', label: 'Gaming' },
+    { key: 'gaming', label: 'Gaming Console' },
     { key: 'refrigerator', label: 'Refrigerator' },
   ]);
 
@@ -248,8 +248,9 @@ export default function AdminCategoryQuiz() {
             Category Quiz Builder
           </h2>
           <p className="text-sm text-slate-500 font-semibold mt-1 max-w-2xl">
-            Build custom quiz windows per category. Use universal deductions on options, or
-            model-wise overrides at the end.
+            Build custom quiz windows per category. Deduction values are percentages (same as
+            phone). For the Accessories window, the % is applied when an option is not selected.
+            Smartwatch quiz is seeded automatically with phone-equivalent deductions.
           </p>
         </div>
         <div className="flex gap-2">
@@ -419,7 +420,7 @@ export default function AdminCategoryQuiz() {
                       />
                     </div>
                     <div className="admin-field mb-0">
-                      <label>Deduction</label>
+                      <label>Deduction %</label>
                       <input
                         type="number"
                         value={opt.deductionValue}
@@ -428,7 +429,7 @@ export default function AdminCategoryQuiz() {
                             deductionValue: e.target.value,
                           })
                         }
-                        title="Can be negative"
+                        title="Percentage deduction (same as phone). For accessories: applied when NOT selected."
                       />
                     </div>
                     <button
