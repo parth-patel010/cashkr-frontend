@@ -87,17 +87,34 @@ export default function SmartwatchConditionQuizPage() {
     };
   }, [slug, storage]);
 
+  const normalizedAnswers = useMemo(() => {
+    const a = { ...answers };
+    const functionalIdx = windows.findIndex((w) => w.id === 'functional');
+    const accessoriesIdx = windows.findIndex((w) => w.id === 'accessories');
+    if (functionalIdx >= 0 && stepIndex >= functionalIdx && !('functional' in a)) {
+      a.functional = [];
+    }
+    if (accessoriesIdx >= 0 && stepIndex >= accessoriesIdx && !('accessories' in a)) {
+      a.accessories = [];
+    }
+    if (showResult) {
+      if (!('functional' in a)) a.functional = [];
+      if (!('accessories' in a)) a.accessories = [];
+    }
+    return a;
+  }, [answers, stepIndex, windows, showResult]);
+
   useEffect(() => {
     if (!device || !quiz) return;
     const result = calculateCategoryQuizPrice({
       basePrice,
       quiz,
-      answers,
+      answers: normalizedAnswers,
       deviceSlug: device.slug,
     });
     setCurrentPrice(result.finalPrice);
     setBreakdown(result);
-  }, [device, quiz, answers, basePrice]);
+  }, [device, quiz, normalizedAnswers, basePrice]);
 
   const setSingle = (windowId, optionId) => {
     setAnswers((a) => ({ ...a, [windowId]: optionId }));
@@ -120,7 +137,7 @@ export default function SmartwatchConditionQuizPage() {
     return true;
   };
 
-  const powerRejected = answers.power === 'power_no';
+  const powerRejected = normalizedAnswers.power === 'power_no';
 
   const handleContinue = () => {
     if (step?.id === 'power' && powerRejected) return;
@@ -132,6 +149,17 @@ export default function SmartwatchConditionQuizPage() {
   };
 
   const handleGetBestPrice = () => {
+    const finalAnswers = {
+      ...normalizedAnswers,
+      functional: normalizedAnswers.functional || [],
+      accessories: normalizedAnswers.accessories || [],
+    };
+    const result = calculateCategoryQuizPrice({
+      basePrice,
+      quiz,
+      answers: finalAnswers,
+      deviceSlug: device.slug,
+    });
     updateQuote({
       device: {
         brand: device.brand,
@@ -140,10 +168,12 @@ export default function SmartwatchConditionQuizPage() {
         category: 'smartwatch',
         imageUrl: device.imageUrl || '',
         storage: storage || device.variants?.[0]?.storage,
-        quizAnswers: answers,
+        quizAnswers: finalAnswers,
       },
-      priceBreakdown: breakdown,
+      priceBreakdown: result,
     });
+    setCurrentPrice(result.finalPrice);
+    setBreakdown(result);
     setShowResult(true);
   };
 
