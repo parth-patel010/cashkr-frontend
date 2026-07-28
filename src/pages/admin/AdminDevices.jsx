@@ -272,6 +272,7 @@ export default function AdminDevices() {
             <option value="earbuds">Earbuds</option>
             <option value="refrigerator">Refrigerator</option>
             <option value="smartwatch">Smartwatch</option>
+            <option value="gaming">Gaming Console</option>
           </select>
         </div>
 
@@ -464,6 +465,7 @@ export default function AdminDevices() {
                         <option value="earbuds">Earbuds</option>
                         <option value="refrigerator">Refrigerator</option>
                         <option value="smartwatch">Smartwatch</option>
+                        <option value="gaming">Gaming Console</option>
                       </select>
                     </div>
 
@@ -788,7 +790,7 @@ export default function AdminDevices() {
                     <div className="max-h-[350px] overflow-y-auto pr-2 space-y-3">
                       {formData.variants?.map((v, idx) => (
                         <div key={idx} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-wrap items-center gap-3">
-                          {['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch'].includes(formData.category) ? (
+                          {['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch', 'gaming'].includes(formData.category) ? (
                             <>
                               <div className="flex-1 min-w-[120px] admin-field mb-0">
                                 <label className="text-[9px] mb-0.5">Storage</label>
@@ -980,7 +982,7 @@ export default function AdminDevices() {
                         const isLaptopIssue = ['battery', 'keyboard', 'trackpad', 'speakers', 'webcam', 'ports', 'hinge', 'overheat', 'gpu', 'screenChanged', 'wifi', 'biometric', 'charging', 'cdDrive', 'chargerIssue', 'hardDisk', 'displayIssue', 'motherboard'].includes(issue);
                         const isMobileIssue = ['batteryLow', 'cameraIssue', 'speakerIssue', 'biometricIssue', 'chargingIssue'].includes(issue);
 
-                        if (['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch'].includes(formData.category)) {
+                        if (['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch', 'gaming'].includes(formData.category)) {
                           if (isLaptopIssue) return null;
                         } else {
                           if (isMobileIssue) return null;
@@ -1001,7 +1003,7 @@ export default function AdminDevices() {
                   </div>
 
                   {/* Battery Deductions (Mobile) */}
-                  {['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch'].includes(formData.category) && (
+                  {['mobile', 'tablet', 'tv', 'earbuds', 'refrigerator', 'smartwatch', 'gaming'].includes(formData.category) && (
                     <div>
                       <h4 className="admin-section-title">Battery Health Deductions (INR)</h4>
                       <div className="admin-multiplier-grid">

@@ -13,7 +13,8 @@ const CATEGORY_LABELS = {
   speakers: 'Speakers',
   mac: 'Mac / iMac',
   camera: 'Camera',
-  gaming: 'Gaming',
+  gaming: 'Gaming Console',
+  refrigerator: 'Refrigerator',
   other: 'Other',
 };
 

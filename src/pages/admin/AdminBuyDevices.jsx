@@ -258,6 +258,7 @@ export default function AdminBuyDevices() {
                       <option value="tv">TV</option>
                       <option value="mac">Mac</option>
                       <option value="refrigerator">Refrigerator</option>
+                      <option value="gaming">Gaming Console</option>
                       <option value="other">Other</option>
                     </select>
                   </div>
