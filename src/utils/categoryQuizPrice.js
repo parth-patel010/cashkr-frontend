@@ -1,8 +1,9 @@
 /**
  * Cascading % price from CategoryQuiz answers (phone-style).
- * Accessories window: deductionValue applies when option is NOT selected.
- * Other multi windows: deduction applies when selected.
- * Single windows: deduction of the chosen option.
+ * Accessories: positive deductionValue when NOT selected; negative = bonus when selected.
+ * Other multi: deduction when selected.
+ * Single: deduction/bonus of chosen option.
+ * Negative deductionValue = % bonus added to price.
  */
 
 function optionDeduction(quiz, optionId, deviceSlug) {
@@ -37,10 +38,14 @@ export function calculateCategoryQuizPrice({ basePrice, quiz, answers = {}, devi
 
   const applyPct = (key, pct) => {
     const n = Number(pct) || 0;
-    if (n <= 0) return;
-    const deduction = Math.round(currentPrice * (n / 100));
+    if (n === 0) return;
+    const amount = Math.round(currentPrice * (Math.abs(n) / 100));
     breakdown[key] = n;
-    currentPrice = Math.max(currentPrice - deduction, 0);
+    if (n > 0) {
+      currentPrice = Math.max(currentPrice - amount, 0);
+    } else {
+      currentPrice += amount;
+    }
   };
 
   for (const win of quiz?.windows || []) {
@@ -51,9 +56,9 @@ export function calculateCategoryQuizPrice({ basePrice, quiz, answers = {}, devi
       if (!hasAnswer) continue;
       for (const opt of win.options || []) {
         const selected = Array.isArray(ans) && ans.includes(opt.id);
-        if (!selected) {
-          applyPct(`missing_${opt.id}`, optionDeduction(quiz, opt.id, deviceSlug));
-        }
+        const pct = optionDeduction(quiz, opt.id, deviceSlug);
+        if (pct > 0 && !selected) applyPct(`missing_${opt.id}`, pct);
+        if (pct < 0 && selected) applyPct(`bonus_${opt.id}`, pct);
       }
       continue;
     }

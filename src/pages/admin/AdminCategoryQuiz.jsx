@@ -248,9 +248,9 @@ export default function AdminCategoryQuiz() {
             Category Quiz Builder
           </h2>
           <p className="text-sm text-slate-500 font-semibold mt-1 max-w-2xl">
-            Build custom quiz windows per category. Deduction values are percentages (same as
-            phone). For the Accessories window, the % is applied when an option is not selected.
-            Smartwatch quiz is seeded automatically with phone-equivalent deductions.
+            Smartwatch and Gaming Console quizzes are seeded automatically with phone-equivalent
+            deductions. For Accessories, positive % applies when not selected; negative % is a bonus
+            when selected.
           </p>
         </div>
         <div className="flex gap-2">
