@@ -36,6 +36,7 @@ export default function AdminDevices() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingDescImages, setUploadingDescImages] = useState(false);
+  const [descImageLink, setDescImageLink] = useState('');
 
   // Form State
   const [showModal, setShowModal] = useState(false);
@@ -115,6 +116,7 @@ export default function AdminDevices() {
       ...JSON.parse(JSON.stringify(DEFAULT_MULTIPLIERS))
     });
     setModalTab('core');
+    setDescImageLink('');
     setShowModal(true);
   };
 
@@ -129,6 +131,7 @@ export default function AdminDevices() {
     };
     setFormData(merged);
     setModalTab('core');
+    setDescImageLink('');
     setShowModal(true);
   };
 
@@ -525,8 +528,8 @@ export default function AdminDevices() {
                   </div>
 
                   <div className="admin-field">
-                    <label>Cover image (max 10MB)</label>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <label>Cover image (upload or paste link)</label>
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
                       {formData.imageUrl ? (
                         <img
                           src={formData.imageUrl}
@@ -572,6 +575,15 @@ export default function AdminDevices() {
                         </button>
                       ) : null}
                     </div>
+                    <input
+                      type="url"
+                      placeholder="Or paste image URL (https://...)"
+                      value={formData.imageUrl || ''}
+                      onChange={(e) => handleInputChange('imageUrl', e.target.value.trim())}
+                    />
+                    <p className="text-[11px] text-slate-400 font-semibold mt-1">
+                      Upload a file (max 10MB) or paste a direct image link.
+                    </p>
                   </div>
 
                   <div className="admin-field">
@@ -585,7 +597,7 @@ export default function AdminDevices() {
                   </div>
 
                   <div className="admin-field">
-                    <label>Images in product description (multiple)</label>
+                    <label>Images in product description (upload or paste links)</label>
                     <div className="flex flex-wrap gap-3 mb-3">
                       {(formData.descriptionImages || []).map((url, idx) => (
                         <div key={`${url}-${idx}`} className="relative">
@@ -609,43 +621,80 @@ export default function AdminDevices() {
                         </div>
                       ))}
                     </div>
-                    <label className="admin-btn admin-btn-ghost cursor-pointer inline-flex">
-                      {uploadingDescImages ? 'Uploading...' : 'Upload description images'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        disabled={uploadingDescImages}
-                        onChange={async (e) => {
-                          const files = Array.from(e.target.files || []);
-                          if (!files.length) return;
-                          const tooBig = files.find((f) => f.size > 10 * 1024 * 1024);
-                          if (tooBig) {
-                            alert('Each image must be 10MB or less');
-                            e.target.value = '';
-                            return;
-                          }
-                          setUploadingDescImages(true);
-                          try {
-                            const uploaded = [];
-                            for (const file of files) {
-                              const { data } = await adminService.uploadImage(file);
-                              if (data.imageUrl) uploaded.push(data.imageUrl);
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <label className="admin-btn admin-btn-ghost cursor-pointer inline-flex">
+                        {uploadingDescImages ? 'Uploading...' : 'Upload description images'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          disabled={uploadingDescImages}
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (!files.length) return;
+                            const tooBig = files.find((f) => f.size > 10 * 1024 * 1024);
+                            if (tooBig) {
+                              alert('Each image must be 10MB or less');
+                              e.target.value = '';
+                              return;
                             }
-                            handleInputChange('descriptionImages', [
-                              ...(formData.descriptionImages || []),
-                              ...uploaded,
-                            ]);
-                          } catch (err) {
-                            alert(err.response?.data?.message || 'Image upload failed');
-                          } finally {
-                            setUploadingDescImages(false);
-                            e.target.value = '';
-                          }
+                            setUploadingDescImages(true);
+                            try {
+                              const uploaded = [];
+                              for (const file of files) {
+                                const { data } = await adminService.uploadImage(file);
+                                if (data.imageUrl) uploaded.push(data.imageUrl);
+                              }
+                              handleInputChange('descriptionImages', [
+                                ...(formData.descriptionImages || []),
+                                ...uploaded,
+                              ]);
+                            } catch (err) {
+                              alert(err.response?.data?.message || 'Image upload failed');
+                            } finally {
+                              setUploadingDescImages(false);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="url"
+                        className="flex-1 min-w-[200px]"
+                        placeholder="Or paste image URL and click Add"
+                        value={descImageLink}
+                        onChange={(e) => setDescImageLink(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter') return;
+                          e.preventDefault();
+                          const url = descImageLink.trim();
+                          if (!url) return;
+                          handleInputChange('descriptionImages', [
+                            ...(formData.descriptionImages || []),
+                            url,
+                          ]);
+                          setDescImageLink('');
                         }}
                       />
-                    </label>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-ghost"
+                        onClick={() => {
+                          const url = descImageLink.trim();
+                          if (!url) return;
+                          handleInputChange('descriptionImages', [
+                            ...(formData.descriptionImages || []),
+                            url,
+                          ]);
+                          setDescImageLink('');
+                        }}
+                      >
+                        Add link
+                      </button>
+                    </div>
                   </div>
 
                   <div className="admin-field">
