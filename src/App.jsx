@@ -65,6 +65,7 @@ import TabletVariantSelectionPage from './pages/TabletVariantSelectionPage.jsx';
 import TabletConditionQuizPage from './pages/TabletConditionQuizPage.jsx';
 import SmartwatchConditionQuizPage from './pages/SmartwatchConditionQuizPage.jsx';
 import GamingConditionQuizPage from './pages/GamingConditionQuizPage.jsx';
+import EarbudsConditionQuizPage from './pages/EarbudsConditionQuizPage.jsx';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin.jsx';
@@ -169,6 +170,7 @@ function App() {
           {/* Generic sell flow (TV, earbuds, refrigerator, smartwatch, gaming) */}
           <Route path="/sell/smartwatch/:brand/:slug/quiz" element={<SmartwatchConditionQuizPage />} />
           <Route path="/sell/gaming/:brand/:slug/quiz" element={<GamingConditionQuizPage />} />
+          <Route path="/sell/earbuds/:brand/:slug/quiz" element={<EarbudsConditionQuizPage />} />
           <Route path="/sell/:category/brand" element={<SellCategoryBrandPage />} />
           <Route path="/sell/:category/:brand/:slug/quiz" element={<TabletConditionQuizPage />} />
           <Route path="/sell/:category/:brand/:slug" element={<SellCategoryVariantPage />} />
