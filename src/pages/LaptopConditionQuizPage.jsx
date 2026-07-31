@@ -8,14 +8,14 @@ import {
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
-import { calculateLaptopPrice, isAppleMacDevice } from '../utils/priceCalculator';
+import { calculateLaptopPrice } from '../utils/priceCalculator';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 
-const ALL_STEPS = [
+const STEPS = [
   { id: 'specs', label: 'Specs' },
   { id: 'power', label: 'Power Status' },
   { id: 'screenSize', label: 'Screen Size' },
@@ -25,9 +25,6 @@ const ALL_STEPS = [
   { id: 'accessories', label: 'Accessories' },
   { id: 'age', label: 'Device Age' },
 ];
-
-/** MacBooks use catalog base price — skip Windows-only screen size / GPU steps. */
-const MAC_STEPS = ALL_STEPS.filter((s) => s.id !== 'screenSize');
 
 const AGE_OPTIONS = [
   { key: 'lessThan1', label: 'Less than 1 year (in warranty)' },
@@ -109,14 +106,6 @@ export default function LaptopConditionQuizPage() {
   const [breakdown, setBreakdown] = useState(null);
 
   const quizStorageKey = `devicekart_laptop_quiz_${slug}`;
-  const isMac = isAppleMacDevice(device);
-  const STEPS = isMac ? MAC_STEPS : ALL_STEPS;
-
-  // Keep step index valid when Mac skips screen-size / GPU step
-  useEffect(() => {
-    if (!device) return;
-    setCurrentStepIndex((prev) => Math.min(prev, STEPS.length - 1));
-  }, [device, STEPS.length]);
 
   const getQuizReturnPath = () => `/sell-old-laptops/${brand}/${slug}/quiz`;
 
@@ -446,12 +435,8 @@ export default function LaptopConditionQuizPage() {
                    <EvaluationDetailRow label="RAM" value={specs.ram || 'Standard'} color="#0565E6" />
                    <EvaluationDetailRow label="Storage" value={specs.storage || 'Standard'} color="#0565E6" />
                    <EvaluationDetailRow label="Power Status" value={powerStatus === 'on' ? 'Turns On' : 'Does Not Turn On (Off)'} color={powerStatus === 'on' ? '#0565E6' : '#EF4444'} />
-                   {!isMac && (
-                     <>
-                       <EvaluationDetailRow label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} color="#0565E6" />
-                       <EvaluationDetailRow label="Graphic Card" value={hasGpu === 'yes' ? `Available (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'Not Available'} color={hasGpu === 'yes' && isGpuWorking === 'yes' ? '#0565E6' : '#EF4444'} />
-                     </>
-                   )}
+                   <EvaluationDetailRow label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} color="#0565E6" />
+                   <EvaluationDetailRow label="Graphic Card" value={hasGpu === 'yes' ? `Available (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'Not Available'} color={hasGpu === 'yes' && isGpuWorking === 'yes' ? '#0565E6' : '#EF4444'} />
                    <EvaluationDetailRow label="Device Age" value={age ? AGE_OPTIONS.find(o => o.key === age).label : '-'} color="#0565E6" />
                    <EvaluationDetailRow label="Functional Issues" value={issuesList.length > 0 ? issuesList.length + ' issue(s)' : 'No Issues'} color={issuesList.length > 0 ? '#EF4444' : '#0565E6'} />
                    <EvaluationDetailRow label="Screen Condition" value={screenIssuesList.length > 0 ? screenIssuesList.length + ' issue(s)' : 'No Issues'} color={screenIssuesList.length > 0 ? '#EF4444' : '#0565E6'} />
@@ -889,12 +874,8 @@ export default function LaptopConditionQuizPage() {
                    <SummaryItem label="RAM" value={specs.ram || '-'} active={true} />
                    <SummaryItem label="Storage" value={specs.storage || '-'} active={true} />
                    <SummaryItem label="Power Status" value={powerStatus ? (powerStatus === 'on' ? 'Turns On' : 'Does Not Turn On') : '-'} active={powerStatus !== null} />
-                   {!isMac && (
-                     <>
-                       <SummaryItem label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} active={screenSize !== null} />
-                       <SummaryItem label="Graphic Card" value={hasGpu ? (hasGpu === 'yes' ? `Yes (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'No') : '-'} active={hasGpu !== null} />
-                     </>
-                   )}
+                   <SummaryItem label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} active={screenSize !== null} />
+                   <SummaryItem label="Graphic Card" value={hasGpu ? (hasGpu === 'yes' ? `Yes (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'No') : '-'} active={hasGpu !== null} />
                    <SummaryItem label="Functional" value={issuesList.length > 0 ? `${issuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'functional') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'functional')} />
                    <SummaryItem label="Screen" value={screenIssuesList.length > 0 ? `${screenIssuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'screen') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'screen')} />
                    <SummaryItem label="Body" value={bodyIssuesList.length > 0 ? `${bodyIssuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'body') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'body')} />
