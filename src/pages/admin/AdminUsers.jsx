@@ -292,7 +292,7 @@ export default function AdminUsers() {
                 </div>
 
                 {selectedUser.lastQuizDevice?.modelName && (
-                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2 md:col-span-2">
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-3 md:col-span-2">
                     <div className="flex items-center gap-2">
                       <Smartphone className="text-amber-600 w-5 h-5" />
                       <span className="text-[12px] font-800 text-amber-800 uppercase tracking-wider">
@@ -303,12 +303,44 @@ export default function AdminUsers() {
                       {selectedUser.lastQuizDevice.brand} {selectedUser.lastQuizDevice.modelName}
                       {selectedUser.lastQuizDevice.storage ? ` · ${selectedUser.lastQuizDevice.storage}` : ''}
                     </div>
-                    <div className="text-xs text-slate-600">
-                      Category: <span className="capitalize">{selectedUser.lastQuizDevice.category || 'mobile'}</span>
-                      {selectedUser.lastQuizDevice.loggedInAt && (
-                        <> · Logged in during quiz: {new Date(selectedUser.lastQuizDevice.loggedInAt).toLocaleString('en-IN')}</>
+                    <div className="text-xs text-slate-600 space-y-1">
+                      <div>
+                        Category:{' '}
+                        <span className="capitalize">{selectedUser.lastQuizDevice.category || 'mobile'}</span>
+                        {selectedUser.lastQuizDevice.loggedInAt && (
+                          <> · Logged in during quiz: {new Date(selectedUser.lastQuizDevice.loggedInAt).toLocaleString('en-IN')}</>
+                        )}
+                      </div>
+                      {selectedUser.lastQuizDevice.quizPath && (
+                        <div className="font-mono text-[11px] text-slate-500 break-all">
+                          From: {selectedUser.lastQuizDevice.quizPath}
+                        </div>
                       )}
                     </div>
+
+                    {Array.isArray(selectedUser.lastQuizDevice.answerSummary) &&
+                      selectedUser.lastQuizDevice.answerSummary.length > 0 && (
+                        <div className="mt-2 border border-amber-100 bg-white/70 rounded-xl overflow-hidden">
+                          <div className="px-3 py-2 text-[11px] font-800 uppercase tracking-wider text-amber-800 bg-amber-100/60">
+                            Quiz Answers
+                          </div>
+                          <div className="divide-y divide-amber-50">
+                            {selectedUser.lastQuizDevice.answerSummary.map((row, idx) => (
+                              <div
+                                key={`${row.question}-${idx}`}
+                                className="flex justify-between gap-4 px-3 py-2"
+                              >
+                                <span className="text-[11px] font-700 text-slate-500 uppercase tracking-wide shrink-0">
+                                  {row.question}
+                                </span>
+                                <span className="text-[13px] font-semibold text-slate-800 text-right">
+                                  {row.answer}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
 

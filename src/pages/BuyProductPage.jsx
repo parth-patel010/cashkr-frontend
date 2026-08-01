@@ -32,6 +32,7 @@ export default function BuyProductPage() {
   const [selectedKey, setSelectedKey] = useState('');
   const [showCheckout, setShowCheckout] = useState(false);
   const [shipping, setShipping] = useState(emptyShipping);
+  const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' | 'razorpay'
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,6 +79,58 @@ export default function BuyProductPage() {
     setShowCheckout(true);
   };
 
+  const shippingPayload = () => ({
+    name: shipping.name.trim(),
+    phone: shipping.phone.trim(),
+    address: shipping.address.trim(),
+    pincode: shipping.pincode.trim(),
+    city: shipping.city.trim(),
+    state: shipping.state.trim(),
+  });
+
+  const openRazorpayCheckout = async (session) => {
+    const ok = await buyService.loadRazorpayScript();
+    if (!ok || !window.Razorpay) {
+      throw new Error('Unable to load payment gateway. Please try again.');
+    }
+
+    return new Promise((resolve, reject) => {
+      const rzp = new window.Razorpay({
+        key: session.keyId,
+        amount: session.amountPaise,
+        currency: session.currency || 'INR',
+        name: 'DeviceKart',
+        description: `${selected?.label || 'Refurbished'} · ${product?.modelName || 'Device'}`,
+        order_id: session.razorpayOrderId,
+        prefill: {
+          name: shipping.name.trim(),
+          contact: shipping.phone.trim(),
+        },
+        theme: { color: '#0565E6' },
+        handler: async (response) => {
+          try {
+            await buyService.verifyPayment({
+              orderId: session.orderId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            resolve(session.orderId);
+          } catch (err) {
+            reject(err);
+          }
+        },
+        modal: {
+          ondismiss: () => reject(new Error('Payment cancelled')),
+        },
+      });
+      rzp.on('payment.failed', () => {
+        reject(new Error('Payment failed. Please try again.'));
+      });
+      rzp.open();
+    });
+  };
+
   const onPlaceOrder = async (e) => {
     e.preventDefault();
     if (!product || !selected || submitting) return;
@@ -93,21 +146,36 @@ export default function BuyProductPage() {
     setSubmitting(true);
     setError('');
     try {
+      const shippingData = shippingPayload();
+
+      if (paymentMethod === 'razorpay') {
+        const { data: session } = await buyService.createRazorpayOrder({
+          productId: product._id,
+          conditionKey: selected.key,
+          shipping: shippingData,
+        });
+        const orderId = await openRazorpayCheckout(session);
+        navigate(`/buy/order-confirmation/${orderId}`);
+        return;
+      }
+
       const { data } = await buyService.placeOrder({
         productId: product._id,
         conditionKey: selected.key,
-        shipping: {
-          name: shipping.name.trim(),
-          phone: shipping.phone.trim(),
-          address: shipping.address.trim(),
-          pincode: shipping.pincode.trim(),
-          city: shipping.city.trim(),
-          state: shipping.state.trim(),
-        },
+        paymentMethod: 'cod',
+        shipping: shippingData,
       });
       navigate(`/buy/order-confirmation/${data.orderId}`);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Unable to place order. Please try again.');
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Unable to place order. Please try again.';
+      if (msg !== 'Payment cancelled') {
+        setError(msg);
+      } else {
+        setError('Payment was cancelled. You can try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -273,6 +341,37 @@ export default function BuyProductPage() {
                     />
                   </div>
                 ))}
+                <div className="pt-2">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-500 mb-2">
+                    Payment method
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cod')}
+                      className={`text-left rounded-xl border-2 px-3.5 py-3 transition-all ${
+                        paymentMethod === 'cod'
+                          ? 'border-primary bg-primary-light'
+                          : 'border-[#E8EEF5] bg-white hover:border-gray-200'
+                      }`}
+                    >
+                      <div className="font-extrabold text-sm text-gray-900">Cash on Delivery</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">Pay when you receive</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('razorpay')}
+                      className={`text-left rounded-xl border-2 px-3.5 py-3 transition-all ${
+                        paymentMethod === 'razorpay'
+                          ? 'border-primary bg-primary-light'
+                          : 'border-[#E8EEF5] bg-white hover:border-gray-200'
+                      }`}
+                    >
+                      <div className="font-extrabold text-sm text-gray-900">Pay Online</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">UPI / Card / Netbanking</div>
+                    </button>
+                  </div>
+                </div>
                 {error ? <p className="text-sm text-red-600 font-semibold">{error}</p> : null}
                 <div className="flex gap-3 pt-2">
                   <button
@@ -287,7 +386,13 @@ export default function BuyProductPage() {
                     disabled={submitting}
                     className="flex-[2] bg-primary hover:bg-primary-dark text-white rounded-xl py-3 font-extrabold text-sm disabled:opacity-50 shadow-[0_4px_14px_rgba(5,101,230,0.20)]"
                   >
-                    {submitting ? 'Placing order...' : 'Place order'}
+                    {submitting
+                      ? paymentMethod === 'razorpay'
+                        ? 'Opening payment...'
+                        : 'Placing order...'
+                      : paymentMethod === 'razorpay'
+                        ? `Pay ${formatCurrency(selected?.price || 0)}`
+                        : 'Place COD order'}
                   </button>
                 </div>
               </form>

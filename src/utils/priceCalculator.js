@@ -3,6 +3,7 @@ import { RAM_PRICES, STORAGE_PRICES, CPU_PRICES, CPU_GEN_FACTORS } from './lapto
 import { findLenovoOverridePrice } from './lenovoPriceOverrides';
 import { findZbookPowerOverridePrice } from './hpZbookPowerOverrides';
 import { findRogChromebookOverridePrice } from './rogChromebookOverrides';
+import { findMacbookOverridePrice } from './macbookPriceOverrides';
 
 // ─── ISSUE DEDUCTION PERCENTAGES ────────────────────────────────────────────
 export const ISSUE_DEDUCTIONS = {
@@ -404,6 +405,34 @@ export function calculateLaptopPrice(device, selections) {
   let basePrice = 0;
 
   if (isAppleMacDevice(device)) {
+    // MacBook override table (Cashify + ₹1,000) — before catalog CPU/age math
+    const macOverride = findMacbookOverridePrice(device, {
+      ...selections,
+      yearBracket,
+      ram,
+      storage,
+    });
+    if (macOverride != null) {
+      let finalPrice = macOverride;
+      if (powerStatus === 'off') {
+        finalPrice = Math.max(Math.round((finalPrice * 0.05) / 10) * 10, 0);
+      } else {
+        finalPrice = Math.max(Math.round(finalPrice / 100) * 100, 0);
+      }
+      return {
+        basePrice: macOverride,
+        componentBase: macOverride,
+        ageAdjustment: 0,
+        powerDeduction: powerStatus === 'off' ? -(macOverride - finalPrice) : 0,
+        functionalDeduction: 0,
+        screenDeduction: 0,
+        bodyDeduction: 0,
+        accessoriesBonus: 0,
+        finalPrice,
+        priceSource: 'macbook_override',
+      };
+    }
+
     // ── MacBook / Apple logic (catalog base → CPU tier → age → deductions) ──
     const variants = device.variants || [];
     const selectedProcessor = selections.processor || '';

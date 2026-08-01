@@ -123,7 +123,19 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 {d.processor ? <InfoRow label="Processor" value={d.processor} /> : null}
                 {d.generation ? <InfoRow label="Generation" value={d.generation} /> : null}
                 {d.graphicsCard ? <InfoRow label="Graphic Card" value={d.graphicsCard} /> : null}
+                {d.hasDedicatedGpu != null && !d.graphicsCard ? (
+                  <InfoRow label="Dedicated GPU" value={boolLabel(d.hasDedicatedGpu)} />
+                ) : null}
+                {d.isGpuWorking != null ? (
+                  <InfoRow label="GPU Working" value={boolLabel(d.isGpuWorking)} />
+                ) : null}
                 {d.screenSize ? <InfoRow label="Screen Size" value={d.screenSize} /> : null}
+                {d.powerStatus ? (
+                  <InfoRow
+                    label="Power Status"
+                    value={d.powerStatus === 'on' ? 'Turns On' : d.powerStatus === 'off' ? 'Does Not Turn On' : d.powerStatus}
+                  />
+                ) : null}
                 {d.storageType ? <InfoRow label="Storage Type" value={d.storageType} /> : null}
                 {d.yearOfPurchase ? <InfoRow label="Year of Purchase" value={d.yearOfPurchase} /> : null}
                 {d.deviceAge ? <InfoRow label="Device Age" value={d.deviceAge} /> : null}
@@ -139,6 +151,7 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 <InfoRow label="Physical Issues" value={formatList(d.physicalIssues)} />
                 <InfoRow label="Technical Issues" value={formatList(d.technicalIssues)} />
                 <InfoRow label="Functional Issues" value={formatList(d.functionalIssues)} />
+                <InfoRow label="Body Issues" value={formatList(d.bodyIssues)} />
                 <InfoRow
                   label="Accessories"
                   value={Array.isArray(d.accessories) ? formatList(d.accessories) : d.accessories}
@@ -154,6 +167,18 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                   <InfoRow label="Has Other Issues" value={boolLabel(d.hasOtherIssues)} />
                 ) : null}
               </Section>
+
+              {Array.isArray(d.answerSummary) && d.answerSummary.length > 0 ? (
+                <Section icon={ClipboardCheck} title="Quiz Answers">
+                  {d.answerSummary.map((row, idx) => (
+                    <InfoRow
+                      key={`${row.question}-${idx}`}
+                      label={row.question}
+                      value={row.answer}
+                    />
+                  ))}
+                </Section>
+              ) : null}
 
               <Section icon={CreditCard} title="Pricing Breakdown">
                 <InfoRow label="Base Price" value={pb.basePrice != null ? `₹${pb.basePrice}` : null} />
@@ -331,8 +356,31 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 <InfoRow label="Condition" value={buy.conditionLabel} />
                 <InfoRow label="Price" value={buy.price != null ? `₹${buy.price}` : null} />
               </Section>
-              <Section icon={CreditCard} title="Amount">
-                <InfoRow label="Order Amount" value={`₹${buy.price || 0}`} />
+              <Section icon={CreditCard} title="Payment">
+                <InfoRow
+                  label="Payment Method"
+                  value={
+                    order.paymentMethod === 'razorpay'
+                      ? 'Pay Online (Razorpay)'
+                      : order.paymentMethod === 'cod'
+                        ? 'Cash on Delivery'
+                        : order.paymentMethod || 'COD'
+                  }
+                />
+                <InfoRow
+                  label="Payment Status"
+                  value={order.paymentStatus ? String(order.paymentStatus) : null}
+                />
+                <InfoRow
+                  label="Order Amount"
+                  value={`₹${order.amount ?? buy.price ?? 0}`}
+                />
+                {order.razorpayOrderId ? (
+                  <InfoRow label="Razorpay Order" value={order.razorpayOrderId} />
+                ) : null}
+                {order.razorpayPaymentId ? (
+                  <InfoRow label="Razorpay Payment" value={order.razorpayPaymentId} />
+                ) : null}
                 <InfoRow label="Status" value={order.status} />
               </Section>
             </>

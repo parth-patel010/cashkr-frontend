@@ -4,10 +4,11 @@
  * Applied BEFORE the Windows Component_Base algorithm.
  *
  * Catalog model names are often "Legion 9i Series" / "Yoga Book 9i Series" / "Yoga 9i Series"
- * (no gen in the title). Gen is inferred from the selected CPU:
+ * / "IdeaPad Slim 3i Series" (no gen in the title). Gen is inferred from the selected CPU:
  *   - Yoga Book: i7-13 → gen8, Ultra 7 → gen9, Ultra 7/9 Series 2 → gen10
  *   - Yoga 9i: i7-11 → gen6, i7-12 → gen7 (any i7 gen maps to nearest table row)
  *   - Legion 9i: Ultra 9, i9-13, i9-14 (any i9 gen maps to nearest table row)
+ *   - IdeaPad Slim 3: i3-11/12, i5-11/12, Ryzen 3/5/7
  */
 
 export const LENOVO_PRICE_OVERRIDES = [
@@ -57,6 +58,26 @@ export const LENOVO_PRICE_OVERRIDES = [
   { seriesKey: 'yoga9i', cpuKey: 'i7-12', ramGb: 8, storageGb: 256, age: '3plus', price: 31790 },
   { seriesKey: 'yoga9i', cpuKey: 'i7-12', ramGb: 16, storageGb: 512, age: '1to3', price: 35860 },
   { seriesKey: 'yoga9i', cpuKey: 'i7-12', ramGb: 16, storageGb: 512, age: '3plus', price: 33240 },
+
+  // IdeaPad Slim 3 / Slim 3i — Cashify (dealer sheet) + ₹1,000; same price both age buckets
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i3-11', ramGb: 8, storageGb: 256, age: '1to3', price: 23910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i3-11', ramGb: 8, storageGb: 256, age: '3plus', price: 23910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i3-11', ramGb: 8, storageGb: 512, age: '1to3', price: 33910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i3-11', ramGb: 8, storageGb: 512, age: '3plus', price: 33910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i3-12', ramGb: 8, storageGb: 512, age: '1to3', price: 38000 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i3-12', ramGb: 8, storageGb: 512, age: '3plus', price: 38000 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i5-11', ramGb: 8, storageGb: 512, age: '1to3', price: 41000 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i5-11', ramGb: 8, storageGb: 512, age: '3plus', price: 41000 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i5-12', ramGb: 8, storageGb: 512, age: '1to3', price: 45910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i5-12', ramGb: 8, storageGb: 512, age: '3plus', price: 45910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i5-12', ramGb: 16, storageGb: 512, age: '1to3', price: 49000 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'i5-12', ramGb: 16, storageGb: 512, age: '3plus', price: 49000 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'ryzen3', ramGb: 8, storageGb: 512, age: '1to3', price: 31500 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'ryzen3', ramGb: 8, storageGb: 512, age: '3plus', price: 31500 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'ryzen5', ramGb: 8, storageGb: 512, age: '1to3', price: 36910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'ryzen5', ramGb: 8, storageGb: 512, age: '3plus', price: 36910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'ryzen7', ramGb: 8, storageGb: 512, age: '1to3', price: 46910 },
+  { seriesKey: 'ideapadSlim3', cpuKey: 'ryzen7', ramGb: 8, storageGb: 512, age: '3plus', price: 46910 },
 ];
 
 function norm(value) {
@@ -97,7 +118,7 @@ function parseStorageGb(storage) {
   return null;
 }
 
-/** Detect catalog series: Legion 9i / Yoga Book 9i / Yoga 9i */
+/** Detect catalog series: Legion 9i / Yoga Book 9i / Yoga 9i / IdeaPad Slim 3 */
 export function detectLenovoSeriesKey(device) {
   const text = norm(`${device?.brand || ''} ${device?.modelName || ''} ${device?.slug || ''}`);
   if (!text) return null;
@@ -128,18 +149,29 @@ export function detectLenovoSeriesKey(device) {
     return 'yoga9i';
   }
 
+  // IdeaPad Slim 3 / Slim 3i (before broader IdeaPad matches)
+  if (
+    text.includes('ideapad slim 3') ||
+    text.includes('ideapad slim 3i') ||
+    text.includes('ideapad-slim-3') ||
+    (text.includes('slim 3') && text.includes('ideapad'))
+  ) {
+    return 'ideapadSlim3';
+  }
+
   return null;
 }
 
 /**
  * Map selected CPU → override cpuKey.
  * All i9 gens → i9-13 or i9-14 bucket; all i7 gens → i7-11 / i7-12 / i7-13.
+ * IdeaPad Slim 3 also uses i3 / i5 / Ryzen buckets.
  */
 export function detectLenovoCpuKey(cpu, seriesKey) {
   const c = norm(cpu);
   if (!c) return null;
 
-  const genMatch = c.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s*gen\b/) || c.match(/\bi[379]\s*[- ]?\s*(\d{1,2})\b/);
+  const genMatch = c.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s*gen\b/) || c.match(/\bi[3579]\s*[- ]?\s*(\d{1,2})\b/);
   const gen = genMatch ? parseInt(genMatch[1], 10) : null;
   const hasSeries2 = c.includes('series 2') || c.includes('series2');
 
@@ -152,6 +184,14 @@ export function detectLenovoCpuKey(cpu, seriesKey) {
   if (c.includes('ultra 7') || c.includes('ultra7')) {
     if (hasSeries2) return 'ultra7-s2';
     return 'ultra7';
+  }
+
+  // AMD Ryzen (IdeaPad Slim 3 sheet)
+  if (c.includes('ryzen')) {
+    if (/\bryzen\s*7\b/.test(c) || /\br7\b/.test(c)) return 'ryzen7';
+    if (/\bryzen\s*5\b/.test(c) || /\br5\b/.test(c)) return 'ryzen5';
+    if (/\bryzen\s*3\b/.test(c) || /\br3\b/.test(c)) return 'ryzen3';
+    return 'ryzen5';
   }
 
   // i9 — all gens
@@ -171,6 +211,23 @@ export function detectLenovoCpuKey(cpu, seriesKey) {
     if (seriesKey === 'yogaBook9i') return 'i7-13';
     if (seriesKey === 'yoga9i') return gen && gen >= 12 ? 'i7-12' : 'i7-11';
     return 'i7-13';
+  }
+
+  // i5
+  if (/\bi5\b/.test(c)) {
+    if (gen === 11) return 'i5-11';
+    if (gen === 12) return 'i5-12';
+    if (gen === 10) return 'i5-10';
+    if (seriesKey === 'ideapadSlim3') return gen && gen >= 12 ? 'i5-12' : 'i5-11';
+    return gen && gen >= 12 ? 'i5-12' : 'i5-11';
+  }
+
+  // i3
+  if (/\bi3\b/.test(c)) {
+    if (gen === 11) return 'i3-11';
+    if (gen === 12) return 'i3-12';
+    if (seriesKey === 'ideapadSlim3') return gen && gen >= 12 ? 'i3-12' : 'i3-11';
+    return gen && gen >= 12 ? 'i3-12' : 'i3-11';
   }
 
   return null;
@@ -227,6 +284,31 @@ export function findLenovoOverridePrice(device, selections = {}) {
         : seriesKey === 'yogaBook9i'
           ? ['i7-13', 'i7-12', 'i7-11']
           : ['i7-13', 'i7-12', 'i7-11'];
+    for (const key of order) {
+      const hit = candidates.find((r) => r.cpuKey === key);
+      if (hit) return hit.price;
+    }
+  }
+
+  // 3b) i5 / i3 for IdeaPad Slim 3
+  if (cpuKey.startsWith('i5-')) {
+    const order = ['i5-12', 'i5-11', 'i5-10'];
+    for (const key of order) {
+      const hit = candidates.find((r) => r.cpuKey === key);
+      if (hit) return hit.price;
+    }
+  }
+  if (cpuKey.startsWith('i3-')) {
+    const order = ['i3-12', 'i3-11'];
+    for (const key of order) {
+      const hit = candidates.find((r) => r.cpuKey === key);
+      if (hit) return hit.price;
+    }
+  }
+
+  // 3c) Ryzen fallbacks
+  if (cpuKey.startsWith('ryzen')) {
+    const order = [cpuKey, 'ryzen7', 'ryzen5', 'ryzen3'];
     for (const key of order) {
       const hit = candidates.find((r) => r.cpuKey === key);
       if (hit) return hit.price;

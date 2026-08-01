@@ -13,6 +13,7 @@ import PageCanvas from '../components/layout/PageCanvas';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { setLoginContext } from '../utils/loginContext';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
+import { formatCategoryQuizAnswerSummary } from '../utils/formatQuizAnswers';
 import {
   DEFAULT_EARBUDS_QUIZ,
   EARBUDS_OPTION_DETAILS,
@@ -150,14 +151,22 @@ export default function EarbudsConditionQuizPage() {
     return true;
   };
 
-  const buildQuizCtx = () => ({
-    category: 'earbuds',
-    brand: device.brand,
-    modelName: device.modelName,
-    slug: device.slug,
-    storage: storage || device.variants?.[0]?.storage || '',
-    quizPath: `/sell/earbuds/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
-  });
+  const buildQuizCtx = (finalAnswers = null) => {
+    const answers = finalAnswers || {
+      ...normalizedAnswers,
+      accessories: normalizedAnswers.accessories || [],
+    };
+    return {
+      category: 'earbuds',
+      brand: device.brand,
+      modelName: device.modelName,
+      slug: device.slug,
+      storage: storage || device.variants?.[0]?.storage || '',
+      quizPath: `/sell/earbuds/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+      answers,
+      answerSummary: formatCategoryQuizAnswerSummary(quiz, answers),
+    };
+  };
 
   const handleGetBestPrice = () => {
     const finalAnswers = {
@@ -170,7 +179,7 @@ export default function EarbudsConditionQuizPage() {
       answers: finalAnswers,
       deviceSlug: device.slug,
     });
-    const quizCtx = buildQuizCtx();
+    const quizCtx = buildQuizCtx(finalAnswers);
     updateQuote({
       device: {
         brand: device.brand,
@@ -180,6 +189,7 @@ export default function EarbudsConditionQuizPage() {
         imageUrl: device.imageUrl || '',
         storage: quizCtx.storage,
         quizAnswers: finalAnswers,
+        answerSummary: quizCtx.answerSummary,
       },
       priceBreakdown: result,
     });

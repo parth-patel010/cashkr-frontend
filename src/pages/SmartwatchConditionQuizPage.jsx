@@ -14,6 +14,7 @@ import PageCanvas from '../components/layout/PageCanvas';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { setLoginContext } from '../utils/loginContext';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
+import { formatCategoryQuizAnswerSummary } from '../utils/formatQuizAnswers';
 import {
   DEFAULT_SMARTWATCH_QUIZ,
   SMARTWATCH_SCREEN_DETAILS,
@@ -176,6 +177,7 @@ export default function SmartwatchConditionQuizPage() {
       answers: finalAnswers,
       deviceSlug: device.slug,
     });
+    const answerSummary = formatCategoryQuizAnswerSummary(quiz, finalAnswers);
     const quizCtx = {
       category: 'smartwatch',
       brand: device.brand,
@@ -183,6 +185,8 @@ export default function SmartwatchConditionQuizPage() {
       slug: device.slug,
       storage: storage || device.variants?.[0]?.storage || '',
       quizPath: `/sell/smartwatch/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+      answers: finalAnswers,
+      answerSummary,
     };
     updateQuote({
       device: {
@@ -193,6 +197,7 @@ export default function SmartwatchConditionQuizPage() {
         imageUrl: device.imageUrl || '',
         storage: quizCtx.storage,
         quizAnswers: finalAnswers,
+        answerSummary,
       },
       priceBreakdown: result,
     });
@@ -204,6 +209,11 @@ export default function SmartwatchConditionQuizPage() {
   };
 
   const handleSchedulePickup = () => {
+    const finalAnswers = {
+      ...normalizedAnswers,
+      functional: normalizedAnswers.functional || [],
+      accessories: normalizedAnswers.accessories || [],
+    };
     const quizCtx = {
       category: 'smartwatch',
       brand: device.brand,
@@ -211,6 +221,8 @@ export default function SmartwatchConditionQuizPage() {
       slug: device.slug,
       storage: storage || device.variants?.[0]?.storage || '',
       quizPath: `/sell/smartwatch/${encodeURIComponent(String(brand || device.brand || '').toLowerCase())}/${device.slug}/quiz`,
+      answers: finalAnswers,
+      answerSummary: formatCategoryQuizAnswerSummary(quiz, finalAnswers),
     };
     setLoginContext(quizCtx);
     if (isAuthenticated) reportLastQuizDevice(quizCtx);

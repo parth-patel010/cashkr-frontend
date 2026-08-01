@@ -14,6 +14,8 @@ import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
+import { reportLastQuizDevice } from '../utils/reportLastQuiz';
+import { formatLaptopQuizAnswerSummary } from '../utils/formatQuizAnswers';
 
 const STEPS = [
   { id: 'specs', label: 'Specs' },
@@ -136,12 +138,39 @@ export default function LaptopConditionQuizPage() {
 
   const redirectToLogin = (pendingShowResult = false) => {
     persistQuizState({ pendingShowResult });
+    const ageLabel = AGE_OPTIONS.find((o) => o.key === age)?.label || age;
+    const answerSummary = formatLaptopQuizAnswerSummary({
+      specs,
+      age,
+      ageLabel,
+      powerStatus,
+      screenSize,
+      hasGpu,
+      isGpuWorking,
+      functionalIssues: issuesList,
+      screenIssues: screenIssuesList,
+      bodyIssues: bodyIssuesList,
+      accessories,
+    });
     setLoginContext({
       category: 'laptop',
       brand: device?.brand || brand,
       modelName: device?.modelName || '',
       slug,
+      storage: specs?.storage || '',
       quizPath: getQuizReturnPath(),
+      answerSummary,
+      answers: {
+        powerStatus,
+        screenSize,
+        hasGpu,
+        isGpuWorking,
+        functionalIssues: issuesList,
+        screenIssues: screenIssuesList,
+        bodyIssues: bodyIssuesList,
+        accessories,
+        age,
+      },
     });
     const returnUrl = encodeURIComponent(getQuizReturnPath());
     navigate(`/login?returnUrl=${returnUrl}`);
@@ -279,11 +308,31 @@ export default function LaptopConditionQuizPage() {
         powerStatus,
         screenSize,
         hasGpu: hasGpu === 'yes',
+        hasDedicatedGpu: hasGpu === 'yes',
         isGpuWorking: isGpuWorking === 'yes',
+        graphicsCard:
+          hasGpu === 'yes'
+            ? `Dedicated (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})`
+            : hasGpu === 'no'
+              ? 'Not Available'
+              : undefined,
         functionalIssues: issuesList,
         screenIssues: screenIssuesList,
         bodyIssues: bodyIssuesList,
-        accessories
+        accessories,
+        answerSummary: formatLaptopQuizAnswerSummary({
+          specs,
+          age,
+          ageLabel: AGE_OPTIONS.find(o => o.key === age)?.label || age,
+          powerStatus,
+          screenSize,
+          hasGpu,
+          isGpuWorking,
+          functionalIssues: issuesList,
+          screenIssues: screenIssuesList,
+          bodyIssues: bodyIssuesList,
+          accessories,
+        }),
       },
       priceBreakdown: breakdown,
       price: currentPrice
@@ -326,7 +375,40 @@ export default function LaptopConditionQuizPage() {
     }
 
     const ageLabel = AGE_OPTIONS.find(o => o.key === age)?.label || age;
-    
+    const answerSummary = formatLaptopQuizAnswerSummary({
+      specs,
+      age,
+      ageLabel,
+      powerStatus,
+      screenSize,
+      hasGpu,
+      isGpuWorking,
+      functionalIssues: issuesList,
+      screenIssues: screenIssuesList,
+      bodyIssues: bodyIssuesList,
+      accessories,
+    });
+    const quizCtx = {
+      category: 'laptop',
+      brand: device?.brand || brand,
+      modelName: device.modelName,
+      slug,
+      storage: specs?.storage || '',
+      quizPath: getQuizReturnPath(),
+      answerSummary,
+      answers: {
+        powerStatus,
+        screenSize,
+        hasGpu,
+        isGpuWorking,
+        functionalIssues: issuesList,
+        screenIssues: screenIssuesList,
+        bodyIssues: bodyIssuesList,
+        accessories,
+        age,
+      },
+    };
+
     updateQuote({
       device: {
         ...device,
@@ -340,16 +422,24 @@ export default function LaptopConditionQuizPage() {
         powerStatus,
         screenSize,
         hasGpu: hasGpu === 'yes',
+        hasDedicatedGpu: hasGpu === 'yes',
         isGpuWorking: isGpuWorking === 'yes',
+        graphicsCard:
+          hasGpu === 'yes'
+            ? `Dedicated (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})`
+            : 'Not Available',
         functionalIssues: issuesList,
         screenIssues: screenIssuesList,
         bodyIssues: bodyIssuesList,
-        accessories: accessories
+        accessories,
+        answerSummary,
       },
       priceBreakdown: breakdown,
       price: currentPrice
     });
-    
+
+    setLoginContext(quizCtx);
+    reportLastQuizDevice(quizCtx);
     setShowResult(true);
   };
 

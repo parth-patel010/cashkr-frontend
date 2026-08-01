@@ -72,9 +72,24 @@ export default function BuyOrderConfirmationPage() {
                   Condition: {snap.conditionLabel || snap.conditionKey}
                 </p>
                 <p className="text-base font-extrabold text-primary mt-2">
-                  {formatCurrency(snap.price || 0)}
+                  {formatCurrency(snap.price || order.amount || 0)}
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="bg-[#F7F9FC] rounded-2xl border border-[#E8EEF5] p-4 sm:p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Payment method</p>
+              <p className="text-sm font-bold text-gray-900 mt-1">
+                {order.paymentMethod === 'razorpay' ? 'Pay Online (Razorpay)' : 'Cash on Delivery'}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Payment status</p>
+              <p className="text-sm font-bold text-gray-900 mt-1 capitalize">
+                {order.paymentStatus || (order.paymentMethod === 'cod' ? 'pending' : '—')}
+              </p>
             </div>
           </div>
 
