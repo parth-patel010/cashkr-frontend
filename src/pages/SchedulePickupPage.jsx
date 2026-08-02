@@ -1,11 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
 import { orderService } from '../services/order.service';
 import { userService } from '../services/user.service';
 import { formatCurrency } from '../utils/formatCurrency';
-import { getNextDays, formatDate, formatDateISO, TIME_SLOTS, isTimeSlotAvailable } from '../utils/dateUtils';
+import {
+  getNextDays,
+  formatDate,
+  formatDateISO,
+  TIME_SLOTS,
+  isTimeSlotAvailable,
+  getIndiaNow,
+} from '../utils/dateUtils';
 import PageCanvas from '../components/layout/PageCanvas';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneInitiateCheckout, isMobileQuote } from '../utils/metaPixel';
@@ -70,7 +77,8 @@ export default function SchedulePickupPage() {
     }
   }, [paymentType, user, selectedPaymentId]);
 
-  const days = getNextDays(7);
+  const days = useMemo(() => getNextDays(7), []);
+  const todayKey = getIndiaNow().dateKey;
 
   // Clear slot if it is no longer available for the selected date
   useEffect(() => {
@@ -255,13 +263,16 @@ export default function SchedulePickupPage() {
                 {/* Date Selection */}
                 <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                   {days.map(d => {
-                    const isSelected = selectedDate && formatDateISO(selectedDate) === formatDateISO(d);
-                    const dateParts = formatDate(d).split(', ');
-                    const dayName = dateParts[0];
+                    const iso = formatDateISO(d);
+                    const isSelected = selectedDate && formatDateISO(selectedDate) === iso;
+                    const isToday = iso === todayKey;
+                    const india = getIndiaNow(d);
+                    const dayName = isToday ? 'Today' : india.weekday;
 
                     return (
                       <button 
-                        key={d.toISOString()} 
+                        key={iso} 
+                        type="button"
                         onClick={() => {
                           setSelectedDate(d);
                           setSelectedSlot(null);
@@ -269,11 +280,13 @@ export default function SchedulePickupPage() {
                         className={`min-w-[88px] p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-0.5
                           ${isSelected ? 'border-primary bg-primary-light' : 'border-[#E8EEF5] bg-[#F7F9FC] hover:border-gray-200'}`}
                       >
-                        <span className={`text-[10px] font-extrabold uppercase tracking-widest ${isSelected ? 'text-primary' : 'text-gray-400'}`}>
+                        <span className={`text-[10px] font-extrabold uppercase tracking-widest ${isSelected || isToday ? 'text-primary' : 'text-gray-400'}`}>
                           {dayName}
                         </span>
-                        <span className="text-2xl font-extrabold text-gray-900">{d.getDate()}</span>
-                        <span className="text-xs font-bold text-gray-400">{d.toLocaleDateString('en-IN', { month: 'short' })}</span>
+                        <span className="text-2xl font-extrabold text-gray-900">{india.day}</span>
+                        <span className="text-xs font-bold text-gray-400">
+                          {formatDate(d).split(' ').pop()}
+                        </span>
                       </button>
                     );
                   })}

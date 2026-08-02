@@ -1,4 +1,5 @@
-const INDIA_TZ = 'Asia/Kolkata';
+/** India has no DST — IST is always UTC+5:30 */
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
 export const TIME_SLOTS = [
   { label: '10:00 AM - 12:00 PM', value: '10am-12pm', popular: true, startHour: 10 },
@@ -12,67 +13,60 @@ function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
-/** Current calendar date + hour in India (Asia/Kolkata). */
+/** Wall-clock parts in India Standard Time (independent of browser timezone / Intl quirks). */
 export function getIndiaNow(now = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: INDIA_TZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23',
-    weekday: 'short',
-  }).formatToParts(now);
-
-  const get = (type) => parts.find((p) => p.type === type)?.value;
-  let hour = parseInt(get('hour'), 10);
-  if (hour === 24) hour = 0;
-
-  const year = parseInt(get('year'), 10);
-  const month = parseInt(get('month'), 10);
-  const day = parseInt(get('day'), 10);
-  const weekday = get('weekday'); // Mon, Tue, ... Sun
-
+  const ist = new Date(now.getTime() + IST_OFFSET_MS);
+  const year = ist.getUTCFullYear();
+  const month = ist.getUTCMonth() + 1;
+  const day = ist.getUTCDate();
+  const hour = ist.getUTCHours();
+  const dow = ist.getUTCDay(); // 0 = Sunday
   return {
     year,
     month,
     day,
     hour,
-    weekday,
+    dow,
     dateKey: `${year}-${pad2(month)}-${pad2(day)}`,
-    isSunday: weekday === 'Sun',
+    isSunday: dow === 0,
+    weekday: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow],
   };
 }
 
-/** Date object anchored at noon IST for a given India calendar day. */
+/** Date anchored at noon IST for a given India calendar day. */
 export function indiaCalendarDate(year, month, day) {
-  return new Date(`${year}-${pad2(month)}-${pad2(day)}T12:00:00+05:30`);
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0) - IST_OFFSET_MS);
 }
 
-function addIndiaDays(year, month, day, delta) {
-  const base = indiaCalendarDate(year, month, day);
-  base.setTime(base.getTime() + delta * 24 * 60 * 60 * 1000);
-  const next = getIndiaNow(base);
-  return { year: next.year, month: next.month, day: next.day, weekday: next.weekday, isSunday: next.isSunday, dateKey: next.dateKey };
+function addCalendarDays(year, month, day, delta) {
+  const utc = new Date(Date.UTC(year, month - 1, day + delta, 12, 0, 0));
+  const y = utc.getUTCFullYear();
+  const m = utc.getUTCMonth() + 1;
+  const d = utc.getUTCDate();
+  const dow = utc.getUTCDay();
+  return {
+    year: y,
+    month: m,
+    day: d,
+    dow,
+    dateKey: `${y}-${pad2(m)}-${pad2(d)}`,
+    isSunday: dow === 0,
+    weekday: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow],
+  };
 }
 
 export function formatDate(date) {
   return new Intl.DateTimeFormat('en-IN', {
-    timeZone: INDIA_TZ,
     weekday: 'short',
     day: 'numeric',
     month: 'short',
+    timeZone: 'Asia/Kolkata',
   }).format(date);
 }
 
 /** India calendar date YYYY-MM-DD. */
 export function formatDateISO(date) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: INDIA_TZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
+  return getIndiaNow(date).dateKey;
 }
 
 /**
@@ -97,38 +91,25 @@ export function hasAvailableTimeSlots(date, now = new Date()) {
 }
 
 /**
- * Next `count` pickup days in India time.
- * - Includes today (even Sunday) when at least one slot is still open.
- * - Skips future Sundays.
+ * Next `count` pickup days in IST.
+ * Always puts today first when any slot is still open (including Sunday).
+ * Skips later Sundays.
  */
 export function getNextDays(count = 7, now = new Date()) {
   const days = [];
   const indiaNow = getIndiaNow(now);
-  let cursor = {
-    year: indiaNow.year,
-    month: indiaNow.month,
-    day: indiaNow.day,
-    weekday: indiaNow.weekday,
-    isSunday: indiaNow.isSunday,
-    dateKey: indiaNow.dateKey,
-  };
+  const today = indiaCalendarDate(indiaNow.year, indiaNow.month, indiaNow.day);
 
-  const todayDate = indiaCalendarDate(cursor.year, cursor.month, cursor.day);
-  if (!hasAvailableTimeSlots(todayDate, now)) {
-    cursor = addIndiaDays(cursor.year, cursor.month, cursor.day, 1);
+  if (hasAvailableTimeSlots(today, now)) {
+    days.push(today);
   }
 
-  // Safety cap so we never loop forever
-  for (let i = 0; days.length < count && i < count + 14; i++) {
-    const d = indiaCalendarDate(cursor.year, cursor.month, cursor.day);
-    const isToday = cursor.dateKey === indiaNow.dateKey;
-
-    // Allow today even on Sunday; skip other Sundays
-    if (!cursor.isSunday || isToday) {
-      days.push(d);
+  let cursor = addCalendarDays(indiaNow.year, indiaNow.month, indiaNow.day, 1);
+  for (let i = 0; days.length < count && i < count + 21; i++) {
+    if (!cursor.isSunday) {
+      days.push(indiaCalendarDate(cursor.year, cursor.month, cursor.day));
     }
-
-    cursor = addIndiaDays(cursor.year, cursor.month, cursor.day, 1);
+    cursor = addCalendarDays(cursor.year, cursor.month, cursor.day, 1);
   }
 
   return days;
