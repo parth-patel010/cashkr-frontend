@@ -71,7 +71,7 @@ export const CATEGORY_SEO = {
   },
   tv: {
     label: 'TVs',
-    brandPath: '/sell/tv/brand',
+    brandPath: '/sell/tv',
     pathPrefix: '/sell/tv',
     category: 'tv',
     title: 'Sell Old TVs Online — Instant Cash | DeviceKart',
@@ -89,7 +89,7 @@ export const CATEGORY_SEO = {
   },
   refrigerator: {
     label: 'Refrigerators',
-    brandPath: '/sell/refrigerator/brand',
+    brandPath: '/sell/refrigerator',
     pathPrefix: '/sell/refrigerator',
     category: 'refrigerator',
     title: 'Sell Old Refrigerators Online — Instant Cash | DeviceKart',

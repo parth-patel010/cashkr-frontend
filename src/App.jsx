@@ -44,6 +44,8 @@ import BuyProductListPage from './pages/BuyProductListPage.jsx';
 import BuyProductPage from './pages/BuyProductPage.jsx';
 import BuyOrderConfirmationPage from './pages/BuyOrderConfirmationPage.jsx';
 import RepairPage from './pages/RepairPage.jsx';
+import SellTvRequestPage from './pages/SellTvRequestPage.jsx';
+import SellFridgeRequestPage from './pages/SellFridgeRequestPage.jsx';
 import WhatsAppButton from './components/WhatsAppButton.jsx';
 
 // Laptop Pages
@@ -86,6 +88,7 @@ import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
 import AdminChat from './pages/admin/AdminChat.jsx';
 import AdminPartners from './pages/admin/AdminPartners.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
+import AdminLeads from './pages/admin/AdminLeads.jsx';
 import AdminPincodes from './pages/admin/AdminPincodes.jsx';
 import AdminAnalytics from './pages/admin/AdminAnalytics.jsx';
 import SellCategoryBrandPage from './pages/SellCategoryBrandPage.jsx';
@@ -143,6 +146,8 @@ function App() {
           <Route path="/buy" element={<BuyHubPage />} />
           <Route path="/sell" element={<SellHubPage />} />
           <Route path="/repair" element={<RepairPage />} />
+          <Route path="/sell/tv" element={<SellTvRequestPage />} />
+          <Route path="/sell/refrigerator" element={<SellFridgeRequestPage />} />
           <Route path="/buy/order-confirmation/:orderId" element={<ProtectedRoute><BuyOrderConfirmationPage /></ProtectedRoute>} />
           <Route path="/buy/:category/brand" element={<BuyBrandSelectionPage />} />
           <Route path="/buy/:category/:brand/:slug" element={<BuyProductPage />} />
@@ -220,6 +225,7 @@ function App() {
             <Route path="chat" element={<AdminChat />} />
             <Route path="partners" element={<AdminPartners />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="leads" element={<AdminLeads />} />
             <Route path="pincodes" element={<AdminPincodes />} />
           </Route>
 

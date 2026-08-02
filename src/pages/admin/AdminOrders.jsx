@@ -544,7 +544,9 @@ export default function AdminOrders() {
   const handleAssignVendor = async (order, vendorId) => {
     setAssigning(true);
     try {
-      const res = await adminService.assignOrderVendor(order.orderId || order._id, vendorId);
+      // Prefer Mongo _id so the API never CastErrors on human orderId strings
+      const idForApi = order._id || order.orderId;
+      const res = await adminService.assignOrderVendor(idForApi, vendorId);
       const updated = res.data.order;
       setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...updated } : o)));
       setSelectedOrder((prev) => (prev && prev._id === order._id ? { ...prev, ...updated } : prev));

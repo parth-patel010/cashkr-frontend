@@ -146,6 +146,10 @@ export const adminService = {
   getRepairOrders: (params) => adminApi.get('/admin/repair-orders', { params }),
   updateRepairOrderStatus: (id, status) => adminApi.patch(`/admin/repair-orders/${id}/status`, { status }),
 
+  // Leads (TV / Fridge / Repair forms)
+  getLeads: (params) => adminApi.get('/admin/leads', { params }),
+  updateLeadStatus: (id, status) => adminApi.patch(`/admin/leads/${id}/status`, { status }),
+
   // Live chat
   getChatConversations: (params) => adminApi.get('/admin/chat/conversations', { params }),
   getChatMessages: (id) => adminApi.get(`/admin/chat/conversations/${id}/messages`),

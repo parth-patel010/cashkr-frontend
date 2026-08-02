@@ -17,7 +17,8 @@ import {
   Tag,
   Bell,
   Shield,
-  ListChecks
+  ListChecks,
+  Inbox
 } from 'lucide-react';
 import './admin.css';
 
@@ -47,6 +48,7 @@ export default function AdminLayout() {
     if (path.includes('/category-quizzes')) return 'Category Quizzes';
     if (path.includes('/security-audit')) return 'Security Audit';
     if (path.includes('/repair-services')) return 'Repair Prices (Model-wise)';
+    if (path.includes('/leads')) return 'Leads (TV / Fridge / Repair)';
     if (path.includes('/chat')) return 'Live Chat';
     if (path.includes('/partners')) return 'Partners';
     if (path.includes('/orders')) return 'Orders';
@@ -201,7 +203,15 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink 
-            to="/admin/pincodes" 
+            to="/admin/leads" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Inbox />
+            <span>Leads</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/pincodes"
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
           >
             <MapPin />

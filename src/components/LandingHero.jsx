@@ -105,6 +105,8 @@ const CATEGORY_ROUTE_MAP = {
   tablet: "/sell-tablet",
   laptop: "/sell-old-laptops",
   mac: "/sell-imac",
+  tv: "/sell/tv",
+  refrigerator: "/sell/refrigerator",
 };
 
 function SmartUnderline() {
@@ -231,8 +233,12 @@ export default function LandingHero({ sellPath = "/sell" }) {
   };
 
   const goToResult = (result) => {
-    const base = CATEGORY_ROUTE_MAP[result.category] || "/sell-old-mobile-phones";
-    navigate(`${base}/${encodeURIComponent(result.brand)}/${result.slug}`);
+    if (result.category === "tv" || result.category === "refrigerator") {
+      navigate(CATEGORY_ROUTE_MAP[result.category]);
+    } else {
+      const base = CATEGORY_ROUTE_MAP[result.category] || "/sell-old-mobile-phones";
+      navigate(`${base}/${encodeURIComponent(result.brand)}/${result.slug}`);
+    }
     setQuery("");
     setResults([]);
     setShowResults(false);

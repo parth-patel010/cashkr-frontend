@@ -55,6 +55,12 @@ api.interceptors.request.use((config) => {
   if (appKey) {
     config.headers['X-DeviceKart-App-Key'] = appKey;
   }
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type'];
+      delete config.headers['content-type'];
+    }
+  }
   return config;
 });
 

@@ -26,9 +26,9 @@ export const FALLBACK_WEBSITE_CATEGORIES = [
   { key: 'tablet', label: 'Tablet', sellPath: '/sell-tablet/brand', buyPath: '/buy/tablet/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 2 },
   { key: 'laptop', label: 'Laptop', sellPath: '/sell-old-laptops/brand', buyPath: '/buy/laptop/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 3 },
   { key: 'mac', label: 'Mac', sellPath: '/sell-imac/brand', buyPath: '/buy/mac/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 4 },
-  { key: 'tv', label: 'TV', sellPath: '/sell/tv/brand', buyPath: '/buy/tv/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 5 },
+  { key: 'tv', label: 'TV', sellPath: '/sell/tv', buyPath: '/buy/tv/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 5 },
   { key: 'earbuds', label: 'Earbuds', sellPath: '/sell/earbuds/brand', buyPath: '/buy/earbuds/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 6 },
-  { key: 'refrigerator', label: 'Refrigerator', sellPath: '/sell/refrigerator/brand', buyPath: '/buy/refrigerator/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 7 },
+  { key: 'refrigerator', label: 'Refrigerator', sellPath: '/sell/refrigerator', buyPath: '/buy/refrigerator/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 7 },
   { key: 'smartwatch', label: 'Smartwatch', sellPath: '/sell/smartwatch/brand', buyPath: '/buy/smartwatch/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 8 },
   { key: 'gaming', label: 'Gaming Console', sellPath: '/sell/gaming/brand', buyPath: '/buy/gaming/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 9 },
 ];
