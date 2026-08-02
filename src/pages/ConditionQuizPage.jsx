@@ -109,14 +109,13 @@ export default function ConditionQuizPage() {
   const [technicalIssues, setTechnicalIssues] = useState([]);
   const [selectedAccessories, setSelectedAccessories] = useState([]);
 
-  // When device loads and is special, remove Bill from default selection
+  // Special (out-of-warranty) models: no age/warranty quiz — persist as out of warranty
   useEffect(() => {
-    if (device && isSpecialModel(device.brand, device.modelName)) {
-      setSelectedAccessories(prev => prev.filter(a => a !== 'Bill'));
-      // Auto-set warranty/age so they don't block anything
-      setUnderWarranty(true);
-    }
-  }, [device]);
+    if (!device || !isSpecialModel(device.brand, device.modelName)) return;
+    setSelectedAccessories((prev) => prev.filter((a) => a !== 'Bill'));
+    if (underWarranty !== false) setUnderWarranty(false);
+    if (deviceAge !== 'Above 11 Months') setDeviceAge('Above 11 Months');
+  }, [device, underWarranty, deviceAge]);
 
   const [showResult, setShowResult] = useState(false);
   const [priceAnimating, setPriceAnimating] = useState(false);
@@ -296,11 +295,11 @@ export default function ConditionQuizPage() {
         category: 'mobile',
         imageUrl: device.imageUrl || '',
         storage: storage || device.variants[0].storage,
-        deviceAge,
+        deviceAge: special ? 'Above 11 Months' : deviceAge,
         ableToMakeCalls,
         isTouchScreenWorking,
         isScreenOriginal,
-        underWarranty,
+        underWarranty: special ? false : underWarranty,
         hasGSTBill: selectedAccessories.includes('Bill'),
         eSIMSupport,
         physicalIssues,
@@ -318,7 +317,7 @@ export default function ConditionQuizPage() {
       });
     }
     setShowResult(true);
-  }, [breakdown, isAuthenticated, device, currentPrice, storage, deviceAge, ableToMakeCalls, isTouchScreenWorking, isScreenOriginal, underWarranty, eSIMSupport, physicalIssues, technicalIssues, selectedAccessories, updateQuote]);
+  }, [breakdown, isAuthenticated, device, currentPrice, storage, deviceAge, ableToMakeCalls, isTouchScreenWorking, isScreenOriginal, underWarranty, eSIMSupport, physicalIssues, technicalIssues, selectedAccessories, updateQuote, special]);
 
   const handleGetBestPrice = () => {
     if (!isAuthenticated) {
@@ -334,11 +333,11 @@ export default function ConditionQuizPage() {
         category: 'mobile',
         imageUrl: device.imageUrl || '',
         storage: storage || device.variants[0].storage,
-        deviceAge,
+        deviceAge: special ? 'Above 11 Months' : deviceAge,
         ableToMakeCalls,
         isTouchScreenWorking,
         isScreenOriginal,
-        underWarranty,
+        underWarranty: special ? false : underWarranty,
         hasGSTBill: selectedAccessories.includes('Bill'),
         eSIMSupport,
         physicalIssues,
@@ -445,8 +444,8 @@ export default function ConditionQuizPage() {
                         leadTrackedRef.current = false;
                         setShowResult(false);
                         setCurrentStepIndex(0);
-                        setDeviceAge('3 - 6 Months');
-                        setUnderWarranty(special ? true : null);
+                        setDeviceAge(special ? 'Above 11 Months' : '3 - 6 Months');
+                        setUnderWarranty(special ? false : null);
                         seteSIMSupport(null);
                         setAbleToMakeCalls(null);
                         setIsTouchScreenWorking(null);

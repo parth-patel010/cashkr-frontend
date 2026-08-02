@@ -39,6 +39,7 @@ export const adminService = {
   // Users
   getUsers: (params) => adminApi.get('/admin/users', { params }),
   getUserById: (id) => adminApi.get(`/admin/users/${id}`),
+  exportUsers: (params) => adminApi.get('/admin/users/export', { params, responseType: 'blob' }),
 
   // Devices
   getDevices: (params) => adminApi.get('/admin/devices', { params }),

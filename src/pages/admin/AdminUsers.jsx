@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
-import { Search, ChevronLeft, ChevronRight, X, ClipboardList, Calendar, Phone, Mail, User, Smartphone } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, ClipboardList, Calendar, Phone, Mail, User, Smartphone, Download } from 'lucide-react';
 import './admin.css';
 
 export default function AdminUsers() {
@@ -11,6 +11,7 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetailLoading, setUserDetailLoading] = useState(false);
   const [userOrders, setUserOrders] = useState([]);
@@ -56,6 +57,27 @@ export default function AdminUsers() {
     setUserOrders([]);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = {};
+      if (debouncedSearch) params.search = debouncedSearch;
+      const res = await adminService.exportUsers(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to export users');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'completed': return 'admin-badge admin-badge-green';
@@ -70,7 +92,7 @@ export default function AdminUsers() {
       
       {/* Top Filter Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative">
+        <div className="relative flex-1 max-w-md">
           <input
             type="text"
             className="admin-search pl-10"
@@ -80,8 +102,19 @@ export default function AdminUsers() {
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
         </div>
-        <div className="text-sm font-semibold text-slate-500">
-          Total Users: <span className="text-slate-900 font-bold">{total}</span>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-sm font-semibold text-slate-500">
+            Total Users: <span className="text-slate-900 font-bold">{total}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-60"
+          >
+            <Download size={14} />
+            {exporting ? 'Exporting...' : 'Download Excel'}
+          </button>
         </div>
       </div>
 

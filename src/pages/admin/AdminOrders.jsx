@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
 import { Search, ChevronLeft, ChevronRight, X, MapPin, Smartphone, User, CreditCard, Download, Camera, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { isSpecialModel } from '../../utils/specialModels';
 import './admin.css';
 
 const ORDER_TYPES = [
@@ -138,13 +139,28 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 ) : null}
                 {d.storageType ? <InfoRow label="Storage Type" value={d.storageType} /> : null}
                 {d.yearOfPurchase ? <InfoRow label="Year of Purchase" value={d.yearOfPurchase} /> : null}
-                {d.deviceAge ? <InfoRow label="Device Age" value={d.deviceAge} /> : null}
+                {(() => {
+                  const specialPhone = isSpecialModel(d.brand, d.modelName);
+                  if (specialPhone) {
+                    return (
+                      <>
+                        <InfoRow label="Device Age" value="N/A (out of warranty model)" />
+                        <InfoRow label="Under Warranty" value="No" />
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      {d.deviceAge ? <InfoRow label="Device Age" value={d.deviceAge} /> : null}
+                      <InfoRow label="Under Warranty" value={boolLabel(d.underWarranty)} />
+                    </>
+                  );
+                })()}
                 {d.batteryHealth ? <InfoRow label="Battery Health" value={d.batteryHealth} /> : null}
                 {d.screenCondition ? <InfoRow label="Screen Condition" value={d.screenCondition} /> : null}
                 {d.bodyCondition ? <InfoRow label="Body Condition" value={d.bodyCondition} /> : null}
                 <InfoRow label="Touchscreen Working" value={boolLabel(d.isTouchScreenWorking)} />
                 <InfoRow label="Screen Original" value={boolLabel(d.isScreenOriginal)} />
-                <InfoRow label="Under Warranty" value={boolLabel(d.underWarranty)} />
                 <InfoRow label="Has GST Bill" value={boolLabel(d.hasGSTBill)} />
                 <InfoRow label="Able to Make Calls" value={boolLabel(d.ableToMakeCalls)} />
                 {d.eSIMSupport ? <InfoRow label="eSIM Support" value={d.eSIMSupport} /> : null}
