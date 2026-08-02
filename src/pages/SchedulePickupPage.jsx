@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { orderService } from '../services/order.service';
 import { userService } from '../services/user.service';
 import { formatCurrency } from '../utils/formatCurrency';
-import { getNextDays, formatDate, formatDateISO, TIME_SLOTS } from '../utils/dateUtils';
+import { getNextDays, formatDate, formatDateISO, TIME_SLOTS, isTimeSlotAvailable } from '../utils/dateUtils';
 import PageCanvas from '../components/layout/PageCanvas';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneInitiateCheckout, isMobileQuote } from '../utils/metaPixel';
@@ -72,11 +72,25 @@ export default function SchedulePickupPage() {
 
   const days = getNextDays(7);
 
+  // Clear slot if it is no longer available for the selected date
+  useEffect(() => {
+    if (!selectedDate || !selectedSlot) return;
+    if (!isTimeSlotAvailable(selectedDate, selectedSlot)) {
+      setSelectedSlot(null);
+    }
+  }, [selectedDate, selectedSlot]);
+
   const handleCreateOrder = async () => {
     if (submittingRef.current) return;
 
     if (!selectedAddressId || !selectedDate || !selectedSlot) {
       setError('Please complete all selections');
+      return;
+    }
+
+    if (!isTimeSlotAvailable(selectedDate, selectedSlot)) {
+      setError('That time slot is no longer available. Please choose another slot.');
+      setSelectedSlot(null);
       return;
     }
 
@@ -248,7 +262,10 @@ export default function SchedulePickupPage() {
                     return (
                       <button 
                         key={d.toISOString()} 
-                        onClick={() => setSelectedDate(d)}
+                        onClick={() => {
+                          setSelectedDate(d);
+                          setSelectedSlot(null);
+                        }}
                         className={`min-w-[88px] p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-0.5
                           ${isSelected ? 'border-primary bg-primary-light' : 'border-[#E8EEF5] bg-[#F7F9FC] hover:border-gray-200'}`}
                       >
@@ -264,19 +281,32 @@ export default function SchedulePickupPage() {
 
                 {/* Time Selection */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {TIME_SLOTS.map(slot => (
-                    <button 
-                      key={slot.value} 
-                      onClick={() => setSelectedSlot(slot.value)}
-                      className={`p-4 rounded-2xl border-2 font-bold transition-all relative
-                        ${selectedSlot === slot.value ? 'border-primary bg-primary-light text-primary' : 'border-[#E8EEF5] bg-[#F7F9FC] text-gray-500 hover:border-gray-200'}`}
-                    >
-                      {slot.popular && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-[9px] font-extrabold text-white px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-white">Popular</span>
-                      )}
-                      {slot.label}
-                    </button>
-                  ))}
+                  {TIME_SLOTS.map(slot => {
+                    const available = selectedDate ? isTimeSlotAvailable(selectedDate, slot.value) : false;
+                    const isSelected = selectedSlot === slot.value;
+                    return (
+                      <button 
+                        key={slot.value} 
+                        type="button"
+                        disabled={!selectedDate || !available}
+                        onClick={() => available && setSelectedSlot(slot.value)}
+                        className={`p-4 rounded-2xl border-2 font-bold transition-all relative
+                          ${!selectedDate || !available
+                            ? 'border-[#E8EEF5] bg-gray-50 text-gray-300 cursor-not-allowed'
+                            : isSelected
+                              ? 'border-primary bg-primary-light text-primary'
+                              : 'border-[#E8EEF5] bg-[#F7F9FC] text-gray-500 hover:border-gray-200'}`}
+                      >
+                        {slot.popular && available && (
+                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-[9px] font-extrabold text-white px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-white">Popular</span>
+                        )}
+                        {slot.label}
+                        {selectedDate && !available && (
+                          <span className="block text-[10px] font-extrabold uppercase tracking-wider mt-1 text-gray-300">Unavailable</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
