@@ -33,11 +33,30 @@ export const FALLBACK_WEBSITE_CATEGORIES = [
   { key: 'gaming', label: 'Gaming Console', sellPath: '/sell/gaming/brand', buyPath: '/buy/gaming/brand', enabledSell: true, enabledBuy: true, imageUrl: '', sortOrder: 9 },
 ];
 
+/** Sell categories that use a request form (no brand/model catalog). */
+export const FORM_SELL_CATEGORY_PATHS = {
+  tv: '/sell/tv',
+  refrigerator: '/sell/refrigerator',
+};
+
+export function isFormSellCategory(key) {
+  return Boolean(FORM_SELL_CATEGORY_PATHS[key]);
+}
+
+/** Force form sell paths even if admin/DB still has /sell/tv/brand etc. */
+export function normalizeWebsiteCategories(list = []) {
+  return list.map((c) => {
+    const formPath = FORM_SELL_CATEGORY_PATHS[c.key];
+    if (!formPath) return c;
+    return { ...c, sellPath: formPath };
+  });
+}
+
 export async function fetchWebsiteCategories() {
   try {
     const { data } = await api.get('/app-settings');
     if (Array.isArray(data.categories) && data.categories.length) {
-      return data.categories;
+      return normalizeWebsiteCategories(data.categories);
     }
   } catch {
     // fallback below
@@ -46,7 +65,9 @@ export async function fetchWebsiteCategories() {
 }
 
 export function sellCategories(list = []) {
-  return list.filter((c) => c.enabledSell !== false).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  return normalizeWebsiteCategories(list)
+    .filter((c) => c.enabledSell !== false)
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 }
 
 export function buyCategories(list = []) {

@@ -2,12 +2,12 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { deviceService } from "../services/device.service";
-import { repairService } from "../services/repair.service";
 import {
   fetchWebsiteCategories,
   sellCategories,
   buyCategories,
   FALLBACK_WEBSITE_CATEGORIES,
+  isFormSellCategory,
 } from "../utils/websiteCategories";
 import logo from "../assets/logo.png";
 
@@ -181,33 +181,51 @@ function MegaDropdown({
             onMouseEnter={cancelClearBrands}
             onMouseLeave={scheduleClearBrands}
           >
-            <p className="text-xs text-gray-400 font-medium mb-3">More in {label}</p>
-            <p className="text-sm font-bold text-gray-900 mb-2">Top Brands</p>
-
-            {brandsLoading ? (
-              <div className="py-6 text-sm text-gray-400">Loading…</div>
-            ) : topBrands.length === 0 ? (
-              <div className="py-6 text-sm text-gray-400">No brands yet</div>
-            ) : (
-              <div className="flex flex-col">
-                {topBrands.map((b) => (
-                  <button
-                    key={b.brand}
-                    type="button"
-                    onClick={() => onNavigate(brandTo(b), { brandName: b.brand })}
-                    className="text-left py-2 text-[14px] text-gray-700 hover:text-[#0565E6] transition-colors"
-                  >
-                    {b.brand}
-                  </button>
-                ))}
+            {type === "sell" && isFormSellCategory(activeCat.key) ? (
+              <>
+                <p className="text-xs text-gray-400 font-medium mb-3">Sell your {label}</p>
+                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                  Quick request form — photos &amp; details, we call you back.
+                </p>
                 <button
                   type="button"
-                  onClick={() => onNavigate(allBrandsPath)}
-                  className="text-left py-2.5 mt-1 text-[14px] font-medium text-gray-800 hover:text-[#0565E6] transition-colors"
+                  onClick={() => onNavigate(activeCat.sellPath)}
+                  className="w-full text-left py-3 px-4 rounded-xl bg-[#EEF4FF] text-[#0565E6] text-[14px] font-bold hover:bg-[#0565E6] hover:text-white transition-colors"
                 >
-                  More {label} Brands
+                  Open {label} form →
                 </button>
-              </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-gray-400 font-medium mb-3">More in {label}</p>
+                <p className="text-sm font-bold text-gray-900 mb-2">Top Brands</p>
+
+                {brandsLoading ? (
+                  <div className="py-6 text-sm text-gray-400">Loading…</div>
+                ) : topBrands.length === 0 ? (
+                  <div className="py-6 text-sm text-gray-400">No brands yet</div>
+                ) : (
+                  <div className="flex flex-col">
+                    {topBrands.map((b) => (
+                      <button
+                        key={b.brand}
+                        type="button"
+                        onClick={() => onNavigate(brandTo(b), { brandName: b.brand })}
+                        className="text-left py-2 text-[14px] text-gray-700 hover:text-[#0565E6] transition-colors"
+                      >
+                        {b.brand}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => onNavigate(allBrandsPath)}
+                      className="text-left py-2.5 mt-1 text-[14px] font-medium text-gray-800 hover:text-[#0565E6] transition-colors"
+                    >
+                      More {label} Brands
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -237,18 +255,10 @@ export default function Navbar() {
 
   const sellCats = useMemo(() => sellCategories(categories), [categories]);
   const buyCats = useMemo(() => buyCategories(categories), [categories]);
-  const repairCats = useMemo(
-    () => [{ key: "mobile", label: "Phone", sellPath: "/repair", buyPath: "/repair" }],
-    []
-  );
 
   const menuCategories = useCallback(
-    (type) => {
-      if (type === "sell") return sellCats;
-      if (type === "buy") return buyCats;
-      return repairCats;
-    },
-    [sellCats, buyCats, repairCats]
+    (type) => (type === "buy" ? buyCats : sellCats),
+    [sellCats, buyCats]
   );
 
   useEffect(() => {
@@ -274,6 +284,8 @@ export default function Navbar() {
 
   const loadBrands = useCallback(async (type, catKey) => {
     if (!catKey) return;
+    if (type === "sell" && isFormSellCategory(catKey)) return;
+    if (type === "repair") return;
     const key = cacheKey(type, catKey);
     if (brandsCacheRef.current[key] || loadingKeysRef.current.has(key)) return;
 
@@ -281,16 +293,11 @@ export default function Navbar() {
     setBrandsLoading(true);
     try {
       let list = [];
-      if (type === "repair") {
-        const { data } = await repairService.getBrands(catKey);
-        list = Array.isArray(data) ? data : [];
-      } else {
-        const offer = type === "buy" ? "buy" : "sell";
-        const { data } = await deviceService.getBrands(catKey, offer);
-        list = Array.isArray(data) ? data : [];
-        if (type === "buy") {
-          list = list.filter((b) => Number(b.modelCount) > 0);
-        }
+      const offer = type === "buy" ? "buy" : "sell";
+      const { data } = await deviceService.getBrands(catKey, offer);
+      list = Array.isArray(data) ? data : [];
+      if (type === "buy") {
+        list = list.filter((b) => Number(b.modelCount) > 0);
       }
       list = [...list].sort((a, b) => (a.brand || "").localeCompare(b.brand || ""));
       brandsCacheRef.current[key] = list;
@@ -367,10 +374,10 @@ export default function Navbar() {
   const dropdownMenus = [
     { key: "sell", label: "Sell Device", activeMatch: (p) => p.startsWith("/sell") },
     { key: "buy", label: "Buy Refurbished", activeMatch: (p) => p.startsWith("/buy") },
-    { key: "repair", label: "Repair Device", activeMatch: (p) => p.startsWith("/repair") },
   ];
 
   const simpleLinks = [
+    { label: "Repair Device", to: "/repair" },
     { label: "How It Works", to: "/#how-it-works" },
     { label: "Bulk Deals", to: "/corporate" },
   ];
@@ -430,16 +437,21 @@ export default function Navbar() {
             );
           })}
 
-          {simpleLinks.map((link) => (
-            <button
-              key={link.label}
-              type="button"
-              onClick={() => handleSimpleNav(link.to)}
-              className="px-3 xl:px-4 text-[15px] font-medium whitespace-nowrap text-gray-700 hover:text-[#0565E6] transition-colors self-center"
-            >
-              {link.label}
-            </button>
-          ))}
+          {simpleLinks.map((link) => {
+            const isRepair = link.to === "/repair";
+            const isActive = isRepair && location.pathname.startsWith("/repair");
+            return (
+              <button
+                key={link.label}
+                type="button"
+                onClick={() => handleSimpleNav(link.to)}
+                className={`px-3 xl:px-4 text-[15px] font-medium whitespace-nowrap transition-colors self-center
+                  ${isActive ? "text-[#0565E6]" : "text-gray-700 hover:text-[#0565E6]"}`}
+              >
+                {link.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Right utilities */}
@@ -535,44 +547,57 @@ export default function Navbar() {
                       })}
 
                       <div className="bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-t border-gray-100">
-                        Top Brands — {categoryDisplayLabel(cats.find((c) => c.key === catKey) || cats[0])}
+                        {menu.key === "sell" && isFormSellCategory(catKey)
+                          ? `Sell ${categoryDisplayLabel(cats.find((c) => c.key === catKey) || cats[0])}`
+                          : `Top Brands — ${categoryDisplayLabel(cats.find((c) => c.key === catKey) || cats[0])}`}
                       </div>
                       <div className="bg-white px-2 py-1">
-                        {brands.slice(0, TOP_BRANDS_COUNT).map((b) => {
-                          const cat = cats.find((c) => c.key === catKey) || cats[0];
-                          const to =
-                            menu.key === "sell"
-                              ? sellBrandPath(cat, b.brand)
-                              : menu.key === "buy"
-                                ? buyBrandPath(cat, b)
-                                : `/repair?brand=${encodeURIComponent(b.brand)}`;
-                          return (
+                        {menu.key === "sell" && isFormSellCategory(catKey) ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cat = cats.find((c) => c.key === catKey) || cats[0];
+                              goTo(cat.sellPath);
+                            }}
+                            className="w-full text-left px-3 py-3.5 text-sm font-bold text-[#0565E6]"
+                          >
+                            Open request form →
+                          </button>
+                        ) : (
+                          <>
+                            {brands.slice(0, TOP_BRANDS_COUNT).map((b) => {
+                              const cat = cats.find((c) => c.key === catKey) || cats[0];
+                              const to =
+                                menu.key === "sell"
+                                  ? sellBrandPath(cat, b.brand)
+                                  : buyBrandPath(cat, b);
+                              return (
+                                <button
+                                  key={b.brand}
+                                  type="button"
+                                  onClick={() => goTo(to, { brandName: b.brand })}
+                                  className="w-full text-left px-3 py-3.5 text-sm text-gray-700 hover:text-[#0565E6]"
+                                >
+                                  {b.brand}
+                                </button>
+                              );
+                            })}
                             <button
-                              key={b.brand}
                               type="button"
-                              onClick={() => goTo(to, { brandName: b.brand })}
-                              className="w-full text-left px-3 py-3.5 text-sm text-gray-700 hover:text-[#0565E6]"
+                              onClick={() => {
+                                const cat = cats.find((c) => c.key === catKey) || cats[0];
+                                const path =
+                                  menu.key === "sell"
+                                    ? cat.sellPath
+                                    : cat.buyPath || `/buy/${cat.key}/brand`;
+                                goTo(path);
+                              }}
+                              className="w-full text-left px-3 py-2.5 text-sm font-medium text-gray-800 hover:text-[#0565E6]"
                             >
-                              {b.brand}
+                              More {categoryDisplayLabel(cats.find((c) => c.key === catKey) || cats[0])} Brands
                             </button>
-                          );
-                        })}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const cat = cats.find((c) => c.key === catKey) || cats[0];
-                            const path =
-                              menu.key === "sell"
-                                ? cat.sellPath
-                                : menu.key === "buy"
-                                  ? cat.buyPath || `/buy/${cat.key}/brand`
-                                  : "/repair";
-                            goTo(path);
-                          }}
-                          className="w-full text-left px-3 py-2.5 text-sm font-medium text-gray-800 hover:text-[#0565E6]"
-                        >
-                          More {categoryDisplayLabel(cats.find((c) => c.key === catKey) || cats[0])} Brands
-                        </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

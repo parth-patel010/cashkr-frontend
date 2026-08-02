@@ -10,6 +10,7 @@ import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { getSellCategoryMeta, isGenericSellCategory } from "../constants/sellCategories";
+import { isFormSellCategory, FORM_SELL_CATEGORY_PATHS } from "../utils/websiteCategories";
 
 export default function SellCategoryBrandPage() {
   const { category } = useParams();
@@ -17,9 +18,13 @@ export default function SellCategoryBrandPage() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failedLogos, setFailedLogos] = useState({});
+  const formOnly = isFormSellCategory(category);
 
   useEffect(() => {
-    if (!isGenericSellCategory(category)) return;
+    if (formOnly || !isGenericSellCategory(category)) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     deviceService
       .getBrands(category)
@@ -29,7 +34,11 @@ export default function SellCategoryBrandPage() {
       })
       .catch(() => setBrands([]))
       .finally(() => setLoading(false));
-  }, [category]);
+  }, [category, formOnly]);
+
+  if (formOnly) {
+    return <Navigate to={FORM_SELL_CATEGORY_PATHS[category]} replace />;
+  }
 
   if (!meta) return <Navigate to="/" replace />;
   if (loading) return <Loader />;

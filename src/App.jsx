@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Navbar from './components/navbar.jsx';
 import Footer from './components/footer.jsx';
@@ -148,6 +148,8 @@ function App() {
           <Route path="/repair" element={<RepairPage />} />
           <Route path="/sell/tv" element={<SellTvRequestPage />} />
           <Route path="/sell/refrigerator" element={<SellFridgeRequestPage />} />
+          <Route path="/sell/tv/brand" element={<Navigate to="/sell/tv" replace />} />
+          <Route path="/sell/refrigerator/brand" element={<Navigate to="/sell/refrigerator" replace />} />
           <Route path="/buy/order-confirmation/:orderId" element={<ProtectedRoute><BuyOrderConfirmationPage /></ProtectedRoute>} />
           <Route path="/buy/:category/brand" element={<BuyBrandSelectionPage />} />
           <Route path="/buy/:category/:brand/:slug" element={<BuyProductPage />} />
