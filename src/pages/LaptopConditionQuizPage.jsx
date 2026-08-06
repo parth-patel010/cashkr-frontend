@@ -8,7 +8,6 @@ import {
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
-import { calculateLaptopPrice } from '../utils/priceCalculator';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
@@ -270,26 +269,40 @@ export default function LaptopConditionQuizPage() {
   }, [isAuthenticated, device, quizStorageKey]);
 
   useEffect(() => {
-    if (!device || !specs) return;
-    const result = calculateLaptopPrice(device, {
-      ...specs,
-      yearBracket: age,
-      powerStatus: powerStatus,
-      screenSize: screenSize,
-      hasGpu: hasGpu === 'yes',
-      isGpuWorking: isGpuWorking === 'yes',
-      functionalIssues: issuesList,
-      screenIssues: screenIssuesList,
-      bodyIssues: bodyIssuesList,
-      accessories: accessories.length > 0 ? accessories : ['none']
-    });
-    if (result) {
-      setPriceAnimating(true);
-      setTimeout(() => setPriceAnimating(false), 400);
-      setCurrentPrice(result.finalPrice);
-      setBreakdown(result);
-    }
-  }, [device, specs, age, powerStatus, screenSize, hasGpu, isGpuWorking, issuesList, screenIssuesList, bodyIssuesList, accessories]);
+    if (!device || !specs || !age || !powerStatus || !screenSize) return;
+    if (hasGpu === 'yes' && !isGpuWorking) return;
+    if (hasGpu === null) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: result } = await deviceService.calculatePrice({
+          slug: device.slug || slug,
+          ...specs,
+          yearBracket: age,
+          powerStatus,
+          screenSize,
+          hasGpu: hasGpu === 'yes',
+          isGpuWorking: isGpuWorking === 'yes',
+          functionalIssues: issuesList,
+          screenIssues: screenIssuesList,
+          bodyIssues: bodyIssuesList,
+          accessories: accessories.length > 0 ? accessories : ['none'],
+        });
+        if (cancelled || !result) return;
+        setPriceAnimating(true);
+        setTimeout(() => setPriceAnimating(false), 400);
+        setCurrentPrice(result.finalPrice);
+        setBreakdown(result);
+      } catch {
+        /* keep last quote on transient errors */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [device, specs, age, powerStatus, screenSize, hasGpu, isGpuWorking, issuesList, screenIssuesList, bodyIssuesList, accessories, slug]);
 
   // Auto-show result after login redirect
   useEffect(() => {

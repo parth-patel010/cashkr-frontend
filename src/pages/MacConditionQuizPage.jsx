@@ -8,7 +8,6 @@ import {
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
-import { calculateLaptopPrice } from '../utils/priceCalculator';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
@@ -199,20 +198,33 @@ export default function MacConditionQuizPage() {
   }, [isAuthenticated, device, quizStorageKey]);
 
   useEffect(() => {
-    if (!device || !specs) return;
-    const result = calculateLaptopPrice(device, {
-      ...specs,
-      yearBracket: age,
-      functionalIssues: issuesList,
-      screenIssues: screenIssuesList,
-      bodyIssues: bodyIssuesList,
-      accessories: accessories.length > 0 ? accessories : ['none']
-    });
-    if (result) {
-      setCurrentPrice(result.finalPrice);
-      setBreakdown(result);
-    }
-  }, [device, specs, age, issuesList, screenIssuesList, bodyIssuesList, accessories]);
+    if (!device || !specs || !age) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: result } = await deviceService.calculatePrice({
+          slug: device.slug || slug,
+          ...specs,
+          yearBracket: age,
+          powerStatus: 'on',
+          functionalIssues: issuesList,
+          screenIssues: screenIssuesList,
+          bodyIssues: bodyIssuesList,
+          accessories: accessories.length > 0 ? accessories : ['none'],
+        });
+        if (cancelled || !result) return;
+        setCurrentPrice(result.finalPrice);
+        setBreakdown(result);
+      } catch {
+        /* keep last quote on transient errors */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [device, specs, age, issuesList, screenIssuesList, bodyIssuesList, accessories, slug]);
 
   // Auto-show result after login redirect
   useEffect(() => {
