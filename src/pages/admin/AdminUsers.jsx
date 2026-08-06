@@ -10,6 +10,8 @@ export default function AdminUsers() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [loginFrom, setLoginFrom] = useState('all'); // all | App | Website
+  const [counts, setCounts] = useState({ all: 0, app: 0, website: 0 });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -26,18 +28,25 @@ export default function AdminUsers() {
 
   useEffect(() => {
     setLoading(true);
-    adminService.getUsers({ search: debouncedSearch, page, limit: 10 })
+    const params = { search: debouncedSearch, page, limit: 10 };
+    if (loginFrom === 'App' || loginFrom === 'Website') params.loginFrom = loginFrom;
+    adminService.getUsers(params)
       .then((res) => {
         setUsers(res.data.users);
         setTotal(res.data.total);
         setTotalPages(res.data.totalPages);
+        setCounts({
+          all: res.data.counts?.all ?? res.data.total ?? 0,
+          app: res.data.counts?.app ?? 0,
+          website: res.data.counts?.website ?? 0,
+        });
         setLoading(false);
       })
       .catch((err) => {
         console.error('Failed to load users', err);
         setLoading(false);
       });
-  }, [debouncedSearch, page]);
+  }, [debouncedSearch, page, loginFrom]);
 
   const handleViewUser = async (userId) => {
     setUserDetailLoading(true);
@@ -62,11 +71,12 @@ export default function AdminUsers() {
     try {
       const params = {};
       if (debouncedSearch) params.search = debouncedSearch;
+      if (loginFrom === 'App' || loginFrom === 'Website') params.loginFrom = loginFrom;
       const res = await adminService.exportUsers(params);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = `users-${loginFrom === 'all' ? 'all' : loginFrom.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -87,34 +97,88 @@ export default function AdminUsers() {
     }
   };
 
+  const filterBtn = (key, label, count) => {
+    const active = loginFrom === key;
+    return (
+      <button
+        type="button"
+        key={key}
+        onClick={() => {
+          setLoginFrom(key);
+          setPage(1);
+        }}
+        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-colors ${
+          active
+            ? 'bg-blue-600 border-blue-600 text-white'
+            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300'
+        }`}
+      >
+        {label}
+        <span
+          className={`min-w-[1.5rem] text-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+            active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+          }`}
+        >
+          {count}
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div className="space-y-6">
       
-      {/* Top Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            className="admin-search pl-10"
-            placeholder="Search by name, email or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+      {/* Source counts */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="admin-card !p-4">
+          <div className="text-[11px] font-800 uppercase tracking-wider text-slate-400">All users</div>
+          <div className="text-2xl font-black text-slate-900 mt-1">{counts.all}</div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-sm font-semibold text-slate-500">
-            Total Users: <span className="text-slate-900 font-bold">{total}</span>
+        <div className="admin-card !p-4">
+          <div className="text-[11px] font-800 uppercase tracking-wider text-blue-500">App logins</div>
+          <div className="text-2xl font-black text-blue-700 mt-1">{counts.app}</div>
+        </div>
+        <div className="admin-card !p-4">
+          <div className="text-[11px] font-800 uppercase tracking-wider text-emerald-600">Website logins</div>
+          <div className="text-2xl font-black text-emerald-700 mt-1">{counts.website}</div>
+        </div>
+      </div>
+
+      {/* Top Filter Bar */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {filterBtn('all', 'All', counts.all)}
+          {filterBtn('App', 'App', counts.app)}
+          {filterBtn('Website', 'Website', counts.website)}
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              className="admin-search pl-10"
+              placeholder="Search by name, email or phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           </div>
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={exporting}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-60"
-          >
-            <Download size={14} />
-            {exporting ? 'Exporting...' : 'Download Excel'}
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-sm font-semibold text-slate-500">
+              Showing: <span className="text-slate-900 font-bold">{total}</span>
+              {loginFrom !== 'all' ? (
+                <span className="text-slate-400 font-medium"> ({loginFrom})</span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-60"
+            >
+              <Download size={14} />
+              {exporting ? 'Exporting...' : 'Download Excel'}
+            </button>
+          </div>
         </div>
       </div>
 

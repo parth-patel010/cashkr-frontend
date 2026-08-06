@@ -6,7 +6,7 @@ import './admin.css';
 const DEFAULT_ANDROID_DOWNLOAD =
   'https://play.google.com/store/apps/details?id=com.devicekart.app';
 const DEFAULT_MAINTENANCE_MESSAGE =
-  "We're working to improve your experience. Please try again later.";
+  "Stay tuned — we're currently under maintenance. We'll be back shortly.";
 
 export default function AdminAppSettings() {
   const [pages, setPages] = useState([]);
@@ -132,7 +132,9 @@ export default function AdminAppSettings() {
           Maintenance mode
         </h3>
         <p className="text-xs text-slate-500 mb-3">
-          When on, the mobile app shows a blocking maintenance screen (EatnSay-style).
+          When ON, the mobile app shows a blocking <strong>Stay Tuned — we are in maintenance</strong>{' '}
+          popup on the home screen (and all screens). Force-update is paused until maintenance is
+          turned OFF.
         </p>
         <label className="flex items-center gap-2 mb-4 cursor-pointer">
           <input
@@ -145,11 +147,12 @@ export default function AdminAppSettings() {
           </span>
         </label>
         <div className="admin-field mb-3">
-          <label>Message</label>
+          <label>Popup message</label>
           <textarea
             rows={2}
             value={maintenanceMessage}
             onChange={(e) => setMaintenanceMessage(e.target.value)}
+            placeholder={DEFAULT_MAINTENANCE_MESSAGE}
           />
         </div>
         <div className="admin-field max-w-sm mb-0">
@@ -168,8 +171,9 @@ export default function AdminAppSettings() {
           Force update (version control)
         </h3>
         <p className="text-xs text-slate-500 mb-4">
-          If the app&apos;s current version is lower than the min version for that platform, users
-          see a non-dismissible Update Required modal. Leave min version empty to disable.
+          Still active when maintenance is OFF. If the installed app version is lower than the min
+          version for that platform, users see a non-dismissible <strong>Update Required</strong>{' '}
+          popup. Leave min version empty to disable.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
