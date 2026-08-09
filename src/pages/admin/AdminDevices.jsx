@@ -112,6 +112,7 @@ export default function AdminDevices() {
       isGamingLaptop: false,
       tier: 'Mid-range',
       isActive: true,
+      orderCreditCost: 0,
       variants: [],
       ...JSON.parse(JSON.stringify(DEFAULT_MULTIPLIERS))
     });
@@ -307,6 +308,7 @@ export default function AdminDevices() {
                   <th>Category</th>
                   <th>Slug</th>
                   <th>Variants</th>
+                  <th>Credits</th>
                   <th>Status</th>
                   <th className="text-right">Actions</th>
                 </tr>
@@ -340,6 +342,9 @@ export default function AdminDevices() {
                       <span className="admin-badge admin-badge-blue">
                         {device.variants?.length || 0} variants
                       </span>
+                    </td>
+                    <td className="font-bold text-sm">
+                      {Number(device.orderCreditCost) || 0}
                     </td>
                     <td>
                       <span className={device.isActive ? 'admin-badge admin-badge-green' : 'admin-badge admin-badge-red'}>
@@ -798,6 +803,26 @@ export default function AdminDevices() {
                       </div>
                     </div>
                   )}
+
+                  <div className="admin-field max-w-xs">
+                    <label>Vendor credit cost (to accept this model)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={formData.orderCreditCost ?? 0}
+                      onChange={(e) =>
+                        handleInputChange(
+                          'orderCreditCost',
+                          e.target.value === '' ? 0 : Math.max(0, Number(e.target.value) || 0),
+                        )
+                      }
+                      placeholder="e.g. 1"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Vendor must have at least this many credits to accept a lead for this model (₹100 = 1 credit).
+                    </p>
+                  </div>
 
                   <div className="flex items-center gap-3">
                     <button

@@ -317,7 +317,7 @@ export default function AdminVendors() {
                 </div>
 
                 <div className="admin-field">
-                  <label>Order credit cost (deducted on accept)</label>
+                  <label>Default order credit cost (fallback)</label>
                   <input
                     type="number"
                     min="0"
@@ -325,6 +325,9 @@ export default function AdminVendors() {
                     onChange={(e) => setForm((p) => ({ ...p, orderCreditCost: e.target.value }))}
                     placeholder="e.g. 1"
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Used only when the device model has no credit cost set (0). Prefer setting credits per model under Devices.
+                  </p>
                 </div>
 
                 <div className="admin-field">
