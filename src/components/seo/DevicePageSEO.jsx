@@ -1,11 +1,19 @@
 import SEOHead from './SEOHead';
-import { getDeviceSeoMeta } from '../../utils/deviceSeo';
-import { buildSchemaGraph, breadcrumbSchema, organizationSchema, productSchema, websiteSchema } from '../../utils/schema';
+import { getDeviceSeoMeta, getModelSeoContent } from '../../utils/deviceSeo';
+import {
+  buildSchemaGraph,
+  breadcrumbSchema,
+  faqPageSchema,
+  organizationSchema,
+  productSchema,
+  websiteSchema,
+} from '../../utils/schema';
 
 export default function DevicePageSEO({ device, brand, pathPrefix, breadcrumbItems, categoryLabel }) {
   if (!device) return null;
 
   const meta = getDeviceSeoMeta(device, { brand, pathPrefix, categoryLabel });
+  const { faqs } = getModelSeoContent(device, meta.brandName);
   const schema = buildSchemaGraph([
     organizationSchema(),
     websiteSchema(),
@@ -18,6 +26,7 @@ export default function DevicePageSEO({ device, brand, pathPrefix, breadcrumbIte
       maxPrice: meta.maxPrice,
       url: meta.path,
     }),
+    faqPageSchema(faqs),
     breadcrumbItems ? breadcrumbSchema(breadcrumbItems) : null,
   ]);
 
@@ -27,6 +36,7 @@ export default function DevicePageSEO({ device, brand, pathPrefix, breadcrumbIte
       description={meta.description}
       path={meta.path}
       image={meta.image}
+      imageAlt={`Sell ${device.modelName} online on DeviceKart`}
       type="product"
       schema={schema}
     />

@@ -10,11 +10,22 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Prefer shared city list from src (ESM).
+let CITY_SLUGS = null;
+try {
+  const citiesMod = await import('../src/data/cities.js');
+  CITY_SLUGS = citiesMod.CITIES.map((c) => c.slug);
+} catch {
+  CITY_SLUGS = null;
+}
+
 const SITE_URL = 'https://www.devicekart.in';
 const API_BASE = process.env.VITE_API_BASE_URL || process.env.API_URL || 'http://localhost:5002/api';
 
 const STATIC_ROUTES = [
   '/',
+  '/sell',
   '/about-us',
   '/partner',
   '/corporate',
@@ -30,6 +41,8 @@ const STATIC_ROUTES = [
   '/compare/devicekart-vs-cashify',
   '/alternatives/cashify-alternatives',
   '/best-place-to-sell-old-phone-india',
+  '/best-old-phone-selling-website',
+  '/sell-old-phone-online-india',
   '/sell-old-mobile-phones/brand',
   '/sell-tablet/brand',
   '/sell-old-laptops/brand',
@@ -40,12 +53,32 @@ const STATIC_ROUTES = [
   '/sell-old-ipad',
 ];
 
-const CITIES = [
+const FALLBACK_CITIES = [
   'mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'pune',
   'ahmedabad', 'jaipur', 'lucknow', 'chandigarh', 'kochi', 'indore', 'nagpur',
   'coimbatore', 'visakhapatnam', 'bhopal', 'patna', 'vadodara', 'ludhiana',
   'surat', 'noida', 'gurgaon', 'thane', 'faridabad', 'ghaziabad', 'rajkot',
   'nashik', 'goa', 'mysore',
+];
+
+const CITIES = CITY_SLUGS?.length ? CITY_SLUGS : FALLBACK_CITIES;
+
+/** High-priority prerender: home, money pages, sell hub, top cities, brand hubs */
+const PRERENDER_PRIORITY = [
+  '/',
+  '/sell',
+  '/best-old-phone-selling-website',
+  '/sell-old-phone-online-india',
+  '/best-place-to-sell-old-phone-india',
+  '/compare/devicekart-vs-cashify',
+  '/alternatives/cashify-alternatives',
+  '/sell-old-mobile-phones/brand',
+  '/sell-tablet/brand',
+  '/sell-old-laptops/brand',
+  '/sell-imac/brand',
+  '/sell-old-iphone',
+  '/sell-old-samsung-phone',
+  ...CITIES.slice(0, 20).map((c) => `/sell-old-phone-in/${c}`),
 ];
 
 const CATEGORY_PATHS = {
@@ -61,7 +94,7 @@ async function fetchJson(url) {
   return res.json();
 }
 
-/** Brand hub pages only — used for fast prerender. */
+/** Brand hub pages + static SEO routes — used for sitemap base & full prerender list. */
 export async function collectBrandRoutes() {
   const routes = [...STATIC_ROUTES, ...CITIES.map((c) => `/sell-old-phone-in/${c}`)];
 
@@ -79,6 +112,11 @@ export async function collectBrandRoutes() {
   );
 
   return [...new Set(routes)];
+}
+
+/** Compact high-priority set for fast prerender. */
+export function collectPriorityPrerenderRoutes() {
+  return [...new Set(PRERENDER_PRIORITY)];
 }
 
 /** Full routes including every model page — used for sitemap only. */
@@ -118,10 +156,15 @@ function buildSitemap(routes) {
     const priority =
       route === '/'
         ? '1.0'
-        : route.includes('/brand') ||
-            (route.startsWith('/sell-old-') && route.split('/').length <= 3)
-          ? '0.9'
-          : '0.8';
+        : route.includes('best-old-phone') ||
+            route.includes('sell-old-phone-online') ||
+            route.includes('best-place-to-sell')
+          ? '0.95'
+          : route.includes('/brand') ||
+              route.startsWith('/sell-old-phone-in/') ||
+              (route.startsWith('/sell-old-') && route.split('/').length <= 3)
+            ? '0.9'
+            : '0.8';
     const changefreq = route === '/' ? 'daily' : route.split('/').length > 3 ? 'weekly' : 'daily';
     return `  <url>
     <loc>${SITE_URL}${route}</loc>
@@ -142,12 +185,12 @@ async function main() {
   const publicDir = path.join(__dirname, '..', 'public');
   const routesFile = path.join(__dirname, '..', 'prerender-routes.json');
 
-  // Fast path: static + brand hubs for prerender (default)
-  const prerenderRoutes = await collectBrandRoutes();
+  // Prerender: high-priority money + top cities (fast). Full brand list still generated for sitemap base.
+  const brandRoutes = await collectBrandRoutes();
+  const prerenderRoutes = collectPriorityPrerenderRoutes();
   fs.writeFileSync(routesFile, JSON.stringify(prerenderRoutes, null, 2));
 
-  // Sitemap: full model list only when --full / FULL_SEO=1
-  let sitemapRoutes = prerenderRoutes;
+  let sitemapRoutes = brandRoutes;
   if (fullSeo) {
     console.log('--full — collecting all model routes for sitemap (slower)...');
     sitemapRoutes = await collectRoutes({ includeModels: true });
@@ -168,7 +211,7 @@ if (isDirectRun) {
     fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), buildSitemap(routes));
     fs.writeFileSync(
       path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'prerender-routes.json'),
-      JSON.stringify(routes, null, 2),
+      JSON.stringify(collectPriorityPrerenderRoutes(), null, 2),
     );
     console.log(`Fallback: generated ${routes.length} static routes only`);
     process.exit(0);

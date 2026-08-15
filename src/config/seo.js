@@ -1,9 +1,10 @@
 export const SITE_URL = 'https://www.devicekart.in';
 export const SITE_NAME = 'DeviceKart';
 export const LEGAL_NAME = 'Swastika Innovation Private Limited';
-export const DEFAULT_TITLE = 'DeviceKart — Sell Old Devices for Instant Cash in India';
+export const DEFAULT_TITLE =
+  'Best Old Phone Selling Website in India — Sell Online for Instant Cash | DeviceKart';
 export const DEFAULT_DESCRIPTION =
-  "DeviceKart is India's trusted device buyback platform. Sell old mobile phones, tablets, laptops and iMac online with free doorstep pickup and instant payment across 2,000+ cities.";
+  'DeviceKart is a top old phone selling website in India. Sell used mobiles, tablets & laptops online with free doorstep pickup, instant quotes, and UPI/bank payment in 2,000+ cities.';
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.svg`;
 export const PHONE = '+91-9930224433';
 export const WHATSAPP = '919930224433';

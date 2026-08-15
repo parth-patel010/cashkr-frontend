@@ -16,6 +16,7 @@ import {
   Clock3,
 } from "lucide-react";
 import SEOHead from "../components/seo/SEOHead";
+import { homeKeywords } from "../data/seoKeywords";
 import LandingHero from "../components/LandingHero";
 import ServicesBenefits from "../components/ServicesBenefits";
 import MostQuotedDevices from "../components/MostQuotedDevices";
@@ -221,9 +222,11 @@ export default function HomePage() {
   return (
     <div className="w-full bg-[#F7F9FC]">
       <SEOHead
-        title="DeviceKart — Sell Old Phones, Laptops & Tablets for Instant Cash in India"
-        description="DeviceKart is India's trusted device buyback platform. Sell old mobile phones, tablets, laptops and iMac online with free doorstep pickup and instant payment across 2,000+ cities."
+        title="Best Old Phone Selling Website in India — Instant Cash | DeviceKart"
+        description="Sell old phones online on DeviceKart — one of India's best old phone selling websites. Free doorstep pickup, instant quotes, and secure UPI/bank payment across 2,000+ cities."
         path="/"
+        keywords={homeKeywords()}
+        imageAlt="DeviceKart — sell old phone online India for instant cash"
         schema={schema}
       />
 
@@ -459,6 +462,56 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Popular searches / city SEO links ── */}
+      <section className="py-12 sm:py-14 bg-[#F7F9FC] border-t border-[#E8EEF5]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight mb-2">
+            Popular searches
+          </h2>
+          <p className="text-sm text-gray-500 mb-6 max-w-2xl">
+            Explore DeviceKart money pages, category hubs, and sell-old-phone city guides across India.
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-sm">
+            <Link to="/best-old-phone-selling-website" className="text-[#0565E6] font-semibold hover:underline">
+              Best old phone selling website
+            </Link>
+            <Link to="/sell-old-phone-online-india" className="text-[#0565E6] font-semibold hover:underline">
+              Sell old phone online India
+            </Link>
+            <Link to="/best-place-to-sell-old-phone-india" className="text-[#0565E6] font-semibold hover:underline">
+              Best place to sell old phone
+            </Link>
+            <Link to="/compare/devicekart-vs-cashify" className="text-[#0565E6] font-semibold hover:underline">
+              DeviceKart vs Cashify
+            </Link>
+            <Link to="/alternatives/cashify-alternatives" className="text-[#0565E6] font-semibold hover:underline">
+              Cashify alternatives
+            </Link>
+            <Link to="/sell-old-mobile-phones/brand" className="text-[#0565E6] font-semibold hover:underline">
+              Sell mobiles
+            </Link>
+            <Link to="/sell-old-laptops/brand" className="text-[#0565E6] font-semibold hover:underline">
+              Sell laptops
+            </Link>
+            <Link to="/sell" className="text-[#0565E6] font-semibold hover:underline">
+              Sell hub
+            </Link>
+          </div>
+          <h3 className="text-sm font-bold text-gray-800 mb-3">Sell in your city</h3>
+          <div className="flex flex-wrap gap-x-3 gap-y-2">
+            {CITY_DATA.slice(0, 24).map((city) => (
+              <Link
+                key={city.slug}
+                to={`/sell-old-phone-in/${city.slug}`}
+                className="text-xs sm:text-sm text-gray-600 hover:text-[#0565E6] hover:underline"
+              >
+                {city.name}
+              </Link>
+            ))}
           </div>
         </div>
       </section>

@@ -116,12 +116,18 @@ export function howToSchema(steps) {
   };
 }
 
-export function localBusinessSchema(cityName) {
+export function localBusinessSchema(cityName, pageUrl) {
+  const url =
+    pageUrl == null
+      ? SITE_URL
+      : pageUrl.startsWith('http')
+        ? pageUrl
+        : `${SITE_URL}${pageUrl.startsWith('/') ? pageUrl : `/${pageUrl}`}`;
   return {
     ...baseContext(),
     '@type': 'LocalBusiness',
     name: `${SITE_NAME} — ${cityName}`,
-    url: SITE_URL,
+    url,
     telephone: PHONE,
     areaServed: { '@type': 'City', name: cityName, containedInPlace: { '@type': 'Country', name: 'India' } },
     parentOrganization: { '@type': 'Organization', name: SITE_NAME },

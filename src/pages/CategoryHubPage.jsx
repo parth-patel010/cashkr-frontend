@@ -2,6 +2,7 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import SEOHead from '../components/seo/SEOHead';
 import { getCategoryHubBySlug } from '../data/categoryHubs';
 import { EXPANDED_FAQS } from '../data/faqs';
+import { hubKeywords } from '../data/seoKeywords';
 import { buildSchemaGraph, faqPageSchema, organizationSchema, websiteSchema } from '../utils/schema';
 import NotFoundPage from './NotFoundPage';
 
@@ -24,9 +25,26 @@ export default function CategoryHubPage() {
     faqPageSchema(relevantFaqs.length ? relevantFaqs : EXPANDED_FAQS.slice(0, 3)),
   ]);
 
+  const hubKey =
+    hub.slug.includes('iphone') || hub.slug.includes('samsung') || hub.slug.includes('mobile')
+      ? 'mobile'
+      : hub.slug.includes('ipad') || hub.slug.includes('tablet')
+        ? 'tablet'
+        : hub.slug.includes('laptop') || hub.slug.includes('macbook')
+          ? 'laptop'
+          : hub.slug.includes('imac') || hub.slug.includes('mac')
+            ? 'mac'
+            : 'mobile';
+
   return (
     <>
-      <SEOHead title={hub.title} description={hub.description} path={path} schema={schema} />
+      <SEOHead
+        title={hub.title}
+        description={hub.description}
+        path={path}
+        keywords={hubKeywords(hubKey)}
+        schema={schema}
+      />
       <div className="max-w-[900px] mx-auto px-4 py-12 sm:py-20">
         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">{hub.title}</h1>
         <p className="text-gray-500 mb-8 leading-relaxed">{hub.description}</p>

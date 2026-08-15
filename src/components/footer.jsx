@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { SOCIAL_LINKS as SOCIAL_URLS } from "../config/seo";
+import { TOP_SEO_CITIES } from "../data/cities";
 
 const FooterLogo = () => (
   <div className="flex items-center gap-2">
@@ -12,7 +13,15 @@ const FooterLogo = () => (
 const FOOTER_LINKS = {
   "Sell Device": ["Sell Mobile", "Sell Tablet", "Sell Laptop", "Sell Mac", "Corporate Sell"],
   "Buy Device": ["Buy Phones", "Buy Laptops", "Buy Tablets", "Buy Smartwatches"],
-  "Quick Links": ["Become a Partner", "FAQs", "Cashify Alternatives"],
+  "Quick Links": [
+    "Become a Partner",
+    "FAQs",
+    "Cashify Alternatives",
+    "Best Selling Website",
+    "Sell Online India",
+    "Best Place to Sell",
+    "vs Cashify",
+  ],
   "Support": ["Help Center", "About Us", "Contact Us", "Careers", "Terms & Conditions", "Privacy Policy", "Cookie Policy", "E-waste Policy"],
 };
 
@@ -29,6 +38,10 @@ const getLinkRoute = (linkName) => {
     "Become a Partner": "/partner",
     "FAQs": "/faq",
     "Cashify Alternatives": "/alternatives/cashify-alternatives",
+    "Best Selling Website": "/best-old-phone-selling-website",
+    "Sell Online India": "/sell-old-phone-online-india",
+    "Best Place to Sell": "/best-place-to-sell-old-phone-india",
+    "vs Cashify": "/compare/devicekart-vs-cashify",
     "Sell Mobile": "/sell-old-mobile-phones/brand",
     "Sell Tablet": "/sell-tablet/brand",
     "Sell Laptop": "/sell-old-laptops/brand",
@@ -123,6 +136,41 @@ export default function Footer() {
             </ul>
           </div>
         ))}
+      </div>
+
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 mb-10">
+        <h4 className="text-white font-bold text-base mb-4">Sell old phone in your city</h4>
+        <div className="flex flex-wrap gap-x-3 gap-y-2">
+          {TOP_SEO_CITIES.map((city) => (
+            <Link
+              key={city.slug}
+              to={`/sell-old-phone-in/${city.slug}`}
+              className="text-xs text-gray-400 hover:text-primary transition-colors no-underline"
+            >
+              {city.name}
+            </Link>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-xs">
+          <Link to="/best-old-phone-selling-website" className="text-gray-400 hover:text-primary no-underline">
+            Best old phone selling website
+          </Link>
+          <Link to="/sell-old-phone-online-india" className="text-gray-400 hover:text-primary no-underline">
+            Sell old phone online India
+          </Link>
+          <Link to="/best-place-to-sell-old-phone-india" className="text-gray-400 hover:text-primary no-underline">
+            Best place to sell old phone
+          </Link>
+          <Link to="/compare/devicekart-vs-cashify" className="text-gray-400 hover:text-primary no-underline">
+            DeviceKart vs Cashify
+          </Link>
+          <Link to="/sell-old-iphone" className="text-gray-400 hover:text-primary no-underline">
+            Sell old iPhone
+          </Link>
+          <Link to="/sell-old-samsung-phone" className="text-gray-400 hover:text-primary no-underline">
+            Sell old Samsung
+          </Link>
+        </div>
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-8">

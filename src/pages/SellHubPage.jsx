@@ -25,9 +25,10 @@ export default function SellHubPage() {
   return (
     <PageCanvas>
       <SEOHead
-        title="Sell Old Devices for Instant Cash"
-        description="Choose your device category and get an instant buyback quote on DeviceKart. Free doorstep pickup across 2,000+ cities in India."
+        title="Sell Old Devices Online India — Instant Cash | DeviceKart"
+        description="Sell old phones, tablets, laptops and Mac online on DeviceKart. Instant buyback quote, free doorstep pickup across 2,000+ cities, and secure UPI or bank payment."
         path="/sell"
+        keywords="sell old phone online India, sell devices for cash, phone buyback India, sell laptop online, doorstep pickup buyback"
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Sell Device" }]} />
 

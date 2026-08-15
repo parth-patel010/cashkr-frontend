@@ -34,6 +34,8 @@ import Careers from './pages/Careers.jsx';
 import CompareDeviceKartVsCashify from './pages/CompareDeviceKartVsCashify.jsx';
 import CashifyAlternatives from './pages/CashifyAlternatives.jsx';
 import BestPlaceToSellPhone from './pages/BestPlaceToSellPhone.jsx';
+import BestOldPhoneSellingWebsite from './pages/BestOldPhoneSellingWebsite.jsx';
+import SellOldPhoneOnlineIndia from './pages/SellOldPhoneOnlineIndia.jsx';
 import CityLandingPage from './pages/CityLandingPage.jsx';
 import CategoryHubPage from './pages/CategoryHubPage.jsx';
 import { CATEGORY_HUBS } from './data/categoryHubs.js';
@@ -202,6 +204,8 @@ function App() {
           <Route path="/compare/devicekart-vs-cashify" element={<CompareDeviceKartVsCashify />} />
           <Route path="/alternatives/cashify-alternatives" element={<CashifyAlternatives />} />
           <Route path="/best-place-to-sell-old-phone-india" element={<BestPlaceToSellPhone />} />
+          <Route path="/best-old-phone-selling-website" element={<BestOldPhoneSellingWebsite />} />
+          <Route path="/sell-old-phone-online-india" element={<SellOldPhoneOnlineIndia />} />
           <Route path="/sell-old-phone-in/:city" element={<CityLandingPage />} />
           {CATEGORY_HUBS.map((hub) => (
             <Route key={hub.slug} path={`/${hub.slug}`} element={<CategoryHubPage />} />

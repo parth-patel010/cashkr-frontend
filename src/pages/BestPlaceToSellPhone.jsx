@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import SEOHead from '../components/seo/SEOHead';
+import { moneyPageKeywords } from '../data/seoKeywords';
 import { buildSchemaGraph, faqPageSchema, organizationSchema, websiteSchema } from '../utils/schema';
 
 const FAQ = {
@@ -27,6 +28,8 @@ export default function BestPlaceToSellPhone() {
         title="Best Place to Sell Old Phone in India (2026) — DeviceKart"
         description="Discover the best place to sell your old phone in India. Compare buyback platforms and learn why DeviceKart offers instant quotes, free pickup, and transparent pricing."
         path="/best-place-to-sell-old-phone-india"
+        keywords={moneyPageKeywords('best-website')}
+        imageAlt="Best place to sell old phone in India — DeviceKart"
         schema={schema}
       />
       <div className="max-w-[900px] mx-auto px-4 py-12 sm:py-20">

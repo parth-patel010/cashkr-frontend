@@ -14,6 +14,8 @@ export default function SEOHead({
   description = DEFAULT_DESCRIPTION,
   path = '/',
   image = DEFAULT_OG_IMAGE,
+  imageAlt,
+  keywords,
   type = 'website',
   noindex = false,
   schema = null,
@@ -21,11 +23,13 @@ export default function SEOHead({
   const fullTitle = formatSeoTitle(title);
   const canonical = absoluteUrl(path);
   const ogImage = image.startsWith('http') ? image : absoluteUrl(image);
+  const ogImageAlt = imageAlt || fullTitle;
 
   return (
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={canonical} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
 
@@ -35,6 +39,7 @@ export default function SEOHead({
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:alt" content={ogImageAlt} />
       <meta property="og:locale" content="en_IN" />
 
       <meta name="twitter:card" content="summary_large_image" />
