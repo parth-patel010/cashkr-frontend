@@ -50,6 +50,14 @@ function applySeo(html, { title, description, path: routePath, keywords, imageAl
 
   let out = html;
 
+  // Strip prior SEO blocks / duplicate social tags first
+  out = out.replace(/\n?\s*<!-- dk-seo-home -->[\s\S]*?<!-- \/dk-seo-home -->\n?/g, '\n');
+  out = out.replace(/\n?\s*<!-- dk-seo-inject -->[\s\S]*?<!-- \/dk-seo-inject -->\n?/g, '\n');
+  out = out.replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, '');
+  out = out.replace(/<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, '');
+  out = out.replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, '');
+  out = out.replace(/<meta\s+name=["']keywords["'][^>]*>\s*/gi, '');
+
   out = out.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttr(fullTitle)}</title>`);
 
   if (/<meta\s+name=["']description["']/i.test(out)) {
@@ -68,12 +76,7 @@ function applySeo(html, { title, description, path: routePath, keywords, imageAl
     ? `<meta name="keywords" content="${escapeAttr(keywords)}" />`
     : '';
 
-  if (/<meta\s+name=["']keywords["']/i.test(out)) {
-    out = out.replace(
-      /<meta\s+name=["']keywords["']\s+content=["'][^"']*["']\s*\/?>/i,
-      keywordsTag || '',
-    );
-  } else if (keywordsTag) {
+  if (keywordsTag) {
     out = out.replace(
       /<meta\s+name=["']description["'][^>]*>/i,
       (m) => `${m}\n    ${keywordsTag}`,
@@ -95,9 +98,6 @@ function applySeo(html, { title, description, path: routePath, keywords, imageAl
     `<meta name="twitter:description" content="${escapeAttr(description)}" />`,
     `<meta name="twitter:image" content="${escapeAttr(ogImage)}" />`,
   ].join('\n    ');
-
-  // Remove prior injected SEO block if re-running
-  out = out.replace(/\n?\s*<!-- dk-seo-inject -->[\s\S]*?<!-- \/dk-seo-inject -->\n?/g, '\n');
 
   out = out.replace(
     /<\/head>/i,
