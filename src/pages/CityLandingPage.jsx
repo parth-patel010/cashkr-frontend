@@ -61,29 +61,29 @@ export default function CityLandingPage() {
     faqPageSchema(faqs),
     breadcrumbSchema([
       { label: 'Home', href: '/' },
-      { label: `Sell old phone in ${city.name}`, href: path },
+      { label: `Sell Old Mobile Phone in ${city.name}`, href: path },
     ]),
   ]);
 
   return (
     <>
       <SEOHead
-        title={`Sell Old Phone in ${city.name} — Free Pickup & Instant Cash | DeviceKart`}
-        description={`Best way to sell old phone in ${city.name}, ${city.state}. Instant online quote, free doorstep pickup, and secure UPI/bank payment with DeviceKart — a trusted Cashify alternative.`}
+        title={`Sell Your Old Mobile Phone in ${city.name} | DeviceKart`}
+        description={`Sell your old Mobile Phone in ${city.name} via DeviceKart. It is the best place to quickly sell your old Mobile Phone in ${city.name} and get instant cash online while staying at home.`}
         path={path}
         keywords={cityKeywords(city.name)}
-        imageAlt={`Sell old phone in ${city.name} with DeviceKart doorstep pickup`}
+        imageAlt={`Sell your Mobile Phone in ${city.name} with DeviceKart`}
         schema={schema}
       />
       <div className="max-w-[900px] mx-auto px-4 py-12 sm:py-20">
         <nav className="text-xs text-gray-500 mb-4 flex flex-wrap gap-1">
           <Link to="/" className="hover:text-[#0565E6] no-underline">Home</Link>
           <span>/</span>
-          <span className="text-gray-800">Sell old phone in {city.name}</span>
+          <span className="text-gray-800">Sell Old Mobile Phone in {city.name}</span>
         </nav>
 
         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-          Sell Old Phone in {city.name} for Instant Cash
+          Sell your Mobile Phone in {city.name}
         </h1>
         <p className="text-gray-500 mb-6 leading-relaxed">
           Looking for the best place to sell your old phone in {city.name}? DeviceKart offers free doorstep
@@ -181,7 +181,7 @@ export default function CityLandingPage() {
               to={`/sell-old-phone-in/${c.slug}`}
               className="text-sm text-[#0565E6] hover:underline no-underline px-2 py-1"
             >
-              Sell old phone in {c.name}
+              Sell Old Mobile Phone in {c.name}
             </Link>
           ))}
         </div>
