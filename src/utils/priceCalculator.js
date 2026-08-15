@@ -73,9 +73,9 @@ export function calculatePrice({
     applyDeduction('screenFaulty', 65);
   }
 
-  // 4. Non-original screen — 50%
+  // 4. Non-original / copy screen — 27%
   if (isScreenOriginal === false) {
-    applyDeduction('copyScreen', 50);
+    applyDeduction('copyScreen', 27);
   }
 
   // 5. Out of warranty — 15%
