@@ -11,6 +11,7 @@ import SelectionCard from "../components/layout/SelectionCard";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { getSellCategoryMeta, isGenericSellCategory } from "../constants/sellCategories";
 import { isFormSellCategory, FORM_SELL_CATEGORY_PATHS } from "../utils/websiteCategories";
+import { categorySellKeywords } from "../data/seoKeywords";
 
 export default function SellCategoryBrandPage() {
   const { category } = useParams();
@@ -49,6 +50,7 @@ export default function SellCategoryBrandPage() {
         title={meta.title}
         description={meta.description}
         path={meta.pathPrefix + "/brand"}
+        keywords={categorySellKeywords(category)}
         breadcrumbItems={[{ label: "Home", href: "/" }, { label: meta.plural }]}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: meta.plural }]} />

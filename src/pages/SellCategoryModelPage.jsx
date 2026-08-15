@@ -14,6 +14,8 @@ import {
   availablePlaystationSeries,
   filterModelsByPlaystationSeries,
 } from "../utils/playstationSeries";
+import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
+import { brandSellKeywords } from "../data/seoKeywords";
 
 export default function SellCategoryModelPage() {
   const { category, brand } = useParams();
@@ -58,6 +60,13 @@ export default function SellCategoryModelPage() {
 
   return (
     <PageCanvas>
+      <CategoryPageSEO
+        title={`Sell Old ${brandName} ${meta.plural} Online — Instant Cash`}
+        description={`Sell your used ${brandName} ${meta.label.toLowerCase()} online with DeviceKart. Instant quotes, free doorstep pickup, and secure payment across India.`}
+        path={`${meta.pathPrefix}/${brand}`}
+        keywords={brandSellKeywords(category, brandName)}
+        breadcrumbItems={breadcrumbItems}
+      />
       <Breadcrumb items={breadcrumbItems} />
 
       <PageShell

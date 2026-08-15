@@ -10,6 +10,7 @@ import SelectionCard from "../components/layout/SelectionCard";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { CATEGORY_SEO } from "../config/seo";
 import { IMAC_BRANDS } from "../constants/devices";
+import { categorySellKeywords } from "../data/seoKeywords";
 
 const IMAC_BRAND_ORDER = ["Apple"];
 
@@ -64,6 +65,7 @@ export default function MacBrandSelectionPage() {
         title={CATEGORY_SEO.mac.title}
         description={CATEGORY_SEO.mac.description}
         path={CATEGORY_SEO.mac.brandPath}
+        keywords={categorySellKeywords('mac')}
         breadcrumbItems={[{ label: "Home", href: "/" }, { label: "iMac / Mac" }]}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "iMac / Mac" }]} />

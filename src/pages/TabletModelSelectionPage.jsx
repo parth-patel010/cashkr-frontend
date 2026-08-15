@@ -9,6 +9,8 @@ import PageShell from "../components/layout/PageShell";
 import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
 import { formatCurrency } from "../utils/formatCurrency";
+import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
+import { brandSellKeywords } from "../data/seoKeywords";
 
 const TabletIcon = () => (
   <svg
@@ -57,6 +59,13 @@ export default function TabletModelSelectionPage() {
 
   return (
     <PageCanvas>
+      <CategoryPageSEO
+        title={`Sell Old ${brandName} Tablets Online — Instant Cash`}
+        description={`Sell your used ${brandName} tablet online with DeviceKart. Instant quotes, free doorstep pickup, and secure payment across India.`}
+        path={`/sell-tablet/${brand}`}
+        keywords={brandSellKeywords('tablet', brandName)}
+        breadcrumbItems={breadcrumbItems}
+      />
       <Breadcrumb items={breadcrumbItems} />
 
       <PageShell

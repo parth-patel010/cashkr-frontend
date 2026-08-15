@@ -10,6 +10,7 @@ import SelectionCard from "../components/layout/SelectionCard";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { CATEGORY_SEO } from "../config/seo";
 import { LAPTOP_BRANDS } from "../constants/devices";
+import { categorySellKeywords } from "../data/seoKeywords";
 
 const LAPTOP_BRAND_ORDER = ["Apple", "Dell", "HP", "Lenovo", "Asus", "Acer", "Microsoft"];
 
@@ -64,6 +65,7 @@ export default function LaptopBrandSelectionPage() {
         title={CATEGORY_SEO.laptop.title}
         description={CATEGORY_SEO.laptop.description}
         path={CATEGORY_SEO.laptop.brandPath}
+        keywords={categorySellKeywords('laptop')}
         breadcrumbItems={[{ label: "Home", href: "/" }, { label: "Laptops" }]}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Laptops" }]} />

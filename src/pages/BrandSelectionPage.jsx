@@ -10,6 +10,7 @@ import SelectionCard from "../components/layout/SelectionCard";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { CATEGORY_SEO } from "../config/seo";
 import { BRANDS } from "../constants/devices";
+import { categorySellKeywords } from "../data/seoKeywords";
 import { trackPhoneViewContent } from "../utils/metaPixel";
 
 const MOBILE_BRAND_ORDER = ["Apple", "Samsung", "OnePlus", "Vivo", "Oppo", "Xiaomi"];
@@ -74,6 +75,7 @@ export default function BrandSelectionPage() {
         title={CATEGORY_SEO.mobile.title}
         description={CATEGORY_SEO.mobile.description}
         path={CATEGORY_SEO.mobile.brandPath}
+        keywords={categorySellKeywords('mobile')}
         breadcrumbItems={[{ label: "Home", href: "/" }, { label: "Mobile Phones" }]}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Mobile Phones" }]} />

@@ -10,6 +10,7 @@ import SelectionCard from "../components/layout/SelectionCard";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { CATEGORY_SEO } from "../config/seo";
 import { TABLET_BRANDS } from "../constants/devices";
+import { categorySellKeywords } from "../data/seoKeywords";
 
 const TABLET_BRAND_ORDER = ["Apple", "Samsung"];
 
@@ -69,6 +70,7 @@ export default function TabletBrandSelectionPage() {
         title={CATEGORY_SEO.tablet.title}
         description={CATEGORY_SEO.tablet.description}
         path={CATEGORY_SEO.tablet.brandPath}
+        keywords={categorySellKeywords('tablet')}
         breadcrumbItems={[{ label: "Home", href: "/" }, { label: "Tablets" }]}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Tablets" }]} />

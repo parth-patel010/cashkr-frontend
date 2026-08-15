@@ -12,6 +12,7 @@ import {
   FALLBACK_WEBSITE_CATEGORIES,
 } from "../utils/websiteCategories";
 import { sellCategoryImage, SELL_CATEGORY_DESCS } from "../config/categoryImages";
+import { sellHubKeywords } from "../data/seoKeywords";
 
 export default function SellHubPage() {
   const [categories, setCategories] = useState(() =>
@@ -28,7 +29,7 @@ export default function SellHubPage() {
         title="Sell Old Devices Online India — Instant Cash | DeviceKart"
         description="Sell old phones, tablets, laptops and Mac online on DeviceKart. Instant buyback quote, free doorstep pickup across 2,000+ cities, and secure UPI or bank payment."
         path="/sell"
-        keywords="sell old phone online India, sell devices for cash, phone buyback India, sell laptop online, doorstep pickup buyback"
+        keywords={sellHubKeywords()}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Sell Device" }]} />
 

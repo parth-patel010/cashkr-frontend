@@ -10,6 +10,7 @@ import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
 import { formatCurrency } from "../utils/formatCurrency";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
+import { brandSellKeywords } from "../data/seoKeywords";
 
 const PhoneIcon = () => (
   <svg
@@ -63,6 +64,7 @@ export default function ModelSelectionPage() {
         title={`Sell Old ${brandName} Phones Online — Instant Cash`}
         description={`Sell your used ${brandName} phone online with DeviceKart. Get instant quotes, free doorstep pickup, and secure payment across India.`}
         path={path}
+        keywords={brandSellKeywords('mobile', brandName)}
         breadcrumbItems={breadcrumbItems}
       />
       <Breadcrumb items={breadcrumbItems} />

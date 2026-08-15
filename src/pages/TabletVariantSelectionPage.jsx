@@ -56,6 +56,7 @@ export default function TabletVariantSelectionPage() {
         pathPrefix="/sell-tablet"
         breadcrumbItems={breadcrumbItems}
         categoryLabel="tablet"
+        categoryKey="tablet"
       />
       <Breadcrumb items={breadcrumbItems} />
 

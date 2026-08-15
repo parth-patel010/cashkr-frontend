@@ -13,6 +13,10 @@ import {
   cityKeywords,
   homeKeywords,
   moneyPageKeywords,
+  categorySellKeywords,
+  brandSellKeywords,
+  sellHubKeywords,
+  hubKeywords,
 } from '../src/data/seoKeywords.js';
 import {
   SITE_URL,
@@ -22,7 +26,15 @@ import {
   DEFAULT_OG_IMAGE,
   absoluteUrl,
   formatSeoTitle,
+  CATEGORY_SEO,
 } from '../src/config/seo.js';
+import { CATEGORY_HUBS } from '../src/data/categoryHubs.js';
+import {
+  BRANDS,
+  LAPTOP_BRANDS,
+  TABLET_BRANDS,
+  IMAC_BRANDS,
+} from '../src/constants/devices.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, '..', 'dist');
@@ -168,6 +180,75 @@ function staticMoneyPages() {
   ];
 }
 
+function brandRoutePages(categoryKey, brands, pathPrefix, nounPlural) {
+  return brands.map((b) => {
+    const slug = b.name.toLowerCase();
+    const routePath = `${pathPrefix}/${slug}`;
+    return {
+      route: routePath,
+      seo: {
+        title: `Sell Old ${b.name} ${nounPlural} Online — Instant Cash | DeviceKart`,
+        description: `Sell your used ${b.name} ${nounPlural.toLowerCase()} online with DeviceKart. Instant quotes, free doorstep pickup, and secure payment across India.`,
+        path: routePath,
+        keywords: brandSellKeywords(categoryKey, b.name),
+        imageAlt: `Sell ${b.name} ${nounPlural} on DeviceKart`,
+      },
+    };
+  });
+}
+
+function sellCatalogPages() {
+  const pages = [
+    {
+      route: '/sell',
+      seo: {
+        title: 'Sell Old Devices Online India — Instant Cash | DeviceKart',
+        description:
+          'Sell old phones, tablets, laptops and Mac online on DeviceKart. Instant buyback quote, free doorstep pickup across 2,000+ cities, and secure UPI or bank payment.',
+        path: '/sell',
+        keywords: sellHubKeywords(),
+      },
+    },
+  ];
+
+  for (const [key, seo] of Object.entries(CATEGORY_SEO)) {
+    if (!seo.brandPath || !['mobile', 'tablet', 'laptop', 'mac'].includes(key)) continue;
+    pages.push({
+      route: seo.brandPath,
+      seo: {
+        title: seo.title,
+        description: seo.description,
+        path: seo.brandPath,
+        keywords: categorySellKeywords(key),
+        imageAlt: seo.title,
+      },
+    });
+  }
+
+  for (const hub of CATEGORY_HUBS) {
+    pages.push({
+      route: `/${hub.slug}`,
+      seo: {
+        title: hub.title,
+        description: hub.description,
+        path: `/${hub.slug}`,
+        keywords: hub.brand
+          ? brandSellKeywords(hub.category, hub.brand)
+          : hubKeywords(hub.category),
+      },
+    });
+  }
+
+  pages.push(
+    ...brandRoutePages('mobile', BRANDS, '/sell-old-mobile-phones', 'Phones'),
+    ...brandRoutePages('laptop', LAPTOP_BRANDS, '/sell-old-laptops', 'Laptops'),
+    ...brandRoutePages('tablet', TABLET_BRANDS, '/sell-tablet', 'Tablets'),
+    ...brandRoutePages('mac', IMAC_BRANDS, '/sell-imac', 'iMac'),
+  );
+
+  return pages;
+}
+
 function main() {
   if (!fs.existsSync(path.join(distDir, 'index.html'))) {
     console.error('dist/index.html not found — run vite build first');
@@ -179,30 +260,33 @@ function main() {
   const shellPath = path.join(distDir, '_spa-shell.html');
   fs.writeFileSync(shellPath, shell);
 
-  const pages = [...staticMoneyPages(), ...cityPages()];
+  const pages = [...staticMoneyPages(), ...cityPages(), ...sellCatalogPages()];
   let count = 0;
 
   for (const { route, seo } of pages) {
-    const template = route === '/' ? shell : shell;
-    const html = applySeo(template, seo);
+    const html = applySeo(shell, seo);
     const outPath = outputPathForRoute(route);
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, html);
     count += 1;
   }
 
-  // Keep shell for SPA fallback copies if needed
   fs.writeFileSync(path.join(distDir, 'index.html'), applySeo(shell, staticMoneyPages()[0].seo));
 
-  const mumbai = path.join(distDir, 'sell-old-phone-in', 'mumbai', 'index.html');
-  if (fs.existsSync(mumbai)) {
-    const sample = fs.readFileSync(mumbai, 'utf8');
-    const kw = sample.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*)["']/i);
+  const samples = [
+    path.join(distDir, 'sell-old-mobile-phones', 'brand', 'index.html'),
+    path.join(distDir, 'sell-old-mobile-phones', 'apple', 'index.html'),
+    path.join(distDir, 'sell-old-laptops', 'brand', 'index.html'),
+    path.join(distDir, 'sell-tablet', 'brand', 'index.html'),
+  ];
+  console.log(`SEO HTML inject: ${count} routes`);
+  for (const sample of samples) {
+    if (!fs.existsSync(sample)) continue;
+    const html = fs.readFileSync(sample, 'utf8');
+    const kw = html.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*)["']/i);
     const kwCount = kw ? kw[1].split(',').map((s) => s.trim()).filter(Boolean).length : 0;
-    console.log(`SEO HTML inject: ${count} routes`);
-    console.log(`  sample /sell-old-phone-in/mumbai → keywords meta count: ${kwCount}`);
-  } else {
-    console.log(`SEO HTML inject: ${count} routes`);
+    const rel = path.relative(distDir, sample).replace(/\\/g, '/');
+    console.log(`  sample /${rel.replace(/\/index\.html$/, '')} → keywords: ${kwCount}`);
   }
 }
 

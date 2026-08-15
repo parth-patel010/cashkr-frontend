@@ -9,6 +9,8 @@ import PageShell from "../components/layout/PageShell";
 import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
 import { formatCurrency } from "../utils/formatCurrency";
+import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
+import { brandSellKeywords } from "../data/seoKeywords";
 
 const LaptopIcon = () => (
   <svg
@@ -57,6 +59,13 @@ export default function LaptopModelSelectionPage() {
 
   return (
     <PageCanvas>
+      <CategoryPageSEO
+        title={`Sell Old ${brandName} Laptops Online — Instant Cash`}
+        description={`Sell your used ${brandName} laptop online with DeviceKart. Instant quotes, free doorstep pickup, and secure payment across India.`}
+        path={`/sell-old-laptops/${brand}`}
+        keywords={brandSellKeywords('laptop', brandName)}
+        breadcrumbItems={breadcrumbItems}
+      />
       <Breadcrumb items={breadcrumbItems} />
 
       <PageShell

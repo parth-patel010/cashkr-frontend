@@ -2,7 +2,7 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import SEOHead from '../components/seo/SEOHead';
 import { getCategoryHubBySlug } from '../data/categoryHubs';
 import { EXPANDED_FAQS } from '../data/faqs';
-import { hubKeywords } from '../data/seoKeywords';
+import { hubKeywords, brandSellKeywords } from '../data/seoKeywords';
 import { buildSchemaGraph, faqPageSchema, organizationSchema, websiteSchema } from '../utils/schema';
 import NotFoundPage from './NotFoundPage';
 
@@ -42,7 +42,11 @@ export default function CategoryHubPage() {
         title={hub.title}
         description={hub.description}
         path={path}
-        keywords={hubKeywords(hubKey)}
+        keywords={
+          hub.brand
+            ? brandSellKeywords(hub.category || hubKey, hub.brand)
+            : hubKeywords(hubKey)
+        }
         schema={schema}
       />
       <div className="max-w-[900px] mx-auto px-4 py-12 sm:py-20">

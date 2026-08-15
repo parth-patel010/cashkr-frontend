@@ -9,6 +9,8 @@ import PageShell from "../components/layout/PageShell";
 import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
 import { formatCurrency } from "../utils/formatCurrency";
+import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
+import { brandSellKeywords } from "../data/seoKeywords";
 
 const IMacIcon = () => (
   <svg
@@ -58,6 +60,13 @@ export default function MacModelSelectionPage() {
 
   return (
     <PageCanvas>
+      <CategoryPageSEO
+        title={`Sell Old ${brandName} iMac Online — Instant Cash`}
+        description={`Sell your used ${brandName} iMac online with DeviceKart. Instant quotes, free doorstep pickup, and secure payment across India.`}
+        path={`/sell-imac/${brand}`}
+        keywords={brandSellKeywords('mac', brandName)}
+        breadcrumbItems={breadcrumbItems}
+      />
       <Breadcrumb items={breadcrumbItems} />
 
       <PageShell

@@ -79,6 +79,7 @@ export default function LaptopModelDetailsPage() {
         pathPrefix="/sell-old-laptops"
         breadcrumbItems={breadcrumbItems}
         categoryLabel="laptop"
+        categoryKey="laptop"
       />
       <Breadcrumb items={breadcrumbItems} />
 

@@ -56,6 +56,7 @@ export default function VariantSelectionPage() {
         pathPrefix="/sell-old-mobile-phones"
         breadcrumbItems={breadcrumbItems}
         categoryLabel="mobile phone"
+        categoryKey="mobile"
       />
       <Breadcrumb items={breadcrumbItems} />
 

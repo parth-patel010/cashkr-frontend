@@ -449,9 +449,243 @@ export function cityKeywords(cityName) {
   return uniqueJoin(buildCityKeywordPool(cityName), 220);
 }
 
-export function hubKeywords(hubKey) {
-  const hub = HUB_KEYWORDS[hubKey] || [];
-  return uniqueJoin([...hub, ...CORE_BUYBACK_KEYWORDS, ...LONG_TAIL_KEYWORDS.slice(0, 30)], 40);
+const CATEGORY_SELL_META = {
+  mobile: {
+    noun: 'phone',
+    nouns: ['phone', 'mobile', 'mobile phone', 'smartphone', 'handset'],
+    brands: [
+      'Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Redmi', 'Vivo', 'Oppo', 'Realme',
+      'Google', 'Nothing', 'Motorola', 'Nokia', 'iQOO', 'POCO', 'Infinix', 'Tecno',
+    ],
+    models: [
+      'iPhone 15', 'iPhone 14', 'iPhone 13', 'iPhone 12', 'iPhone 11',
+      'Samsung Galaxy S24', 'Samsung Galaxy S23', 'OnePlus 12', 'OnePlus Nord',
+      'Redmi Note 13', 'Vivo V29', 'Oppo Reno', 'Google Pixel 8',
+    ],
+  },
+  tablet: {
+    noun: 'tablet',
+    nouns: ['tablet', 'iPad', 'Android tablet', 'tab'],
+    brands: ['Apple', 'Samsung', 'Lenovo', 'Xiaomi', 'Realme', 'Huawei'],
+    models: [
+      'iPad Air', 'iPad Pro', 'iPad Mini', 'iPad 10th Gen',
+      'Samsung Galaxy Tab S9', 'Samsung Galaxy Tab A9', 'Lenovo Tab',
+    ],
+  },
+  laptop: {
+    noun: 'laptop',
+    nouns: ['laptop', 'notebook', 'ultrabook', 'gaming laptop', 'Chromebook'],
+    brands: [
+      'Apple', 'Dell', 'HP', 'Lenovo', 'Asus', 'Acer', 'Microsoft', 'MSI',
+      'Razer', 'Samsung', 'LG', 'Huawei',
+    ],
+    models: [
+      'MacBook Air', 'MacBook Pro', 'Dell XPS', 'HP Pavilion', 'Lenovo ThinkPad',
+      'Asus VivoBook', 'Acer Aspire', 'Microsoft Surface', 'MSI Gaming',
+    ],
+  },
+  mac: {
+    noun: 'Mac',
+    nouns: ['iMac', 'Mac', 'Mac desktop', 'Apple desktop'],
+    brands: ['Apple'],
+    models: ['iMac 24', 'iMac M1', 'iMac M3', 'Mac Mini', 'Mac Studio'],
+  },
+  earbuds: {
+    noun: 'earbuds',
+    nouns: ['earbuds', 'earphones', 'AirPods', 'TWS', 'wireless earbuds'],
+    brands: ['Apple', 'Samsung', 'Sony', 'Boat', 'OnePlus', 'JBL', 'Nothing'],
+    models: ['AirPods Pro', 'AirPods', 'Galaxy Buds', 'Sony WF', 'Boat Airdopes'],
+  },
+  smartwatch: {
+    noun: 'smartwatch',
+    nouns: ['smartwatch', 'watch', 'fitness watch', 'Apple Watch'],
+    brands: ['Apple', 'Samsung', 'Noise', 'Fire-Boltt', 'Garmin', 'Fitbit'],
+    models: ['Apple Watch Series', 'Galaxy Watch', 'Noise ColorFit'],
+  },
+  gaming: {
+    noun: 'console',
+    nouns: ['gaming console', 'PlayStation', 'Xbox', 'Nintendo Switch', 'console'],
+    brands: ['Sony', 'Microsoft', 'Nintendo'],
+    models: ['PlayStation 5', 'PlayStation 4', 'Xbox Series X', 'Nintendo Switch'],
+  },
+};
+
+const SELL_INTENTS = [
+  'sell',
+  'sell old',
+  'sell used',
+  'sell second hand',
+  'buyback',
+  'cash for',
+  'best price sell',
+  'online sell',
+];
+
+const SELL_MODIFIERS = [
+  'online India',
+  'for cash',
+  'instant cash',
+  'doorstep pickup',
+  'free pickup',
+  'best price',
+  'near me',
+  'without visiting shop',
+  'UPI payment',
+  '2026',
+];
+
+function titleCaseBrand(brand) {
+  if (!brand) return '';
+  return String(brand)
+    .split(/[\s-_]+/)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function buildCategorySellPool(categoryKey) {
+  const meta = CATEGORY_SELL_META[categoryKey] || CATEGORY_SELL_META.mobile;
+  const pool = [...(HUB_KEYWORDS[categoryKey] || []), ...CORE_BUYBACK_KEYWORDS, ...LONG_TAIL_KEYWORDS];
+
+  for (const noun of meta.nouns) {
+    for (const intent of SELL_INTENTS) {
+      pool.push(`${intent} ${noun} online India`);
+      pool.push(`${intent} ${noun} for cash`);
+    }
+    for (const mod of SELL_MODIFIERS) {
+      pool.push(`sell ${noun} ${mod}`);
+      pool.push(`sell old ${noun} ${mod}`);
+    }
+    pool.push(`${noun} buyback India`);
+    pool.push(`best website to sell ${noun}`);
+    pool.push(`highest price for old ${noun}`);
+  }
+
+  for (const brand of meta.brands) {
+    pool.push(`sell ${brand} ${meta.noun} online`);
+    pool.push(`sell old ${brand} ${meta.noun}`);
+    pool.push(`${brand} ${meta.noun} buyback India`);
+    pool.push(`sell ${brand} for cash India`);
+  }
+
+  for (const model of meta.models) {
+    pool.push(`sell ${model} online India`);
+    pool.push(`sell old ${model} for cash`);
+    pool.push(`${model} buyback price`);
+    pool.push(`${model} resale value India`);
+  }
+
+  for (const city of HOME_CITIES) {
+    pool.push(`sell ${meta.noun} in ${city}`);
+    pool.push(`sell old ${meta.noun} in ${city}`);
+  }
+
+  return pool;
+}
+
+function buildBrandSellPool(categoryKey, brandName) {
+  const meta = CATEGORY_SELL_META[categoryKey] || CATEGORY_SELL_META.mobile;
+  const brand = titleCaseBrand(brandName);
+  const pool = buildCategorySellPool(categoryKey);
+
+  for (const noun of meta.nouns) {
+    for (const intent of SELL_INTENTS) {
+      pool.push(`${intent} ${brand} ${noun}`);
+      pool.push(`${intent} ${brand} ${noun} online India`);
+      pool.push(`${intent} ${brand} ${noun} for cash`);
+    }
+    for (const mod of SELL_MODIFIERS) {
+      pool.push(`sell ${brand} ${noun} ${mod}`);
+      pool.push(`sell old ${brand} ${noun} ${mod}`);
+      pool.push(`sell used ${brand} ${noun} ${mod}`);
+    }
+    pool.push(`${brand} ${noun} buyback`);
+    pool.push(`${brand} ${noun} resale India`);
+    pool.push(`best place to sell ${brand} ${noun}`);
+    pool.push(`DeviceKart sell ${brand} ${noun}`);
+  }
+
+  pool.push(`sell ${brand} online India`);
+  pool.push(`sell old ${brand} for cash`);
+  pool.push(`${brand} buyback India`);
+  pool.push(`${brand} exchange for cash`);
+  pool.push(`Cashify alternative sell ${brand}`);
+
+  for (const model of meta.models) {
+    if (model.toLowerCase().includes(brand.toLowerCase()) || brand === 'Apple' || brand === 'Samsung') {
+      pool.push(`sell ${brand} ${model} online`);
+      pool.push(`sell old ${model} ${brand}`);
+    }
+  }
+
+  for (const city of HOME_CITIES.slice(0, 12)) {
+    pool.push(`sell ${brand} ${meta.noun} in ${city}`);
+    pool.push(`sell old ${brand} in ${city}`);
+  }
+
+  return pool;
+}
+
+function buildModelSellPool(categoryKey, brandName, modelName) {
+  const brand = titleCaseBrand(brandName);
+  const model = modelName || brand;
+  const meta = CATEGORY_SELL_META[categoryKey] || CATEGORY_SELL_META.mobile;
+  const pool = buildBrandSellPool(categoryKey, brand);
+
+  for (const intent of SELL_INTENTS) {
+    pool.push(`${intent} ${model}`);
+    pool.push(`${intent} ${model} online India`);
+    pool.push(`${intent} ${model} for cash`);
+  }
+  for (const mod of SELL_MODIFIERS) {
+    pool.push(`sell ${model} ${mod}`);
+    pool.push(`sell old ${model} ${mod}`);
+  }
+  pool.push(`${model} buyback price India`);
+  pool.push(`${model} resale value`);
+  pool.push(`sell ${brand} ${model} DeviceKart`);
+  pool.push(`best price for ${model}`);
+  pool.push(`instant cash for ${model}`);
+  pool.push(`doorstep pickup ${model}`);
+
+  for (const noun of meta.nouns.slice(0, 3)) {
+    pool.push(`sell ${model} ${noun} online`);
+  }
+
+  return pool;
+}
+
+/** ~220 keywords for category brand-list pages (phones / laptops / tablets / …). */
+export function categorySellKeywords(categoryKey = 'mobile') {
+  return uniqueJoin(buildCategorySellPool(categoryKey), 220);
+}
+
+/** ~220 keywords for a brand sell page (e.g. sell Apple phones). */
+export function brandSellKeywords(categoryKey, brandName) {
+  return uniqueJoin(buildBrandSellPool(categoryKey, brandName), 220);
+}
+
+/** ~220 keywords for a specific model sell page. */
+export function modelSellKeywords(categoryKey, brandName, modelName) {
+  return uniqueJoin(buildModelSellPool(categoryKey, brandName, modelName), 220);
+}
+
+/** Hub landing pages (iphone / samsung / laptop / ipad). */
+export function hubKeywords(hubKey, brandName) {
+  if (brandName) return brandSellKeywords(hubKey, brandName);
+  return categorySellKeywords(hubKey);
+}
+
+/** /sell hub page keywords. */
+export function sellHubKeywords() {
+  return uniqueJoin(
+    [
+      ...buildCategorySellPool('mobile'),
+      ...buildCategorySellPool('laptop'),
+      ...buildCategorySellPool('tablet'),
+      ...CORE_BUYBACK_KEYWORDS,
+    ],
+    220,
+  );
 }
 
 export function moneyPageKeywords(variant = 'best-website') {

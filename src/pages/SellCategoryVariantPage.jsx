@@ -59,6 +59,7 @@ export default function SellCategoryVariantPage() {
         pathPrefix={meta.pathPrefix}
         breadcrumbItems={breadcrumbItems}
         categoryLabel={meta.key}
+        categoryKey={meta.key}
       />
       <Breadcrumb items={breadcrumbItems} />
 

@@ -1,5 +1,6 @@
 import SEOHead from './SEOHead';
 import { getDeviceSeoMeta, getModelSeoContent } from '../../utils/deviceSeo';
+import { modelSellKeywords } from '../../data/seoKeywords';
 import {
   buildSchemaGraph,
   breadcrumbSchema,
@@ -9,7 +10,14 @@ import {
   websiteSchema,
 } from '../../utils/schema';
 
-export default function DevicePageSEO({ device, brand, pathPrefix, breadcrumbItems, categoryLabel }) {
+export default function DevicePageSEO({
+  device,
+  brand,
+  pathPrefix,
+  breadcrumbItems,
+  categoryLabel,
+  categoryKey = 'mobile',
+}) {
   if (!device) return null;
 
   const meta = getDeviceSeoMeta(device, { brand, pathPrefix, categoryLabel });
@@ -37,13 +45,14 @@ export default function DevicePageSEO({ device, brand, pathPrefix, breadcrumbIte
       path={meta.path}
       image={meta.image}
       imageAlt={`Sell ${device.modelName} online on DeviceKart`}
+      keywords={modelSellKeywords(categoryKey, brand, device.modelName)}
       type="product"
       schema={schema}
     />
   );
 }
 
-export function CategoryPageSEO({ title, description, path, breadcrumbItems }) {
+export function CategoryPageSEO({ title, description, path, breadcrumbItems, keywords }) {
   const schema = buildSchemaGraph([
     organizationSchema(),
     websiteSchema(),
@@ -51,6 +60,12 @@ export function CategoryPageSEO({ title, description, path, breadcrumbItems }) {
   ]);
 
   return (
-    <SEOHead title={title} description={description} path={path} schema={schema} />
+    <SEOHead
+      title={title}
+      description={description}
+      path={path}
+      keywords={keywords}
+      schema={schema}
+    />
   );
 }
