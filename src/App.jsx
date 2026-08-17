@@ -80,6 +80,7 @@ import AdminDevices from './pages/admin/AdminDevices.jsx';
 import AdminBrands from './pages/admin/AdminBrands.jsx';
 import AdminBuyDevices from './pages/admin/AdminBuyDevices.jsx';
 import AdminVendors from './pages/admin/AdminVendors.jsx';
+import AdminVendorDetail from './pages/admin/AdminVendorDetail.jsx';
 import AdminAppSettings from './pages/admin/AdminAppSettings.jsx';
 import AdminWebsiteSettings from './pages/admin/AdminWebsiteSettings.jsx';
 import AdminOffers from './pages/admin/AdminOffers.jsx';
@@ -221,6 +222,7 @@ function App() {
             <Route path="brands" element={<AdminBrands />} />
             <Route path="buy-devices" element={<AdminBuyDevices />} />
             <Route path="vendors" element={<AdminVendors />} />
+            <Route path="vendors/:id" element={<AdminVendorDetail />} />
             <Route path="app-settings" element={<AdminAppSettings />} />
             <Route path="website-settings" element={<AdminWebsiteSettings />} />
             <Route path="offers" element={<AdminOffers />} />

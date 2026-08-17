@@ -40,6 +40,7 @@ export default function AdminLayout() {
     if (path.includes('/devices')) return 'Device Catalog Management';
     if (path.includes('/brands')) return 'Brand Management';
     if (path.includes('/buy-devices')) return 'Buy Device Inventory';
+    if (path.match(/\/vendors\/[^/]+/)) return 'Vendor Details';
     if (path.includes('/vendors')) return 'Vendor Management';
     if (path.includes('/website-settings')) return 'Website Settings';
     if (path.includes('/app-settings')) return 'App Settings';

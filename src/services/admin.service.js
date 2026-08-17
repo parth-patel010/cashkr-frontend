@@ -107,7 +107,7 @@ export const adminService = {
 
   // Vendors
   getVendors: (params) => adminApi.get('/admin/vendors', { params }),
-  getVendor: (id) => adminApi.get(`/admin/vendors/${id}`),
+  getVendor: (id, params) => adminApi.get(`/admin/vendors/${id}`, { params }),
   createVendor: (data) => adminApi.post('/admin/vendors', data),
   updateVendor: (id, data) => adminApi.put(`/admin/vendors/${id}`, data),
   adjustVendorWallet: (id, data) => adminApi.post(`/admin/vendors/${id}/adjust-wallet`, data),

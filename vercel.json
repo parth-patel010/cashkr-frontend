@@ -8,14 +8,7 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/((?!sell-old-phone-in/).*)",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/sell-old-phone-in/:city",
-      "destination": "/sell-old-phone-in/:city/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {

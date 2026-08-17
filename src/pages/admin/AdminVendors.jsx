@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit } from 'lucide-react';
 import './admin.css';
 
@@ -18,6 +19,7 @@ const emptyForm = {
 };
 
 export default function AdminVendors() {
+  const navigate = useNavigate();
   const [vendors, setVendors] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -157,9 +159,21 @@ export default function AdminVendors() {
             </thead>
             <tbody>
               {vendors.map((v) => (
-                <tr key={v._id}>
+                <tr
+                  key={v._id}
+                  className="cursor-pointer hover:bg-slate-50"
+                  onClick={() => navigate(`/admin/vendors/${v._id}`)}
+                >
                   <td>{v.vendorCode}</td>
-                  <td>{v.name}</td>
+                  <td>
+                    <Link
+                      to={`/admin/vendors/${v._id}`}
+                      className="font-semibold text-blue-600 no-underline hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {v.name}
+                    </Link>
+                  </td>
                   <td>{v.phone}</td>
                   <td>{v.city || '—'}</td>
                   <td>
@@ -187,7 +201,7 @@ export default function AdminVendors() {
                       {v.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <button type="button" className="admin-icon-btn" onClick={() => openEdit(v)}>
                       <Edit size={14} />
                     </button>
