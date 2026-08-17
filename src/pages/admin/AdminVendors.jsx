@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit } from 'lucide-react';
+import { Plus, Search, Edit, Eye } from 'lucide-react';
 import './admin.css';
 
 const emptyForm = {
@@ -154,7 +154,7 @@ export default function AdminVendors() {
                 <th>Wallet</th>
                 <th>Credits</th>
                 <th>Status</th>
-                <th />
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -202,9 +202,24 @@ export default function AdminVendors() {
                     </span>
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="admin-icon-btn" onClick={() => openEdit(v)}>
-                      <Edit size={14} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="admin-icon-btn"
+                        title="View vendor"
+                        onClick={() => navigate(`/admin/vendors/${v._id}`)}
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-icon-btn"
+                        title="Edit vendor"
+                        onClick={() => openEdit(v)}
+                      >
+                        <Edit size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
