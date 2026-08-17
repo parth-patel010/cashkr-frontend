@@ -31,8 +31,13 @@ const STATUS_LABELS = {
   failed: 'Failed',
 };
 
-function formatMoney(value) {
-  return `₹${Number(value || 0).toLocaleString('en-IN')}`;
+function formatPickupDate(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime()) && String(value).match(/^\d{4}-/)) {
+    return parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  return String(value);
 }
 
 function statusBadgeClass(status) {
@@ -273,6 +278,7 @@ export default function AdminVendorDetail() {
               <th>Order</th>
               <th>Device</th>
               <th>Customer</th>
+              <th>Pickup slot</th>
               <th>Pickup</th>
               <th>Value</th>
               <th>Status</th>
@@ -297,6 +303,12 @@ export default function AdminVendorDetail() {
                   <div className="text-sm font-semibold">{order.pickup?.name || order.userId?.name || '—'}</div>
                   <div className="text-xs text-slate-500">{order.pickup?.phone || order.userId?.phone || ''}</div>
                 </td>
+                <td>
+                  <div className="font-semibold text-slate-800">
+                    {formatPickupDate(order.pickup?.date) || '—'}
+                  </div>
+                  <div className="text-xs text-slate-500">{order.pickup?.timeSlot || 'No slot'}</div>
+                </td>
                 <td className="text-xs">
                   {order.pickup?.city || '—'}
                   {order.pickup?.pincode ? ` · ${order.pickup.pincode}` : ''}
@@ -314,7 +326,7 @@ export default function AdminVendorDetail() {
             ))}
             {!orders.length ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center' }}>
+                <td colSpan={8} style={{ textAlign: 'center' }}>
                   {loading ? 'Loading orders...' : 'No orders assigned to this vendor for the selected filter.'}
                 </td>
               </tr>
