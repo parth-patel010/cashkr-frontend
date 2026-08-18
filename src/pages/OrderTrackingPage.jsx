@@ -283,9 +283,40 @@ export default function OrderTrackingPage() {
                  <h5 className="text-sm font-extrabold text-gray-900 mb-3">Order Summary</h5>
                  <div className="space-y-3 bg-[#F7F9FC] p-5 rounded-2xl border border-[#E8EEF5]">
                     <div className="flex justify-between text-xs font-bold text-gray-400">
-                       <span>Subtotal</span>
-                       <span className="text-gray-900">{formatCurrency(order.priceBreakdown?.finalPrice)}</span>
+                       <span>Quoted price</span>
+                       <span className="text-gray-900">
+                         {formatCurrency(
+                           order.priceBreakdown?.quotedFinalPrice != null
+                             ? order.priceBreakdown.quotedFinalPrice
+                             : (order.priceBreakdown?.finalPrice || 0)
+                               - (Number(order.vendorPriceAdjustment || order.priceBreakdown?.vendorAdjustment) || 0)
+                               - (Number(order.priceBreakdown?.laterAdjustment) || 0)
+                         )}
+                       </span>
                     </div>
+                    {Number(order.vendorPriceAdjustment || order.priceBreakdown?.vendorAdjustment) ? (
+                      <div className="flex justify-between text-xs font-bold text-gray-400">
+                         <span>Pickup adjustment</span>
+                         <span className="text-gray-900">
+                           {Number(order.vendorPriceAdjustment || order.priceBreakdown?.vendorAdjustment) >= 0 ? '+' : ''}
+                           {formatCurrency(Math.abs(Number(order.vendorPriceAdjustment || order.priceBreakdown?.vendorAdjustment)))}
+                         </span>
+                      </div>
+                    ) : null}
+                    {Number(order.priceBreakdown?.laterAdjustment) ? (
+                      <div className="flex justify-between text-xs font-bold text-gray-400">
+                         <span>Later adjustment</span>
+                         <span className="text-gray-900">
+                           {Number(order.priceBreakdown.laterAdjustment) >= 0 ? '+' : ''}
+                           {formatCurrency(Math.abs(Number(order.priceBreakdown.laterAdjustment)))}
+                         </span>
+                      </div>
+                    ) : null}
+                    {order.priceBreakdown?.laterAdjustmentNote ? (
+                      <p className="text-[11px] font-bold text-gray-400 m-0">
+                        {order.priceBreakdown.laterAdjustmentNote}
+                      </p>
+                    ) : null}
                     <div className="flex justify-between text-xs font-bold text-gray-400">
                        <span>Pickup</span>
                        <span className="text-primary">FREE</span>

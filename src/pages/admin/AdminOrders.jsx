@@ -16,7 +16,18 @@ const STATUS_BY_TYPE = {
   repair: ['booked', 'assigned', 'picked', 'repairing', 'quality_check', 'delivered', 'cancelled'],
 };
 
-function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAssignVendor }) {
+function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAssignVendor, onLaterAdjust }) {
+  const pbInit = order?.priceBreakdown || {};
+  const [laterAmount, setLaterAmount] = useState(String(pbInit.laterAdjustment || ''));
+  const [laterNote, setLaterNote] = useState(pbInit.laterAdjustmentNote || '');
+  const [savingLater, setSavingLater] = useState(false);
+
+  useEffect(() => {
+    const pb = order?.priceBreakdown || {};
+    setLaterAmount(pb.laterAdjustment != null && pb.laterAdjustment !== 0 ? String(pb.laterAdjustment) : String(pb.laterAdjustment || ''));
+    setLaterNote(pb.laterAdjustmentNote || '');
+  }, [order?._id, order?.priceBreakdown?.laterAdjustment, order?.priceBreakdown?.laterAdjustmentNote]);
+
   if (!order) return null;
 
   const InfoRow = ({ label, value }) =>
@@ -49,6 +60,27 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
   const buy = order.productSnapshot || {};
   const repair = order.snapshot || {};
   const pb = order.priceBreakdown || {};
+  const vendorAdj = Number(order.vendorPriceAdjustment ?? pb.vendorAdjustment) || 0;
+  const laterAdj = Number(pb.laterAdjustment) || 0;
+  const quoted =
+    pb.quotedFinalPrice != null && pb.quotedFinalPrice !== ''
+      ? Number(pb.quotedFinalPrice)
+      : (Number(pb.finalPrice) || 0) - vendorAdj - laterAdj;
+
+  const laterPreview = Math.max(
+    0,
+    Math.round(quoted + vendorAdj + (Number(laterAmount) || 0)),
+  );
+
+  const saveLaterAdjustment = async () => {
+    if (!onLaterAdjust) return;
+    setSavingLater(true);
+    try {
+      await onLaterAdjust(order, { amount: Number(laterAmount) || 0, note: laterNote });
+    } finally {
+      setSavingLater(false);
+    }
+  };
 
   return (
     <div className="admin-modal-backdrop" onClick={onClose}>
@@ -227,13 +259,62 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                     value={`${Number(order.vendorPriceAdjustment || pb.vendorAdjustment || 0) >= 0 ? '+' : ''}₹${order.vendorPriceAdjustment ?? pb.vendorAdjustment}`}
                   />
                 ) : null}
+                {laterAdj ? (
+                  <InfoRow
+                    label="Later adjustment"
+                    value={`${laterAdj >= 0 ? '+' : ''}₹${laterAdj}`}
+                  />
+                ) : null}
+                {pb.laterAdjustmentNote ? (
+                  <InfoRow label="Later note" value={pb.laterAdjustmentNote} />
+                ) : null}
                 <div className="flex justify-between items-center py-3 mt-1 border-t-2 border-blue-100">
                   <span className="text-[12px] font-800 text-blue-700 uppercase tracking-wider">
-                    {order.status === 'completed' ? 'Final paid / completed' : 'Final Price Offered'}
+                    {order.status === 'completed' ? 'Final paid / invoice total' : 'Final Price Offered'}
                   </span>
                   <span className="text-[18px] font-900 text-blue-700">₹{pb.finalPrice || 0}</span>
                 </div>
               </Section>
+
+              {order.status === 'completed' ? (
+                <Section icon={CreditCard} title="Later adjustment (updates customer invoice)">
+                  <div className="py-3 space-y-3">
+                    <p className="text-xs text-slate-500 m-0">
+                      Quoted ₹{quoted} {vendorAdj ? `+ vendor ₹${vendorAdj}` : ''} + later adjustment = invoice total.
+                    </p>
+                    <div className="admin-field">
+                      <label>Later adjustment (₹)</label>
+                      <input
+                        type="number"
+                        value={laterAmount}
+                        onChange={(e) => setLaterAmount(e.target.value)}
+                        placeholder="e.g. 200 or -150"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <label>Note (optional)</label>
+                      <input
+                        value={laterNote}
+                        onChange={(e) => setLaterNote(e.target.value)}
+                        placeholder="Reason for later adjustment"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-bold text-slate-700">
+                        New invoice total: ₹{laterPreview}
+                      </span>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-primary"
+                        disabled={savingLater}
+                        onClick={saveLaterAdjustment}
+                      >
+                        {savingLater ? 'Saving...' : 'Apply to invoice'}
+                      </button>
+                    </div>
+                  </div>
+                </Section>
+              ) : null}
 
               {order.deviceReport?.vendorVerification ? (
                 <Section icon={ClipboardCheck} title="Vendor verified checklist">
@@ -541,6 +622,19 @@ export default function AdminOrders() {
     }
   };
 
+  const handleLaterAdjust = async (order, payload) => {
+    try {
+      const idForApi = order._id || order.orderId;
+      const res = await adminService.laterAdjustOrder(idForApi, payload);
+      const updated = res.data.order;
+      setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...updated } : o)));
+      setSelectedOrder((prev) => (prev && prev._id === order._id ? { ...prev, ...updated } : prev));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to apply later adjustment');
+      throw err;
+    }
+  };
+
   const handleAssignVendor = async (order, vendorId) => {
     setAssigning(true);
     try {
@@ -801,6 +895,7 @@ export default function AdminOrders() {
           vendors={vendors}
           assigning={assigning}
           onAssignVendor={handleAssignVendor}
+          onLaterAdjust={handleLaterAdjust}
           onClose={() => setSelectedOrder(null)}
         />
       ) : null}

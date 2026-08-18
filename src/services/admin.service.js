@@ -141,6 +141,7 @@ export const adminService = {
   getOrders: (params) => adminApi.get('/admin/orders', { params }),
   exportOrders: (params) => adminApi.get('/admin/orders/export', { params, responseType: 'blob' }),
   updateOrderStatus: (id, status) => adminApi.patch(`/admin/orders/${id}/status`, { status }),
+  laterAdjustOrder: (id, data) => adminApi.patch(`/admin/orders/${id}/later-adjustment`, data),
   getBuyOrders: (params) => adminApi.get('/admin/buy-orders', { params }),
   updateBuyOrderStatus: (id, status) => adminApi.patch(`/admin/buy-orders/${id}/status`, { status }),
   getRepairOrders: (params) => adminApi.get('/admin/repair-orders', { params }),
