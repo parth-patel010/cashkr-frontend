@@ -31,6 +31,10 @@ const STATUS_LABELS = {
   failed: 'Failed',
 };
 
+function formatMoney(value) {
+  return `₹${Number(value || 0).toLocaleString('en-IN')}`;
+}
+
 function formatPickupDate(value) {
   if (!value) return '';
   const parsed = new Date(value);
