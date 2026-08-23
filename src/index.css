@@ -148,6 +148,29 @@ body::-webkit-scrollbar {
   animation: brandAssetFloat 5s ease-in-out 1s infinite;
 }
 
+/* Progressive brand asset images */
+.progressive-img {
+  opacity: 0;
+  transition: opacity 0.45s ease-out;
+}
+
+.progressive-img.is-loaded {
+  opacity: 1;
+}
+
+.progressive-img-skeleton {
+  animation: brandAssetSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes brandAssetSkeletonPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+
+.brand-asset-enter-pending {
+  opacity: 1;
+}
+
 @keyframes brandCardsFadeUp {
   from {
     opacity: 0;
@@ -242,9 +265,14 @@ body::-webkit-scrollbar {
   .brand-asset-slide-from-right,
   .brand-asset-float,
   .brand-cards-fade-up {
-    animation: none;
-    opacity: 1;
-    transform: none;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .progressive-img {
+    transition: none !important;
+    opacity: 1 !important;
   }
 
   .brand-card-siri:hover .brand-card-siri__spin,

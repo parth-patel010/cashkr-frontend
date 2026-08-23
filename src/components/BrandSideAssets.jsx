@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import ProgressiveImage from "./ui/ProgressiveImage";
+
 /**
  * Side branding art for sell brand pages (desktop flanks + mobile stack).
  * Same layout as the phone brand page; assets differ per category.
@@ -59,7 +62,6 @@ export const BRAND_SIDE_ASSETS = {
     alt: "Sell your gaming console",
     ...LANDSCAPE_SIZES,
   },
-  // Dedicated iMac side art
   mac: {
     left: "/imac_Branding_asset_1.png",
     right: "/imac_Branding_asset_2.png",
@@ -79,6 +81,44 @@ export function getBrandSideAssets(category = "mobile") {
   return BRAND_SIDE_ASSETS[category] || BRAND_SIDE_ASSETS.mobile;
 }
 
+function preloadBrandAssets(left, right) {
+  const links = [left, right].map((href) => {
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = href;
+    document.head.appendChild(link);
+    return link;
+  });
+  return () => links.forEach((link) => link.remove());
+}
+
+function BrandAssetSlot({
+  src,
+  alt,
+  className,
+  slideClass,
+  priority = true,
+  loaded,
+  onLoaded,
+}) {
+  return (
+    <div className={loaded ? slideClass : "brand-asset-enter-pending"}>
+      <div className={loaded ? "brand-asset-float" : undefined}>
+        <ProgressiveImage
+          src={src}
+          alt={alt}
+          className={className}
+          wrapperClassName="min-h-[8rem] sm:min-h-[10rem]"
+          skeletonClassName="bg-gradient-to-br from-[#EEF4FF] via-[#F4F7FB] to-[#E8EEF5]"
+          priority={priority}
+          onLoaded={onLoaded}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function BrandSideAssets({ category = "mobile", children }) {
   const assets = getBrandSideAssets(category);
   const { left, right, alt } = assets;
@@ -87,61 +127,65 @@ export default function BrandSideAssets({ category = "mobile", children }) {
   const rightDesktopClass = assets.rightDesktopClass || DEFAULT_RIGHT_DESKTOP;
   const rightMobileClass = assets.rightMobileClass || DEFAULT_RIGHT_MOBILE;
 
+  const [leftLoaded, setLeftLoaded] = useState(false);
+  const [rightLoaded, setRightLoaded] = useState(false);
+
+  useEffect(() => {
+    setLeftLoaded(false);
+    setRightLoaded(false);
+    return preloadBrandAssets(left, right);
+  }, [left, right, category]);
+
   return (
     <div className="relative w-full overflow-visible">
       <div
         aria-hidden="true"
-        className="hidden lg:block pointer-events-none absolute -top-26 xl:-top-34 2xl:-top-42 w-screen left-1/2 -translate-x-1/2 z-10"
+        className="hidden lg:block pointer-events-none absolute -top-26 xl:-top-34 2xl:-top-42 w-screen left-1/2 -translate-x-1/2 z-0"
       >
-        <div className="absolute left-0 brand-asset-slide-right">
-          <div className="brand-asset-float">
-            <img
-              src={left}
-              alt=""
-              className={leftDesktopClass}
-              loading="lazy"
-            />
-          </div>
+        <div className="absolute left-0">
+          <BrandAssetSlot
+            src={left}
+            alt=""
+            className={leftDesktopClass}
+            slideClass="brand-asset-slide-right"
+            loaded={leftLoaded}
+            onLoaded={() => setLeftLoaded(true)}
+          />
         </div>
-        <div className="absolute right-0 brand-asset-slide-from-right">
-          <div className="brand-asset-float">
-            <img
-              src={right}
-              alt=""
-              className={rightDesktopClass}
-              loading="lazy"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="lg:hidden -mx-4 sm:-mx-6 -mt-5 mb-4 flex justify-start mr-6 -translate-x-2 sm:-translate-x-3">
-        <div className="brand-asset-slide-right">
-          <div className="brand-asset-float">
-            <img
-              src={left}
-              alt={alt}
-              className={leftMobileClass}
-              loading="lazy"
-            />
-          </div>
+        <div className="absolute right-0">
+          <BrandAssetSlot
+            src={right}
+            alt=""
+            className={rightDesktopClass}
+            slideClass="brand-asset-slide-from-right"
+            loaded={rightLoaded}
+            onLoaded={() => setRightLoaded(true)}
+          />
         </div>
       </div>
 
-      {children}
+      <div className="lg:hidden relative z-0 -mx-4 sm:-mx-6 -mt-5 mb-4 flex justify-start mr-6 -translate-x-2 sm:-translate-x-3 pointer-events-none">
+        <BrandAssetSlot
+          src={left}
+          alt={alt}
+          className={leftMobileClass}
+          slideClass="brand-asset-slide-right"
+          loaded={leftLoaded}
+          onLoaded={() => setLeftLoaded(true)}
+        />
+      </div>
 
-      <div className="lg:hidden mt-4 flex justify-end pr-0 sm:pr-1 translate-x-1 sm:translate-x-2">
-        <div className="brand-asset-slide-from-right">
-          <div className="brand-asset-float">
-            <img
-              src={right}
-              alt=""
-              aria-hidden="true"
-              className={rightMobileClass}
-              loading="lazy"
-            />
-          </div>
-        </div>
+      <div className="relative z-10">{children}</div>
+
+      <div className="lg:hidden relative z-0 mt-4 flex justify-end pr-0 sm:pr-1 translate-x-1 sm:translate-x-2 pointer-events-none">
+        <BrandAssetSlot
+          src={right}
+          alt=""
+          className={rightMobileClass}
+          slideClass="brand-asset-slide-from-right"
+          loaded={rightLoaded}
+          onLoaded={() => setRightLoaded(true)}
+        />
       </div>
     </div>
   );

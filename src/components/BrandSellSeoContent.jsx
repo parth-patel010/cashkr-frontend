@@ -1,4 +1,5 @@
 import { getCategorySeoContent } from "../data/categoryBrandContent";
+import ProgressiveImage from "./ui/ProgressiveImage";
 
 /**
  * Closing editorial block for sell brand pages —
@@ -10,12 +11,13 @@ export default function BrandSellSeoContent({ category = "mobile" }) {
   return (
     <section className="bg-white border-t border-[#E8EEF5]">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-4 sm:pb-6">
-        <img
+        <ProgressiveImage
           src="/Branding_poster_1.png"
           alt="Download the DeviceKart app — sell, buy and repair old devices with free pickup and instant payment"
           className="w-full h-auto rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E8EEF5]"
-          loading="lazy"
-          decoding="async"
+          wrapperClassName="w-full min-h-[12rem] sm:min-h-[16rem]"
+          skeletonClassName="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#EEF4FF] via-[#F4F7FB] to-[#E8EEF5]"
+          priority={false}
         />
       </div>
 
