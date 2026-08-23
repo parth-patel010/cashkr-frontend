@@ -108,6 +108,158 @@ body::-webkit-scrollbar {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Sell brand page — decorative side assets */
+@keyframes brandAssetSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-120px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes brandAssetSlideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(60vw);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.brand-asset-slide-right {
+  animation: brandAssetSlideRight 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.brand-asset-slide-from-right {
+  animation: brandAssetSlideFromRight 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes brandAssetFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.brand-asset-float {
+  animation: brandAssetFloat 5s ease-in-out 1s infinite;
+}
+
+@keyframes brandCardsFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.brand-cards-fade-up {
+  animation: brandCardsFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Compact brand cards — Siri-style rotating border on hover */
+@keyframes brandCardBorderSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.brand-card-siri {
+  position: relative;
+  display: flex;
+  isolation: isolate;
+  border-radius: 1rem;
+  padding: 2px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brand-card-siri:hover,
+.brand-card-siri:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(5, 101, 230, 0.12);
+  outline: none;
+}
+
+.brand-card-siri__spin {
+  position: absolute;
+  inset: -50%;
+  z-index: 0;
+  background: conic-gradient(
+    from 0deg,
+    #0565E6 0deg,
+    #7DD3FC 55deg,
+    #A78BFA 120deg,
+    #C4B5FD 170deg,
+    #E0E7FF 210deg,
+    #0565E6 270deg,
+    #38BDF8 320deg,
+    #0565E6 360deg
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.brand-card-siri:hover .brand-card-siri__spin,
+.brand-card-siri:focus-visible .brand-card-siri__spin,
+.brand-card-siri:focus-within .brand-card-siri__spin {
+  opacity: 1;
+  animation: brandCardBorderSpin 2.5s linear infinite;
+}
+
+.brand-card-siri__face {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: #fff;
+  border-radius: calc(1rem - 2px);
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s ease;
+}
+
+.brand-card-siri:hover .brand-card-siri__face,
+.brand-card-siri:focus-visible .brand-card-siri__face {
+  border-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-asset-slide-right,
+  .brand-asset-slide-from-right,
+  .brand-asset-float,
+  .brand-cards-fade-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .brand-card-siri:hover .brand-card-siri__spin,
+  .brand-card-siri:focus-visible .brand-card-siri__spin,
+  .brand-card-siri:focus-within .brand-card-siri__spin {
+    animation: none;
+    opacity: 0;
+  }
+
+  .brand-card-siri:hover,
+  .brand-card-siri:focus-visible {
+    box-shadow: 0 0 0 2px rgba(5, 101, 230, 0.45);
+  }
+}
+
 .search-result-item {
   display: flex;
   align-items: center;

@@ -52,11 +52,12 @@ export default function DevicePageSEO({
   );
 }
 
-export function CategoryPageSEO({ title, description, path, breadcrumbItems, keywords }) {
+export function CategoryPageSEO({ title, description, path, breadcrumbItems, keywords, faqs }) {
   const schema = buildSchemaGraph([
     organizationSchema(),
     websiteSchema(),
     breadcrumbItems ? breadcrumbSchema(breadcrumbItems) : null,
+    faqs?.length ? faqPageSchema(faqs) : null,
   ]);
 
   return (

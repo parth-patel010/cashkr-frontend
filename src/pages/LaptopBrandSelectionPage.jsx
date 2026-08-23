@@ -7,10 +7,14 @@ import PageCanvas from "../components/layout/PageCanvas";
 import PageShell from "../components/layout/PageShell";
 import TrustPills from "../components/layout/TrustPills";
 import SelectionCard from "../components/layout/SelectionCard";
+import BrandSideAssets from "../components/BrandSideAssets";
+import BrandModelSearch from "../components/BrandModelSearch";
+import BrandPageBottom from "../components/BrandPageBottom";
 import { CategoryPageSEO } from "../components/seo/DevicePageSEO";
 import { CATEGORY_SEO } from "../config/seo";
 import { LAPTOP_BRANDS } from "../constants/devices";
 import { categorySellKeywords } from "../data/seoKeywords";
+import { getCategoryBrandFaqs } from "../data/categoryBrandContent";
 
 const LAPTOP_BRAND_ORDER = ["Apple", "Dell", "HP", "Lenovo", "Asus", "Acer", "Microsoft"];
 
@@ -60,17 +64,22 @@ export default function LaptopBrandSelectionPage() {
   if (loading) return <Loader />;
 
   return (
+    <>
     <PageCanvas>
       <CategoryPageSEO
         title={CATEGORY_SEO.laptop.title}
         description={CATEGORY_SEO.laptop.description}
         path={CATEGORY_SEO.laptop.brandPath}
         keywords={categorySellKeywords('laptop')}
+        faqs={getCategoryBrandFaqs('laptop')}
         breadcrumbItems={[{ label: "Home", href: "/" }, { label: "Laptops" }]}
       />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Laptops" }]} />
 
       <PageShell
+        bare
+        bodyClassName="overflow-visible"
+        headerAlign="center"
         eyebrow="Sell Your Laptop"
         eyebrowIcon={Laptop}
         eyebrowTone="blue"
@@ -78,38 +87,46 @@ export default function LaptopBrandSelectionPage() {
         titleAccent="Laptop Brand"
         subtitle="Choose your laptop brand below and get an instant price quote with free doorstep pickup."
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5">
-          {brands.map((b) => (
-            <SelectionCard
-              key={b.brand}
-              to={`/sell-old-laptops/${b.brand.toLowerCase()}`}
-              title={b.brand}
-              subtitle={`${b.modelCount || ""} model${b.modelCount !== 1 ? "s" : ""}`.trim()}
-              image={
-                !failedLogos[b.brand] && getBrandLogo(b.brand) ? (
-                  <img
-                    src={getBrandLogo(b.brand)}
-                    alt={b.brand}
-                    className="max-h-[64px] sm:max-h-[72px] max-w-[80%] object-contain"
-                    onError={() =>
-                      setFailedLogos((prev) => ({ ...prev, [b.brand]: true }))
-                    }
-                  />
-                ) : (
-                  <div
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl font-extrabold"
-                    style={{ backgroundColor: getBrandColor(b.brand) }}
-                  >
-                    {b.brand[0]}
-                  </div>
-                )
-              }
-            />
-          ))}
-        </div>
+        <BrandSideAssets category="laptop">
+          <div className="brand-cards-fade-up grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-4.5 w-full max-w-[54rem] mx-auto">
+            {brands.map((b) => (
+              <SelectionCard
+                key={b.brand}
+                compactMedium
+                to={`/sell-old-laptops/${b.brand.toLowerCase()}`}
+                title={b.brand}
+                subtitle={`${b.modelCount || ""} model${b.modelCount !== 1 ? "s" : ""}`.trim()}
+                image={
+                  !failedLogos[b.brand] && getBrandLogo(b.brand) ? (
+                    <img
+                      src={getBrandLogo(b.brand)}
+                      alt={b.brand}
+                      className="max-h-[56px] sm:max-h-[64px] max-w-[88%] object-contain"
+                      onError={() =>
+                        setFailedLogos((prev) => ({ ...prev, [b.brand]: true }))
+                      }
+                    />
+                  ) : (
+                    <div
+                      className="w-14 h-14 sm:w-[3.75rem] sm:h-[3.75rem] rounded-xl flex items-center justify-center text-white text-lg sm:text-xl font-bold"
+                      style={{ backgroundColor: getBrandColor(b.brand) }}
+                    >
+                      {b.brand[0]}
+                    </div>
+                  )
+                }
+              />
+            ))}
+          </div>
+        </BrandSideAssets>
+
+        <BrandModelSearch category="laptop" />
       </PageShell>
 
       <TrustPills />
     </PageCanvas>
+
+    <BrandPageBottom category="laptop" />
+    </>
   );
 }

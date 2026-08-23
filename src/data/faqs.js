@@ -1,3 +1,5 @@
+import { getCategoryBrandFaqs } from './categoryBrandContent';
+
 export const HOME_FAQS = [
   {
     q: 'Is DeviceKart legit?',
@@ -115,3 +117,6 @@ export const HOW_TO_STEPS = [
     desc: 'Receive immediate payment via UPI, bank transfer, or cash once your device is verified.',
   },
 ];
+
+/** FAQs focused on selling mobile phones (brand / sell-phone pages). */
+export const MOBILE_SELL_FAQS = getCategoryBrandFaqs('mobile');

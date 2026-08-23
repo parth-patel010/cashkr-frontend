@@ -64,6 +64,7 @@ export default function BuyBrandSelectionPage() {
       />
 
       <PageShell
+        bare
         eyebrow={`Buy ${cat.label}`}
         eyebrowIcon={ShoppingBag}
         eyebrowTone="blue"
@@ -79,7 +80,7 @@ export default function BuyBrandSelectionPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {brands.map((b) => {
               const brandSlug = (b.slug || b.brand).toLowerCase();
               const logo = getBrandLogo(b.brand, b.logoUrl || b.logo);
@@ -94,6 +95,7 @@ export default function BuyBrandSelectionPage() {
               return (
                 <SelectionCard
                   key={b.brand}
+                  compact
                   to={`/buy/${category}/${encodeURIComponent(brandSlug)}`}
                   state={{ brandName: b.brand }}
                   title={b.brand}
@@ -103,14 +105,14 @@ export default function BuyBrandSelectionPage() {
                       <img
                         src={logo}
                         alt={b.brand}
-                        className="max-h-[64px] sm:max-h-[72px] max-w-[80%] object-contain"
+                        className="max-h-[52px] sm:max-h-[60px] max-w-[88%] object-contain"
                         onError={() =>
                           setFailedLogos((prev) => ({ ...prev, [b.brand]: true }))
                         }
                       />
                     ) : (
                       <div
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-slate-700 text-xl sm:text-2xl font-extrabold border border-slate-100"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-slate-700 text-lg sm:text-xl font-bold border border-slate-100"
                         style={{ backgroundColor: tileBg }}
                       >
                         {b.brand[0]}

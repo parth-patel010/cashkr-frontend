@@ -1,4 +1,5 @@
 import { Zap, Award, Truck, ShieldCheck, Headphones, ChevronRight } from "lucide-react";
+import { getCategoryBrandMeta } from "../data/categoryBrandContent";
 
 const ASSETS = {
   quote: "/landing_page_assets/how-it-work-phone-card1.png",
@@ -122,48 +123,108 @@ function StepCard({ step }) {
   );
 }
 
-export default function HowBuybackWorks() {
+export default function HowBuybackWorks({ variant = "home", category = "mobile" }) {
+  const isBrand = variant === "brand";
+  const meta = getCategoryBrandMeta(category);
+
   return (
-    <section id="how-it-works" className="bg-white py-12 sm:py-16 scroll-mt-24">
+    <section
+      id={isBrand ? "brand-how-it-works" : "how-it-works"}
+      className={`scroll-mt-24 py-12 sm:py-16 ${
+        isBrand
+          ? "bg-[#F7F9FC] border-y border-[#E8EEF5]"
+          : "bg-white"
+      }`}
+    >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-[#0565E6] bg-[#EEF4FF] border border-[#0565E6]/15 px-3.5 py-1.5 rounded-full mb-4">
+        <div
+          className={`mb-10 sm:mb-12 ${
+            isBrand ? "text-left max-w-2xl" : "text-center"
+          }`}
+        >
+          <span
+            className={`inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-[#0565E6] border border-[#0565E6]/15 px-3.5 py-1.5 mb-4 ${
+              isBrand
+                ? "bg-white rounded-lg shadow-sm"
+                : "bg-[#EEF4FF] rounded-full"
+            }`}
+          >
             <Zap size={12} strokeWidth={2.5} fill="currentColor" />
-            Simple. Fast. Secure.
+            {isBrand ? "After you pick a brand" : "Simple. Fast. Secure."}
           </span>
           <h2 className="text-2xl sm:text-[2rem] font-extrabold text-gray-900 tracking-tight leading-tight">
-            How <span className="text-[#0565E6]">DeviceKart</span> Buyback Works
+            {isBrand ? (
+              <>
+                How selling your <span className="text-[#0565E6]">{meta.howAccent}</span> works
+              </>
+            ) : (
+              <>
+                How <span className="text-[#0565E6]">DeviceKart</span> Buyback Works
+              </>
+            )}
           </h2>
-          <p className="text-sm sm:text-base text-gray-500 mt-3 max-w-xl mx-auto leading-relaxed">
-            Selling your old device is simple, secure and rewarding. Follow these easy steps.
+          <p
+            className={`text-sm sm:text-base text-gray-500 mt-3 leading-relaxed ${
+              isBrand ? "max-w-xl" : "max-w-xl mx-auto"
+            }`}
+          >
+            {isBrand
+              ? meta.howSubtitle
+              : "Selling your old device is simple, secure and rewarding. Follow these easy steps."}
           </p>
         </div>
 
         {/* Steps */}
         <div className="relative">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-x-3 gap-y-10">
-            {STEPS.map((step, i) => (
-              <div key={step.num} className="relative">
-                <StepCard step={step} />
-
-                {/* Dashed connector arrow between steps (desktop 6-col) */}
-                {i < STEPS.length - 1 && (
-                  <div
-                    className="hidden xl:flex absolute top-[72px] -right-[14px] w-7 items-center text-[#0565E6] z-30"
-                    aria-hidden
-                  >
-                    <span className="flex-1 border-t border-dashed border-[#0565E6]/55" />
-                    <ChevronRight size={14} strokeWidth={2.6} className="-ml-1 shrink-0" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          {isBrand ? (
+            <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {STEPS.map((step, i) => (
+                <div
+                  key={step.num}
+                  className="relative snap-start shrink-0 w-[72%] sm:w-[46%] lg:w-[30%] xl:w-[15.5%]"
+                >
+                  <StepCard step={step} />
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className="hidden xl:flex absolute top-[72px] -right-[14px] w-7 items-center text-[#0565E6] z-30"
+                      aria-hidden
+                    >
+                      <span className="flex-1 border-t border-dashed border-[#0565E6]/55" />
+                      <ChevronRight size={14} strokeWidth={2.6} className="-ml-1 shrink-0" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-x-3 gap-y-10">
+              {STEPS.map((step, i) => (
+                <div key={step.num} className="relative">
+                  <StepCard step={step} />
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className="hidden xl:flex absolute top-[72px] -right-[14px] w-7 items-center text-[#0565E6] z-30"
+                      aria-hidden
+                    >
+                      <span className="flex-1 border-t border-dashed border-[#0565E6]/55" />
+                      <ChevronRight size={14} strokeWidth={2.6} className="-ml-1 shrink-0" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Bottom highlights */}
-        <div className="mt-10 sm:mt-12 rounded-2xl sm:rounded-3xl bg-[#F4F7FB] border border-[#E8EEF5] px-5 py-6 sm:px-7 sm:py-7">
+        <div
+          className={`mt-10 sm:mt-12 px-5 py-6 sm:px-7 sm:py-7 ${
+            isBrand
+              ? "rounded-2xl bg-white border border-[#D7E4F7] shadow-[0_6px_24px_rgba(5,101,230,0.06)]"
+              : "rounded-2xl sm:rounded-3xl bg-[#F4F7FB] border border-[#E8EEF5]"
+          }`}
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 sm:gap-4">
             {HIGHLIGHTS.map(({ title, desc, Icon, color }) => (
               <div key={title} className="flex items-start gap-3">
