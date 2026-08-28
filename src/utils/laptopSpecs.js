@@ -1,3 +1,5 @@
+import { getMacbookProcessorsForDevice } from './macbookPriceOverrides';
+
 export const WINDOWS_PROCESSORS = [
   'Intel Core i3', 'Intel Core i3 - 2nd Gen', 'Intel Core i3 - 3rd Gen', 'Intel Core i3 - 4th Gen', 'Intel Core i3 - 5th Gen', 'Intel Core i3 - 6th Gen', 'Intel Core i3 - 7th Gen', 'Intel Core i3 - 8th Gen', 'Intel Core i3 - 9th Gen', 'Intel Core i3 - 10th Gen', 'Intel Core i3 - 11th Gen', 'Intel Core i3 - 12th Gen', 'Intel Core i3 - 13th Gen', 'Intel Core i3 - 14th Gen',
   'Intel Core i5', 'Intel Core i5 - 2nd Gen', 'Intel Core i5 - 3rd Gen', 'Intel Core i5 - 4th Gen', 'Intel Core i5 - 5th Gen', 'Intel Core i5 - 6th Gen', 'Intel Core i5 - 7th Gen', 'Intel Core i5 - 8th Gen', 'Intel Core i5 - 9th Gen', 'Intel Core i5 - 10th Gen', 'Intel Core i5 - 11th Gen', 'Intel Core i5 - 12th Gen', 'Intel Core i5 - 13th Gen', 'Intel Core i5 - 14th Gen',
@@ -45,3 +47,29 @@ export const MASTER_STORAGE = [
   '500 GB HDD + 128 GB SSD', '1 TB HDD + 128 GB SSD', '1 TB HDD + 256 GB SSD', '1 TB HDD + 512 GB SSD',
   '128 GB SSD', '256 GB SSD', '512 GB SSD', '1 TB SSD', '2 TB SSD', '3 TB SSD', '4 TB SSD', '8 TB SSD'
 ];
+
+export function isMacLaptopDevice(device) {
+  if (!device) return false;
+  const brand = (device.brand || '').toLowerCase().trim();
+  const model = (device.modelName || '').toLowerCase();
+  const family = (device.processorFamily || '').toLowerCase();
+  return (
+    brand === 'apple'
+    || device.category === 'mac'
+    || model.includes('macbook')
+    || model.includes('imac')
+    || family.startsWith('apple m')
+  );
+}
+
+/** Same processor list as LaptopSpecModal / customer quiz. */
+export function getLaptopProcessorOptions(device) {
+  if (!device) return WINDOWS_PROCESSORS;
+  const isMac = isMacLaptopDevice(device);
+  if (isMac) {
+    const sheetProcessors = getMacbookProcessorsForDevice(device);
+    if (sheetProcessors?.length) return sheetProcessors;
+    return MAC_PROCESSORS;
+  }
+  return WINDOWS_PROCESSORS;
+}

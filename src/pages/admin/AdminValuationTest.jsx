@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminService } from '../../services/admin.service';
 import { formatCurrency } from '../../utils/formatCurrency';
 import {
+  getLaptopProcessorOptions,
+  MASTER_RAM,
+  MASTER_STORAGE,
+} from '../../utils/laptopSpecs';
+import {
   LAPTOP_STEPS,
   LAPTOP_AGE_OPTIONS,
   LAPTOP_SCREEN_SIZE_OPTIONS,
@@ -63,6 +68,21 @@ export default function AdminValuationTest() {
   const steps = category === 'mobile' ? MOBILE_STEPS : LAPTOP_STEPS;
   const currentStep = steps[stepIndex];
 
+  const laptopProcessorOptions = useMemo(
+    () => getLaptopProcessorOptions(selectedDevice),
+    [selectedDevice],
+  );
+
+  const laptopRamOptions = useMemo(() => {
+    const fromVariants = (selectedDevice?.variants || []).map((v) => v.ram).filter(Boolean);
+    return [...new Set([...MASTER_RAM, ...fromVariants])];
+  }, [selectedDevice]);
+
+  const laptopStorageOptions = useMemo(() => {
+    const fromVariants = (selectedDevice?.variants || []).map((v) => v.storage).filter(Boolean);
+    return [...new Set([...MASTER_STORAGE, ...fromVariants])];
+  }, [selectedDevice]);
+
   const brandOptions = useMemo(() => {
     if (!modelSummary?.[category]?.brands) return [];
     return modelSummary[category].brands;
@@ -106,12 +126,13 @@ export default function AdminValuationTest() {
     setQuoteError('');
     if (device) {
       const firstVariant = device.variants?.[0];
+      const processors = getLaptopProcessorOptions(device);
       if (category === 'laptop') {
         setLaptopQuiz({
           ...DEFAULT_LAPTOP_QUIZ,
-          processor: firstVariant?.processor || device.processorFamily || '',
-          ram: firstVariant?.ram || '',
-          storage: firstVariant?.storage || '',
+          processor: processors.includes(firstVariant?.processor) ? firstVariant.processor : (processors[0] || ''),
+          ram: MASTER_RAM.includes(firstVariant?.ram) ? firstVariant.ram : (MASTER_RAM[2] || '8GB'),
+          storage: MASTER_STORAGE.includes(firstVariant?.storage) ? firstVariant.storage : (MASTER_STORAGE.find((s) => s.includes('512 GB SSD')) || MASTER_STORAGE[0] || ''),
         });
       } else {
         setMobileQuiz({
@@ -250,31 +271,49 @@ export default function AdminValuationTest() {
     switch (currentStep?.id) {
       case 'specs':
         return (
-          <div className="grid gap-3 md:grid-cols-3">
-            <label className="block">
-              <span className="text-sm text-gray-600">Processor</span>
-              <select className="admin-input mt-1 w-full" value={laptopQuiz.processor} onChange={(e) => setLaptopQuiz({ ...laptopQuiz, processor: e.target.value })}>
-                {[...new Set((selectedDevice?.variants || []).map((v) => v.processor).filter(Boolean))].map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-sm text-gray-600">RAM</span>
-              <select className="admin-input mt-1 w-full" value={laptopQuiz.ram} onChange={(e) => setLaptopQuiz({ ...laptopQuiz, ram: e.target.value })}>
-                {[...new Set((selectedDevice?.variants || []).map((v) => v.ram).filter(Boolean))].map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-sm text-gray-600">Storage</span>
-              <select className="admin-input mt-1 w-full" value={laptopQuiz.storage} onChange={(e) => setLaptopQuiz({ ...laptopQuiz, storage: e.target.value })}>
-                {(selectedDevice?.variants || []).map((v) => (
-                  <option key={v.storage} value={v.storage}>{v.storage}</option>
-                ))}
-              </select>
-            </label>
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500">Full spec lists match the customer laptop quiz (not limited to catalog variants).</p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="block">
+                <span className="text-sm text-gray-600">Processor</span>
+                <select
+                  className="admin-input mt-1 w-full"
+                  value={laptopQuiz.processor}
+                  onChange={(e) => setLaptopQuiz({ ...laptopQuiz, processor: e.target.value })}
+                >
+                  <option value="">Select processor</option>
+                  {laptopProcessorOptions.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-sm text-gray-600">RAM</span>
+                <select
+                  className="admin-input mt-1 w-full"
+                  value={laptopQuiz.ram}
+                  onChange={(e) => setLaptopQuiz({ ...laptopQuiz, ram: e.target.value })}
+                >
+                  <option value="">Select RAM</option>
+                  {laptopRamOptions.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-sm text-gray-600">Storage</span>
+                <select
+                  className="admin-input mt-1 w-full"
+                  value={laptopQuiz.storage}
+                  onChange={(e) => setLaptopQuiz({ ...laptopQuiz, storage: e.target.value })}
+                >
+                  <option value="">Select storage</option>
+                  {laptopStorageOptions.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
         );
       case 'power':
