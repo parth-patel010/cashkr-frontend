@@ -320,6 +320,7 @@ export default function ConditionQuizPage() {
     if (!autoShowResultRef.current || !breakdown || !isAuthenticated || !device) return;
     autoShowResultRef.current = false;
     const quoteValue = breakdown.finalPrice ?? currentPrice;
+    const quizCtx = buildMobileQuizReport();
     updateQuote({
       device: {
         brand: device.brand,
@@ -338,6 +339,7 @@ export default function ConditionQuizPage() {
         physicalIssues,
         technicalIssues,
         accessories: selectedAccessories,
+        answerSummary: quizCtx.answerSummary,
       },
       priceBreakdown: breakdown,
     });
@@ -349,7 +351,6 @@ export default function ConditionQuizPage() {
         value: quoteValue,
       });
     }
-    const quizCtx = buildMobileQuizReport();
     setLoginContext(quizCtx);
     reportLastQuizDevice(quizCtx);
     setShowResult(true);
@@ -361,6 +362,7 @@ export default function ConditionQuizPage() {
       return;
     }
     const quoteValue = breakdown?.finalPrice ?? currentPrice;
+    const quizCtx = buildMobileQuizReport();
     updateQuote({
       device: { 
         brand: device.brand, 
@@ -379,6 +381,7 @@ export default function ConditionQuizPage() {
         physicalIssues,
         technicalIssues,
         accessories: selectedAccessories,
+        answerSummary: quizCtx.answerSummary,
       },
       priceBreakdown: breakdown,
     });
@@ -388,7 +391,6 @@ export default function ConditionQuizPage() {
       modelName: device.modelName,
       value: quoteValue,
     });
-    const quizCtx = buildMobileQuizReport();
     setLoginContext(quizCtx);
     reportLastQuizDevice(quizCtx);
     setShowResult(true);

@@ -1,11 +1,11 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   RefreshCw,
   Play,
   Download,
   ChevronDown,
-  ChevronRight,
   Database,
+  X,
 } from 'lucide-react';
 import { adminService } from '../../services/admin.service';
 import { formatCurrency } from '../../utils/formatCurrency';
@@ -32,6 +32,120 @@ function StatusBadge({ status }) {
       )}
       {style.label}
     </span>
+  );
+}
+
+function recordHasQuiz(row) {
+  return Array.isArray(row?.quizSummary)
+    && row.quizSummary.some((r) => r && String(r.question || '').trim() && String(r.answer ?? '').trim() !== '');
+}
+
+function ComparisonModal({ record, onClose }) {
+  if (!record) return null;
+  const diff = record.difference;
+  const diffColor = diff == null ? 'text-slate-400' : diff >= 0 ? 'text-emerald-600' : 'text-red-600';
+
+  return (
+    <div className="admin-modal-backdrop" onClick={onClose}>
+      <div className="admin-modal" style={{ maxWidth: 920 }} onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <div>
+            <h3>{record.brand} {record.modelName}</h3>
+            <p className="text-xs text-slate-500 mt-1 capitalize">
+              {record.category}{record.storage ? ` · ${record.storage}` : ''}
+            </p>
+          </div>
+          <button type="button" className="admin-modal-close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="admin-modal-body">
+          <div className="grid md:grid-cols-2 gap-5">
+            <div className="rounded-2xl border border-amber-100 bg-amber-50/40 overflow-hidden">
+              <div className="px-4 py-3 border-b border-amber-100 bg-amber-100/50">
+                <div className="text-[11px] font-800 uppercase tracking-wider text-amber-900">DeviceKart Quiz</div>
+                <div className="text-lg font-900 text-slate-900 mt-1">
+                  {record.internalPrice != null ? formatCurrency(record.internalPrice) : '—'}
+                </div>
+              </div>
+              <div className="divide-y divide-amber-50 bg-white/80">
+                {record.quizSummary?.length ? record.quizSummary.map((row, idx) => (
+                  <div key={`${row.question}-${idx}`} className="flex justify-between gap-4 px-4 py-2.5">
+                    <span className="text-[11px] font-700 text-slate-500 uppercase tracking-wide shrink-0">
+                      {row.question}
+                    </span>
+                    <span className="text-sm font-600 text-slate-800 text-right">{row.answer}</span>
+                  </div>
+                )) : (
+                  <div className="px-4 py-6 text-sm text-slate-400 text-center">No quiz data</div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/40 overflow-hidden">
+              <div className="px-4 py-3 border-b border-blue-100 bg-blue-100/50">
+                <div className="text-[11px] font-800 uppercase tracking-wider text-blue-900">Cashify Valuation</div>
+                <div className="text-lg font-900 text-slate-900 mt-1">
+                  {record.cashifyPrice != null ? formatCurrency(record.cashifyPrice) : 'Not run yet'}
+                </div>
+              </div>
+              <div className="divide-y divide-blue-50 bg-white/80">
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-[11px] font-700 text-slate-500 uppercase">Agent Status</span>
+                  <StatusBadge status={record.agentStatus} />
+                </div>
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-[11px] font-700 text-slate-500 uppercase">Our Offer (+ markup)</span>
+                  <span className="text-sm font-700 text-slate-800">
+                    {record.ourOffer != null ? formatCurrency(record.ourOffer) : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-[11px] font-700 text-slate-500 uppercase">Difference</span>
+                  <span className={`text-sm font-800 ${diffColor}`}>
+                    {diff != null ? formatCurrency(diff) : '—'}
+                  </span>
+                </div>
+                {record.cashifyProductUrl && (
+                  <div className="px-4 py-2.5">
+                    <div className="text-[11px] font-700 text-slate-500 uppercase mb-1">Cashify URL</div>
+                    <a
+                      href={record.cashifyProductUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-blue-600 break-all hover:underline"
+                    >
+                      {record.cashifyProductUrl}
+                    </a>
+                  </div>
+                )}
+                {record.note && (
+                  <div className="px-4 py-2.5 text-sm text-slate-600">
+                    <span className="text-[11px] font-700 text-slate-500 uppercase block mb-1">Note</span>
+                    {record.note}
+                  </div>
+                )}
+                {record.error && (
+                  <div className="px-4 py-2.5 text-sm text-red-600">
+                    <span className="text-[11px] font-700 uppercase block mb-1">Error</span>
+                    {record.error}
+                  </div>
+                )}
+                {record.durationMs > 0 && (
+                  <div className="flex justify-between gap-4 px-4 py-2.5">
+                    <span className="text-[11px] font-700 text-slate-500 uppercase">Run Duration</span>
+                    <span className="text-sm font-600 text-slate-800">{(record.durationMs / 1000).toFixed(1)}s</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="admin-modal-footer">
+          <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -65,7 +179,7 @@ export default function AdminPricingAgent() {
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState('');
   const [message, setMessage] = useState('');
-  const [expandedId, setExpandedId] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const downloadRef = useRef(null);
 
@@ -88,8 +202,9 @@ export default function AdminPricingAgent() {
         adminService.getPricingAgentRecords({ page, limit: 50 }),
       ]);
       setStats(statsRes.data?.stats || {});
-      setRecords(recordsRes.data?.records || []);
-      setTotal(recordsRes.data?.total || 0);
+      const rows = (recordsRes.data?.records || []).filter(recordHasQuiz);
+      setRecords(rows);
+      setTotal(recordsRes.data?.total || rows.length);
     } catch (err) {
       if (!silent) setMessage(err.response?.data?.message || 'Failed to load pricing agent data.');
     } finally {
@@ -326,114 +441,57 @@ export default function AdminPricingAgent() {
                 <th>Status</th>
                 <th>Cashify</th>
                 <th>Diff</th>
-                <th style={{ width: 36 }} />
               </tr>
             </thead>
             <tbody>
               {loading && !records.length ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={8} className="text-center py-10 text-slate-400 font-600">
                     Loading…
                   </td>
                 </tr>
               ) : !records.length ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-10 text-slate-400 font-600">
-                    No records yet. Complete a quiz or click Sync Quizzes.
+                  <td colSpan={8} className="text-center py-10 text-slate-400 font-600">
+                    No quiz-filled records yet. Complete a quiz or click Sync Quizzes.
                   </td>
                 </tr>
               ) : (
                 records.map((row, idx) => {
                   const sr = (page - 1) * 50 + idx + 1;
-                  const expanded = expandedId === row.id;
                   const diff = row.difference;
                   const diffColor = diff == null ? 'text-slate-400' : diff >= 0 ? 'text-emerald-600' : 'text-red-600';
                   return (
-                    <Fragment key={row.id}>
-                      <tr className={row.agentStatus === 'running' ? 'pricing-agent-pulse' : ''}>
-                        <td className="font-800 text-slate-400">{sr}</td>
-                        <td className="text-xs text-slate-600 whitespace-nowrap">
-                          {formatTime(row.capturedAt || row.createdAt)}
-                        </td>
-                        <td>
-                          <div className="font-700 text-slate-800 text-sm">
-                            {row.brand} {row.modelName}
-                          </div>
-                          <div className="text-[11px] text-slate-500 capitalize">
-                            {row.category}
-                            {row.storage ? ` · ${row.storage}` : ''}
-                          </div>
-                        </td>
-                        <td className="font-700 text-sm">
-                          {row.internalPrice != null ? formatCurrency(row.internalPrice) : '—'}
-                        </td>
-                        <td><QuizChips summary={row.quizSummary} /></td>
-                        <td><StatusBadge status={row.agentStatus} /></td>
-                        <td className="font-700 text-sm">
-                          {row.cashifyPrice != null ? formatCurrency(row.cashifyPrice) : '—'}
-                        </td>
-                        <td className={`font-800 text-sm ${diffColor}`}>
-                          {diff != null ? formatCurrency(diff) : '—'}
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="p-1 text-slate-400 hover:text-slate-700"
-                            onClick={() => setExpandedId(expanded ? null : row.id)}
-                            aria-label="Expand quiz"
-                          >
-                            {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          </button>
-                        </td>
-                      </tr>
-                      {expanded && (
-                        <tr>
-                          <td colSpan={9} className="bg-slate-50/80 !py-4">
-                            <div className="grid md:grid-cols-2 gap-4 px-2">
-                              <div>
-                                <div className="text-[11px] font-800 uppercase tracking-wider text-slate-500 mb-2">
-                                  Quiz Answers
-                                </div>
-                                {row.quizSummary?.length ? (
-                                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                                    {row.quizSummary.map((q, qIdx) => (
-                                      <div
-                                        key={`${q.question}-${qIdx}`}
-                                        className="flex justify-between gap-4 px-3 py-2 border-b border-slate-100 last:border-0"
-                                      >
-                                        <span className="text-[11px] font-700 text-slate-500 uppercase">
-                                          {q.question}
-                                        </span>
-                                        <span className="text-sm font-600 text-slate-800 text-right">
-                                          {q.answer}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-slate-400">No summary</span>
-                                )}
-                              </div>
-                              <div className="text-xs text-slate-600 space-y-1">
-                                <div><strong>Source:</strong> {row.sourceType} · {row.sourceId || '—'}</div>
-                                <div><strong>Slug:</strong> <code className="text-[11px]">{row.slug}</code></div>
-                                {row.cashifyProductUrl && (
-                                  <div className="break-all">
-                                    <strong>Cashify URL:</strong>{' '}
-                                    <a href={row.cashifyProductUrl} target="_blank" rel="noreferrer" className="text-blue-600">
-                                      {row.cashifyProductUrl}
-                                    </a>
-                                  </div>
-                                )}
-                                {row.note && <div><strong>Note:</strong> {row.note}</div>}
-                                {row.error && <div className="text-red-600"><strong>Error:</strong> {row.error}</div>}
-                                {row.durationMs > 0 && <div><strong>Duration:</strong> {(row.durationMs / 1000).toFixed(1)}s</div>}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
+                    <tr
+                      key={row.id}
+                      className={`cursor-pointer hover:bg-slate-50/80 ${row.agentStatus === 'running' ? 'pricing-agent-pulse' : ''}`}
+                      onClick={() => setSelectedRecord(row)}
+                    >
+                      <td className="font-800 text-slate-400">{sr}</td>
+                      <td className="text-xs text-slate-600 whitespace-nowrap">
+                        {formatTime(row.capturedAt || row.createdAt)}
+                      </td>
+                      <td>
+                        <div className="font-700 text-slate-800 text-sm">
+                          {row.brand} {row.modelName}
+                        </div>
+                        <div className="text-[11px] text-slate-500 capitalize">
+                          {row.category}
+                          {row.storage ? ` · ${row.storage}` : ''}
+                        </div>
+                      </td>
+                      <td className="font-700 text-sm">
+                        {row.internalPrice != null ? formatCurrency(row.internalPrice) : '—'}
+                      </td>
+                      <td><QuizChips summary={row.quizSummary} /></td>
+                      <td><StatusBadge status={row.agentStatus} /></td>
+                      <td className="font-700 text-sm">
+                        {row.cashifyPrice != null ? formatCurrency(row.cashifyPrice) : '—'}
+                      </td>
+                      <td className={`font-800 text-sm ${diffColor}`}>
+                        {diff != null ? formatCurrency(diff) : '—'}
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -464,6 +522,8 @@ export default function AdminPricingAgent() {
           </div>
         )}
       </div>
+
+      <ComparisonModal record={selectedRecord} onClose={() => setSelectedRecord(null)} />
     </div>
   );
 }
