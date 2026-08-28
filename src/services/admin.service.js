@@ -166,6 +166,18 @@ export const adminService = {
   // Analytics
   getAnalytics: (params) => adminApi.get('/admin/analytics', { params }),
   updateMetaSpend: (data) => adminApi.put('/admin/analytics/meta-spend', data),
+
+  // Valuation test (Cashify agent)
+  getValuationTestModels: () => adminApi.get('/admin/valuation-test/models'),
+  getValuationTestDevices: (params) => adminApi.get('/admin/valuation-test/devices', { params }),
+  valuationCashifyStatus: () => adminApi.get('/admin/valuation-test/cashify/status'),
+  valuationVerifyCashifySession: () => adminApi.post('/admin/valuation-test/cashify/verify-session'),
+  valuationRequestOtp: (data) => adminApi.post('/admin/valuation-test/cashify/request-otp', data),
+  valuationVerifyOtp: (data) => adminApi.post('/admin/valuation-test/cashify/verify-otp', data),
+  valuationCashifyLogout: () => adminApi.post('/admin/valuation-test/cashify/logout'),
+  runValuationTestQuote: (data) => adminApi.post('/admin/valuation-test/quote', data),
+  getValuationLastRun: () => adminApi.get('/admin/valuation-test/last-run'),
+  downloadValuationLastRun: () => adminApi.get('/admin/valuation-test/last-run/download', { responseType: 'blob' }),
 };
 
 export default adminApi;

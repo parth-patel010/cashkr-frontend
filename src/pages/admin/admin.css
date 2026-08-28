@@ -514,7 +514,8 @@
 
 .admin-field input,
 .admin-field select,
-.admin-field textarea {
+.admin-field textarea,
+.admin-input {
   width: 100%;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
@@ -529,7 +530,8 @@
 
 .admin-field input:focus,
 .admin-field select:focus,
-.admin-field textarea:focus {
+.admin-field textarea:focus,
+.admin-input:focus {
   border-color: #93C5FD;
   background: #FFFFFF;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06);

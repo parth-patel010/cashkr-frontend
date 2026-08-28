@@ -18,7 +18,8 @@ import {
   Bell,
   Shield,
   ListChecks,
-  Inbox
+  Inbox,
+  FlaskConical,
 } from 'lucide-react';
 import './admin.css';
 
@@ -47,6 +48,7 @@ export default function AdminLayout() {
     if (path.includes('/offers')) return 'Offers';
     if (path.includes('/notifications')) return 'Notifications';
     if (path.includes('/category-quizzes')) return 'Category Quizzes';
+    if (path.includes('/valuation-test')) return 'Valuation Test';
     if (path.includes('/security-audit')) return 'Security Audit';
     if (path.includes('/repair-services')) return 'Repair Prices (Model-wise)';
     if (path.includes('/leads')) return 'Leads (TV / Fridge / Repair)';
@@ -145,6 +147,14 @@ export default function AdminLayout() {
           >
             <ListChecks />
             <span>Category Quizzes</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/valuation-test" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <FlaskConical />
+            <span>Valuation Test</span>
           </NavLink>
 
           <NavLink 

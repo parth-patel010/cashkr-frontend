@@ -85,6 +85,7 @@ import AdminAppSettings from './pages/admin/AdminAppSettings.jsx';
 import AdminWebsiteSettings from './pages/admin/AdminWebsiteSettings.jsx';
 import AdminOffers from './pages/admin/AdminOffers.jsx';
 import AdminCategoryQuiz from './pages/admin/AdminCategoryQuiz.jsx';
+import AdminValuationTest from './pages/admin/AdminValuationTest.jsx';
 import AdminNotifications from './pages/admin/AdminNotifications.jsx';
 import AdminSecurityAudit from './pages/admin/AdminSecurityAudit.jsx';
 import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
@@ -228,6 +229,7 @@ function App() {
             <Route path="offers" element={<AdminOffers />} />
             <Route path="notifications" element={<AdminNotifications />} />
             <Route path="category-quizzes" element={<AdminCategoryQuiz />} />
+            <Route path="valuation-test" element={<AdminValuationTest />} />
             <Route path="security-audit" element={<AdminSecurityAudit />} />
             <Route path="repair-services" element={<AdminRepairServices />} />
             <Route path="chat" element={<AdminChat />} />
