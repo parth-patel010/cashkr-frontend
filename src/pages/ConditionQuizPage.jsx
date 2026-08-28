@@ -16,6 +16,8 @@ import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneLead, trackPhoneInitiateCheckout } from '../utils/metaPixel';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
+import { formatMobileQuizAnswerSummary } from '../utils/formatQuizAnswers';
+import { reportLastQuizDevice } from '../utils/reportLastQuiz';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -130,6 +132,37 @@ export default function ConditionQuizPage() {
   const getQuizReturnPath = () => {
     const params = storage ? `?storage=${encodeURIComponent(storage)}` : '';
     return `/sell-old-mobile-phones/${brand}/${slug}/quiz${params}`;
+  };
+
+  const buildMobileQuizReport = () => {
+    const resolvedStorage = storage || device?.variants?.[0]?.storage || '';
+    const resolvedAge = special ? 'Above 11 Months' : deviceAge;
+    const resolvedWarranty = special ? false : underWarranty;
+    const quizPayload = {
+      slug: device.slug,
+      storage: resolvedStorage,
+      deviceAge: resolvedAge,
+      ableToMakeCalls,
+      isTouchScreenWorking,
+      isScreenOriginal,
+      underWarranty: resolvedWarranty,
+      eSIMSupport,
+      physicalIssues,
+      technicalIssues,
+      accessories: selectedAccessories,
+    };
+    const answerSummary = formatMobileQuizAnswerSummary(quizPayload);
+    return {
+      category: 'mobile',
+      brand: device.brand,
+      modelName: device.modelName,
+      slug: device.slug,
+      storage: resolvedStorage,
+      quizPath: getQuizReturnPath(),
+      answerSummary,
+      quizPayload,
+      answers: quizPayload,
+    };
   };
 
   const persistQuizState = (extra = {}) => {
@@ -316,6 +349,9 @@ export default function ConditionQuizPage() {
         value: quoteValue,
       });
     }
+    const quizCtx = buildMobileQuizReport();
+    setLoginContext(quizCtx);
+    reportLastQuizDevice(quizCtx);
     setShowResult(true);
   }, [breakdown, isAuthenticated, device, currentPrice, storage, deviceAge, ableToMakeCalls, isTouchScreenWorking, isScreenOriginal, underWarranty, eSIMSupport, physicalIssues, technicalIssues, selectedAccessories, updateQuote, special]);
 
@@ -352,6 +388,9 @@ export default function ConditionQuizPage() {
       modelName: device.modelName,
       value: quoteValue,
     });
+    const quizCtx = buildMobileQuizReport();
+    setLoginContext(quizCtx);
+    reportLastQuizDevice(quizCtx);
     setShowResult(true);
   };
 

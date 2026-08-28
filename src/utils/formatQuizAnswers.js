@@ -115,3 +115,96 @@ export function formatLaptopQuizAnswerSummary({
   }
   return rows;
 }
+
+const MOBILE_PHYSICAL_LABELS = {
+  glass_crack: 'Glass Crack',
+  back_panel: 'Back Panel Damage',
+  camera_glass_broken: 'Camera Glass Broken',
+};
+
+const MOBILE_TECHNICAL_LABELS = {
+  battery_service: 'Battery Warning',
+  front_camera: 'Front Camera faulty',
+  back_camera: 'Back Camera faulty',
+  volume_button: 'Volume button issue',
+  wifi_issue: 'Wifi issue',
+  finger_touch: 'Finger touch issue',
+  face_unlock: 'Face unlock issue',
+  speaker_faulty: 'Speaker faulty',
+  power_button: 'Power button issue',
+  charging_port: 'Charging port issue',
+  audio_receiver: 'Audio receiver issue',
+  bluetooth: 'Bluetooth issue',
+  vibrator: 'Vibrator issue',
+  microphone: 'Microphone issue',
+  proximity_sensor: 'Proximity sensor',
+};
+
+const MOBILE_ACCESSORY_LABELS = {
+  Bill: 'GST Valid Bill',
+  Box: 'Original Box',
+  Charger: 'Original Charger',
+};
+
+function yesNoLabel(val) {
+  if (val === true) return 'Yes';
+  if (val === false) return 'No';
+  return val == null ? '—' : String(val);
+}
+
+/**
+ * Mobile quiz answer summary for admin / pricing agent.
+ */
+export function formatMobileQuizAnswerSummary({
+  deviceAge,
+  ableToMakeCalls,
+  isTouchScreenWorking,
+  isScreenOriginal,
+  underWarranty,
+  eSIMSupport,
+  physicalIssues = [],
+  technicalIssues = [],
+  accessories = [],
+} = {}) {
+  const rows = [];
+
+  if (deviceAge) rows.push({ question: 'Device Age', answer: deviceAge });
+  if (underWarranty != null) {
+    rows.push({ question: 'Under Warranty', answer: yesNoLabel(underWarranty) });
+  }
+  if (eSIMSupport) {
+    const esimLabel = eSIMSupport === 'esim_only_global'
+      ? 'eSIM only (Global variant)'
+      : 'Physical SIM + eSIM';
+    rows.push({ question: 'SIM Type', answer: esimLabel });
+  }
+  if (ableToMakeCalls != null) {
+    rows.push({ question: 'Able to Make Calls', answer: yesNoLabel(ableToMakeCalls) });
+  }
+  if (isTouchScreenWorking != null) {
+    rows.push({ question: 'Touch Screen Working', answer: yesNoLabel(isTouchScreenWorking) });
+  }
+  if (isScreenOriginal != null) {
+    rows.push({ question: 'Original Screen', answer: yesNoLabel(isScreenOriginal) });
+  }
+
+  const physicalLabels = physicalIssues.map((id) => MOBILE_PHYSICAL_LABELS[id] || id);
+  rows.push({
+    question: 'Physical Issues',
+    answer: physicalLabels.length ? physicalLabels.join(', ') : 'None',
+  });
+
+  const technicalLabels = technicalIssues.map((id) => MOBILE_TECHNICAL_LABELS[id] || id);
+  rows.push({
+    question: 'Technical Issues',
+    answer: technicalLabels.length ? technicalLabels.join(', ') : 'None',
+  });
+
+  const accessoryLabels = accessories.map((id) => MOBILE_ACCESSORY_LABELS[id] || id);
+  rows.push({
+    question: 'Accessories',
+    answer: accessoryLabels.length ? accessoryLabels.join(', ') : 'None',
+  });
+
+  return rows;
+}

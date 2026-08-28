@@ -178,6 +178,16 @@ export const adminService = {
   runValuationTestQuote: (data) => adminApi.post('/admin/valuation-test/quote', data),
   getValuationLastRun: () => adminApi.get('/admin/valuation-test/last-run'),
   downloadValuationLastRun: () => adminApi.get('/admin/valuation-test/last-run/download', { responseType: 'blob' }),
+
+  // Pricing agent (Cashify batch)
+  getPricingAgentStats: () => adminApi.get('/admin/pricing-agent/stats'),
+  getPricingAgentRecords: (params) => adminApi.get('/admin/pricing-agent/records', { params }),
+  syncPricingAgent: () => adminApi.post('/admin/pricing-agent/sync'),
+  runAllPricingAgent: () => adminApi.post('/admin/pricing-agent/run-all'),
+  downloadPricingAgent: (format) => adminApi.get('/admin/pricing-agent/export', {
+    params: { format },
+    responseType: 'blob',
+  }),
 };
 
 export default adminApi;

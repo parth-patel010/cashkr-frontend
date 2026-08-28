@@ -420,6 +420,22 @@ export default function LaptopConditionQuizPage() {
         accessories,
         age,
       },
+      quizPayload: {
+        slug,
+        processor: specs?.processor || '',
+        ram: specs?.ram || '',
+        storage: specs?.storage || '',
+        powerStatus,
+        screenSize,
+        hasGpu: hasGpu === 'yes',
+        isGpuWorking: isGpuWorking === 'yes',
+        functionalIssues: issuesList,
+        screenIssues: screenIssuesList,
+        bodyIssues: bodyIssuesList,
+        accessories,
+        yearBracket: age,
+        age,
+      },
     };
 
     updateQuote({
