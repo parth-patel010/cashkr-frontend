@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { adminService } from '../../services/admin.service';
 import { formatCurrency } from '../../utils/formatCurrency';
 import {
@@ -61,9 +61,10 @@ export default function AdminValuationTest() {
   const [authError, setAuthError] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
 
-  const [lastRun, setLastRun] = useState(null);
+  const [lastRuns, setLastRuns] = useState([]);
   const [lastRunLoading, setLastRunLoading] = useState(false);
   const [showLastRun, setShowLastRun] = useState(false);
+  const [expandedRunId, setExpandedRunId] = useState(null);
 
   const steps = category === 'mobile' ? MOBILE_STEPS : LAPTOP_STEPS;
   const currentStep = steps[stepIndex];
@@ -183,6 +184,7 @@ export default function AdminValuationTest() {
       const payload = buildQuotePayload();
       const { data } = await adminService.runValuationTestQuote(payload);
       setQuoteResult(data);
+      if (showLastRun) loadAllRuns(false);
     } catch (err) {
       setQuoteError(err.response?.data?.error || err.message || 'Quote failed');
     } finally {
@@ -190,29 +192,32 @@ export default function AdminValuationTest() {
     }
   };
 
-  const loadLastRun = async () => {
+  const loadAllRuns = async (toggleShow = true) => {
     setLastRunLoading(true);
     try {
       const { data } = await adminService.getValuationLastRun();
-      setLastRun(data.run);
-      setShowLastRun(true);
+      setLastRuns(data.runs || []);
+      if (toggleShow) setShowLastRun(true);
     } catch (err) {
-      alert(err.response?.data?.error || 'Could not load last run');
+      alert(err.response?.data?.error || 'Could not load agent test runs');
     } finally {
       setLastRunLoading(false);
     }
   };
 
-  const downloadLastRun = async () => {
+  const downloadAllRuns = async () => {
     try {
       const response = await adminService.downloadValuationLastRun();
-      const blob = new Blob([response.data], { type: 'application/json' });
+      const blob = new Blob(
+        [response.data],
+        { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+      );
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const disposition = response.headers['content-disposition'] || '';
       const match = disposition.match(/filename="(.+)"/);
-      a.download = match?.[1] || 'agent-run.json';
+      a.download = match?.[1] || 'agent-test-runs.xlsx';
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -607,22 +612,75 @@ export default function AdminValuationTest() {
       )}
 
       <div className="admin-stat-card space-y-3">
-        <h3 className="font-semibold">Last agent run</h3>
+        <h3 className="font-semibold">Agent test runs</h3>
         <div className="flex gap-2">
-          <button type="button" className="admin-btn admin-btn-primary" disabled={lastRunLoading} onClick={loadLastRun}>
-            {lastRunLoading ? 'Loading…' : 'Show last run'}
+          <button type="button" className="admin-btn admin-btn-primary" disabled={lastRunLoading} onClick={() => loadAllRuns(true)}>
+            {lastRunLoading ? 'Loading…' : 'Show all runs'}
           </button>
-          <button type="button" className="admin-btn" onClick={downloadLastRun}>Download full data</button>
+          <button type="button" className="admin-btn" onClick={downloadAllRuns}>Download Excel</button>
         </div>
-        {showLastRun && lastRun && (
-          <div className="text-sm space-y-2 border rounded-lg p-4 bg-gray-50">
-            <div><strong>{lastRun.brand} {lastRun.modelName}</strong> · {lastRun.category} · {new Date(lastRun.createdAt).toLocaleString()}</div>
-            <div>Internal: {formatCurrency(lastRun.comparison?.internalPrice)} · Cashify: {lastRun.comparison?.cashifyPrice != null ? formatCurrency(lastRun.comparison.cashifyPrice) : '—'} · Our offer: {lastRun.comparison?.ourOffer != null ? formatCurrency(lastRun.comparison.ourOffer) : '—'}</div>
-            <div>Status: {lastRun.status} · Run by: {lastRun.runBy || '—'}</div>
-            <pre className="text-xs overflow-auto max-h-64 bg-white p-3 rounded border">{JSON.stringify(lastRun.quizPayload, null, 2)}</pre>
+        {showLastRun && lastRuns.length > 0 && (
+          <div className="admin-table-wrapper">
+            <table className="admin-table text-sm">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Device</th>
+                  <th>Category</th>
+                  <th>Internal</th>
+                  <th>Cashify</th>
+                  <th>Our offer</th>
+                  <th>Difference</th>
+                  <th>Status</th>
+                  <th>Run by</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {lastRuns.map((run) => (
+                  <Fragment key={run.id}>
+                    <tr>
+                      <td>{new Date(run.createdAt).toLocaleString()}</td>
+                      <td>{run.brand} {run.modelName}</td>
+                      <td>{run.category}</td>
+                      <td>{formatCurrency(run.comparison?.internalPrice)}</td>
+                      <td>{run.comparison?.cashifyPrice != null ? formatCurrency(run.comparison.cashifyPrice) : '—'}</td>
+                      <td>{run.comparison?.ourOffer != null ? formatCurrency(run.comparison.ourOffer) : '—'}</td>
+                      <td>{run.comparison?.difference != null ? formatCurrency(run.comparison.difference) : '—'}</td>
+                      <td>{run.status}</td>
+                      <td>{run.runBy || '—'}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="admin-btn text-xs"
+                          onClick={() => setExpandedRunId((id) => (id === run.id ? null : run.id))}
+                        >
+                          {expandedRunId === run.id ? 'Hide' : 'Details'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedRunId === run.id && (
+                      <tr>
+                        <td colSpan={10} className="bg-gray-50">
+                          <div className="space-y-2 p-2 text-xs">
+                            <div>Duration: {run.durationMs} ms · Slug: {run.slug}</div>
+                            {run.cashifyResult?.productUrl && (
+                              <div className="break-all">Cashify URL: {run.cashifyResult.productUrl}</div>
+                            )}
+                            {run.error && <div className="text-red-600">Error: {run.error}</div>}
+                            {run.cashifyResult?.note && <div className="text-amber-700">Note: {run.cashifyResult.note}</div>}
+                            <pre className="overflow-auto max-h-48 bg-white p-3 rounded border">{JSON.stringify(run.quizPayload, null, 2)}</pre>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-        {showLastRun && !lastRun && <p className="text-sm text-gray-500">No agent test runs yet.</p>}
+        {showLastRun && lastRuns.length === 0 && <p className="text-sm text-gray-500">No agent test runs yet.</p>}
       </div>
 
       {authOpen && (
