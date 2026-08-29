@@ -478,9 +478,20 @@ export default function LaptopConditionQuizPage() {
       setScreenSize(null);
       setHasGpu(null);
       setIsGpuWorking(null);
+      setHasTouchScreen(null);
+      setIsTouchScreenWorking(null);
       setIssuesList([]);
-      setScreenIssuesList([]);
-      setBodyIssuesList([]);
+      setBodyScratch(DEFAULT_CASHIFY_BODY.bodyScratch);
+      setDentTop(DEFAULT_CASHIFY_BODY.dentTop);
+      setDentBase(DEFAULT_CASHIFY_BODY.dentBase);
+      setLooseHinges(DEFAULT_CASHIFY_BODY.looseHinges);
+      setPanelCondition(DEFAULT_CASHIFY_BODY.panelCondition);
+      setScreenScratch(DEFAULT_CASHIFY_SCREEN.screenScratch);
+      setScreenDiscolouration(DEFAULT_CASHIFY_SCREEN.screenDiscolouration);
+      setScreenSpots(DEFAULT_CASHIFY_SCREEN.screenSpots);
+      setScreenLines(DEFAULT_CASHIFY_SCREEN.screenLines);
+      setIsScreenOriginal(DEFAULT_CASHIFY_SCREEN.isScreenOriginal);
+      setSoftwareIssue('no');
       setAccessories([]);
       setAge(null);
       try {
