@@ -18,6 +18,16 @@ function normalizeStatus(status) {
   return status === 'skipped' ? 'overridden' : status;
 }
 
+function cashifyValuationHeadline(record) {
+  if (record.cashifyPrice != null) return formatCurrency(record.cashifyPrice);
+  const status = normalizeStatus(record.displayStatus || record.agentStatus);
+  if (status === 'running') return 'Running…';
+  if (status === 'pending') return 'Queued…';
+  if (status === 'failed') return 'Failed — not completed';
+  if (status === 'partial') return 'Partial — see note';
+  return 'Not run yet';
+}
+
 const STATUS_STYLES = {
   pending: { bg: '#FEF3C7', color: '#92400E', label: 'Pending' },
   running: { bg: '#DBEAFE', color: '#1D4ED8', label: 'Running' },
@@ -235,11 +245,13 @@ function PricingSettingsModal({ open, onClose }) {
   );
 }
 
-function ComparisonModal({ record, onClose }) {
+function ComparisonModal({ record, onClose, onRun, runBusy = false }) {
   if (!record) return null;
   const diff = record.difference;
   const diffColor = diff == null ? 'text-slate-400' : diff >= 0 ? 'text-emerald-600' : 'text-red-600';
   const isOverridden = normalizeStatus(record.agentStatus) === 'overridden';
+  const status = normalizeStatus(record.displayStatus || record.agentStatus);
+  const canRun = status !== 'overridden';
 
   return (
     <div className="admin-modal-backdrop" onClick={onClose}>
@@ -292,7 +304,7 @@ function ComparisonModal({ record, onClose }) {
               <div className="px-4 py-3 border-b border-blue-100 bg-blue-100/50">
                 <div className="text-[11px] font-800 uppercase tracking-wider text-blue-900">Cashify Valuation</div>
                 <div className="text-lg font-900 text-slate-900 mt-1">
-                  {record.cashifyPrice != null ? formatCurrency(record.cashifyPrice) : 'Not run yet'}
+                  {cashifyValuationHeadline(record)}
                 </div>
               </div>
               <div className="divide-y divide-blue-50 bg-white/80">
@@ -333,7 +345,12 @@ function ComparisonModal({ record, onClose }) {
                     </a>
                   </div>
                 )}
-                {record.note && (
+                {normalizeStatus(record.displayStatus || record.agentStatus) === 'running' && (
+                  <div className="px-4 py-2.5 text-sm text-blue-700 bg-blue-50/80">
+                    Agent is working on this valuation. Refresh in a few seconds, or use <strong>Run all pending</strong> if it stays stuck.
+                  </div>
+                )}
+                {record.note && normalizeStatus(record.displayStatus || record.agentStatus) !== 'running' && (
                   <div className="px-4 py-2.5 text-sm text-slate-600">
                     <span className="text-[11px] font-700 text-slate-500 uppercase block mb-1">Note</span>
                     {record.note}
@@ -355,7 +372,18 @@ function ComparisonModal({ record, onClose }) {
             </div>
           </div>
         </div>
-        <div className="admin-modal-footer">
+        <div className="admin-modal-footer flex justify-end gap-2">
+          {canRun && onRun && (
+            <button
+              type="button"
+              className="admin-btn admin-btn-primary"
+              disabled={runBusy}
+              onClick={() => onRun(record)}
+            >
+              <Play size={14} />
+              {runBusy ? 'Queuing…' : status === 'running' ? 'Re-queue valuation' : 'Run valuation'}
+            </button>
+          )}
           <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>Close</button>
         </div>
       </div>
@@ -468,6 +496,40 @@ export default function AdminPricingAgent() {
       setActionBusy('');
     }
   };
+
+  const handleRunOne = async (row, event) => {
+    event?.stopPropagation?.();
+    if (!row?.id) return;
+    const status = normalizeStatus(row.displayStatus || row.agentStatus);
+    if (status === 'overridden') return;
+
+    setActionBusy(`run-${row.id}`);
+    setMessage('');
+    try {
+      const { data } = await adminService.runOnePricingAgent(row.id);
+      if (data.status === 'overridden') {
+        setMessage(data.message || 'Quiz locked to existing override price.');
+      } else {
+        setMessage(
+          data.queuePosition > 1
+            ? `Queued (position ${data.queuePosition}) — ${row.brand} ${row.modelName}`
+            : `Running soon — ${row.brand} ${row.modelName}`,
+        );
+      }
+      await loadData(true);
+      if (selectedRecord?.id === row.id) {
+        const { data: list } = await adminService.getPricingAgentRecords({ page, limit: 50 });
+        const updated = (list?.records || []).find((r) => r.id === row.id);
+        if (updated) setSelectedRecord(updated);
+      }
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Run failed.');
+    } finally {
+      setActionBusy('');
+    }
+  };
+
+  const canRunRow = (row) => normalizeStatus(row.displayStatus || row.agentStatus) !== 'overridden';
 
   const handleDownload = async (format) => {
     setDownloadOpen(false);
@@ -657,18 +719,19 @@ export default function AdminPricingAgent() {
                 <th>Override Price</th>
                 <th>Cashify</th>
                 <th>Diff</th>
+                <th style={{ width: 100 }}>Run</th>
               </tr>
             </thead>
             <tbody>
               {loading && !records.length ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={10} className="text-center py-10 text-slate-400 font-600">
                     Loading…
                   </td>
                 </tr>
               ) : !records.length ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={10} className="text-center py-10 text-slate-400 font-600">
                     No quiz-filled records yet. Complete a quiz or click Sync Quizzes.
                   </td>
                 </tr>
@@ -715,6 +778,30 @@ export default function AdminPricingAgent() {
                       <td className={`font-800 text-sm ${diffColor}`}>
                         {diff != null ? formatCurrency(diff) : '—'}
                       </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {canRunRow(row) ? (
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn-ghost text-xs py-1.5 px-2.5"
+                            disabled={actionBusy === `run-${row.id}`}
+                            onClick={(e) => handleRunOne(row, e)}
+                            title={
+                              normalizeStatus(row.displayStatus || row.agentStatus) === 'running'
+                                ? 'Re-queue if stuck'
+                                : 'Queue Cashify valuation for this quiz'
+                            }
+                          >
+                            <Play size={14} />
+                            {actionBusy === `run-${row.id}`
+                              ? '…'
+                              : normalizeStatus(row.displayStatus || row.agentStatus) === 'running'
+                                ? 'Re-run'
+                                : 'Run'}
+                          </button>
+                        ) : (
+                          <span className="text-[11px] font-600 text-slate-400" title="Locked override">—</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -747,7 +834,12 @@ export default function AdminPricingAgent() {
         )}
       </div>
 
-      <ComparisonModal record={selectedRecord} onClose={() => setSelectedRecord(null)} />
+      <ComparisonModal
+        record={selectedRecord}
+        onClose={() => setSelectedRecord(null)}
+        onRun={(row) => handleRunOne(row)}
+        runBusy={selectedRecord ? actionBusy === `run-${selectedRecord.id}` : false}
+      />
       <PricingSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
