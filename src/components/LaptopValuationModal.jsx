@@ -20,8 +20,9 @@ function copyForDevice(deviceKind = 'laptop') {
       `Almost there — ${HUMAN_TOUCH}`,
     ],
     queue: [
-      'Our AI agent is finishing another valuation — you\'re next.',
-      'Same quiz = same price. We remember your answers.',
+      'Our AI agent is finishing another valuation — you\'re in the queue.',
+      'Higher-value devices are valued first so you get a fair market rate.',
+      'Please stay on this screen — we\'ll finish as soon as the agent is free.',
       `Free doorstep pickup · Instant payment · ${HUMAN_TOUCH}`,
     ],
     tips: [
@@ -176,7 +177,9 @@ export default function LaptopValuationModal({
     ? `In queue — position ${queuePosition}`
     : phase === 'queued' && agentBusy
       ? 'Waiting for valuation agent…'
-      : phase === 'running'
+      : phase === 'queued'
+        ? 'Queued for live valuation…'
+        : phase === 'running'
         ? 'Getting your live valuation…'
         : phase === 'cached'
           ? 'Found your locked price'

@@ -52,7 +52,7 @@ export function LaptopScreenCashifyStep({
       <div>
         <h3 className="text-lg font-extrabold text-gray-900">5. Screen condition</h3>
         <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">
-          Same questions as Cashify — choose one option per row
+          Same questions as Cashify — choose one option per row (nothing is pre-selected)
         </p>
       </div>
       <QuestionBlock title="Scratch or broken on screen" hint="Select screen scratch or broken condition">

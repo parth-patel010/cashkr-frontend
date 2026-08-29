@@ -126,33 +126,55 @@ export function formatLaptopQuizAnswerSummary({
 }
 
 const MOBILE_PHYSICAL_LABELS = {
-  glass_crack: 'Glass Crack',
-  back_panel: 'Back Panel Damage',
+  glass_crack: 'Broken/scratch on device screen',
+  screen_spot: 'Dead Spot/Visible line and Discoloration on screen',
+  back_panel: 'Scratch/Dent on device body',
+  panel_missing: 'Device panel missing/broken',
   camera_glass_broken: 'Camera Glass Broken',
 };
 
 const MOBILE_TECHNICAL_LABELS = {
-  battery_service: 'Battery Warning',
-  front_camera: 'Front Camera faulty',
-  back_camera: 'Back Camera faulty',
-  volume_button: 'Volume button issue',
-  wifi_issue: 'Wifi issue',
-  finger_touch: 'Finger touch issue',
-  face_unlock: 'Face unlock issue',
-  speaker_faulty: 'Speaker faulty',
-  power_button: 'Power button issue',
-  charging_port: 'Charging port issue',
-  audio_receiver: 'Audio receiver issue',
-  bluetooth: 'Bluetooth issue',
-  vibrator: 'Vibrator issue',
-  microphone: 'Microphone issue',
-  proximity_sensor: 'Proximity sensor',
+  battery_service: 'Battery Faulty',
+  front_camera: 'Front Camera not working',
+  back_camera: 'Back Camera not working',
+  volume_button: 'Volume Button not working',
+  wifi_issue: 'WiFi not working',
+  finger_touch: 'Finger Touch not working',
+  face_unlock: 'Face Sensor not working',
+  speaker_faulty: 'Speaker Faulty',
+  power_button: 'Power Button not working',
+  charging_port: 'Charging Port not working',
+  audio_receiver: 'Audio Receiver not working',
+  bluetooth: 'Bluetooth not working',
+  vibrator: 'Vibrator is not working',
+  microphone: 'Microphone not working',
+  proximity_sensor: 'Proximity Sensor not working',
+  silent_button: 'Silent Button not working',
 };
 
 const MOBILE_ACCESSORY_LABELS = {
   Bill: 'GST Valid Bill',
   Box: 'Original Box',
   Charger: 'Original Charger',
+};
+
+const SCREEN_PHYSICAL_DETAIL_LABELS = {
+  minor12: '1-2 scratches on screen',
+  more2: 'More than 2 scratches on screen',
+  cracked: 'Screen cracked/ glass broken',
+  chipped: 'Chipped/cracked outside display area',
+};
+
+const PANEL_CONDITION_LABELS = {
+  none: 'No defect on side or back panel',
+  cracked: 'Cracked/ broken side or back panel',
+  missing: 'Missing side or back panel',
+};
+
+const BENT_CONDITION_LABELS = {
+  none: 'Phone not bent',
+  loose: 'Loose screen (Gap in screen and body)',
+  bent: 'Bent/ curved panel',
 };
 
 function yesNoLabel(val) {
@@ -174,6 +196,9 @@ export function formatMobileQuizAnswerSummary({
   physicalIssues = [],
   technicalIssues = [],
   accessories = [],
+  screenPhysicalDetail,
+  panelCondition,
+  bentCondition,
 } = {}) {
   const rows = [];
 
@@ -182,9 +207,9 @@ export function formatMobileQuizAnswerSummary({
     rows.push({ question: 'Under Warranty', answer: yesNoLabel(underWarranty) });
   }
   if (eSIMSupport) {
-    const esimLabel = eSIMSupport === 'esim_only_global'
-      ? 'eSIM only (Global variant)'
-      : 'Physical SIM + eSIM';
+    const esimLabel = eSIMSupport === 'esim_only_global' || eSIMSupport === 'dual'
+      ? 'Dual eSIM / eSIM only'
+      : 'Single eSIM / Physical + eSIM';
     rows.push({ question: 'SIM Type', answer: esimLabel });
   }
   if (ableToMakeCalls != null) {
@@ -202,6 +227,25 @@ export function formatMobileQuizAnswerSummary({
     question: 'Physical Issues',
     answer: physicalLabels.length ? physicalLabels.join(', ') : 'None',
   });
+
+  if (screenPhysicalDetail) {
+    rows.push({
+      question: 'Screen Scratch/Crack Detail',
+      answer: SCREEN_PHYSICAL_DETAIL_LABELS[screenPhysicalDetail] || screenPhysicalDetail,
+    });
+  }
+  if (panelCondition) {
+    rows.push({
+      question: 'Panel Condition',
+      answer: PANEL_CONDITION_LABELS[panelCondition] || panelCondition,
+    });
+  }
+  if (bentCondition) {
+    rows.push({
+      question: 'Bent / Loose Screen',
+      answer: BENT_CONDITION_LABELS[bentCondition] || bentCondition,
+    });
+  }
 
   const technicalLabels = technicalIssues.map((id) => MOBILE_TECHNICAL_LABELS[id] || id);
   rows.push({

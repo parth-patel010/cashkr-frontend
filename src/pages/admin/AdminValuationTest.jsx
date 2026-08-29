@@ -22,6 +22,9 @@ import {
   MOBILE_PHYSICAL_ISSUES,
   MOBILE_TECHNICAL_ISSUES,
   MOBILE_AGE_OPTIONS,
+  SCREEN_PHYSICAL_DETAIL_OPTIONS,
+  PANEL_CONDITION_OPTIONS,
+  BENT_CONDITION_OPTIONS,
   DEFAULT_MOBILE_QUIZ,
   supportsESIM,
 } from '../../data/quiz/mobileQuiz';
@@ -461,6 +464,26 @@ export default function AdminValuationTest() {
                 {opt.label}
               </label>
             ))}
+            <div className="mt-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase">Screen scratch detail</p>
+              <div className="flex flex-wrap gap-2">
+                {SCREEN_PHYSICAL_DETAIL_OPTIONS.map((opt) => (
+                  <button key={opt.key} type="button" className={`admin-btn ${mobileQuiz.screenPhysicalDetail === opt.key ? 'admin-btn-primary' : ''}`} onClick={() => setMobileQuiz({ ...mobileQuiz, screenPhysicalDetail: opt.key })}>{opt.label}</button>
+                ))}
+              </div>
+              <p className="text-xs font-semibold text-gray-500 uppercase">Panel condition</p>
+              <div className="flex flex-wrap gap-2">
+                {PANEL_CONDITION_OPTIONS.map((opt) => (
+                  <button key={opt.key} type="button" className={`admin-btn ${mobileQuiz.panelCondition === opt.key ? 'admin-btn-primary' : ''}`} onClick={() => setMobileQuiz({ ...mobileQuiz, panelCondition: opt.key })}>{opt.label}</button>
+                ))}
+              </div>
+              <p className="text-xs font-semibold text-gray-500 uppercase">Bent / loose</p>
+              <div className="flex flex-wrap gap-2">
+                {BENT_CONDITION_OPTIONS.map((opt) => (
+                  <button key={opt.key} type="button" className={`admin-btn ${mobileQuiz.bentCondition === opt.key ? 'admin-btn-primary' : ''}`} onClick={() => setMobileQuiz({ ...mobileQuiz, bentCondition: opt.key })}>{opt.label}</button>
+                ))}
+              </div>
+            </div>
           </div>
         );
       case 'technical':

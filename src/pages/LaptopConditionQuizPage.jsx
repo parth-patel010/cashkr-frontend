@@ -30,8 +30,6 @@ import {
   SCREEN_LINES_OPTIONS,
   SCREEN_ORIGINAL_OPTIONS,
   SOFTWARE_OPTIONS,
-  DEFAULT_CASHIFY_BODY,
-  DEFAULT_CASHIFY_SCREEN,
   toLegacyBodyIssues,
   toLegacyScreenIssues,
   buildCashifyAnswerSummary,
@@ -126,17 +124,17 @@ export default function LaptopConditionQuizPage() {
   const [hasTouchScreen, setHasTouchScreen] = useState(null); // 'yes' | 'no'
   const [isTouchScreenWorking, setIsTouchScreenWorking] = useState(null); // 'yes' | 'no'
   const [issuesList, setIssuesList] = useState([]);
-  const [bodyScratch, setBodyScratch] = useState(DEFAULT_CASHIFY_BODY.bodyScratch);
-  const [dentTop, setDentTop] = useState(DEFAULT_CASHIFY_BODY.dentTop);
-  const [dentBase, setDentBase] = useState(DEFAULT_CASHIFY_BODY.dentBase);
-  const [looseHinges, setLooseHinges] = useState(DEFAULT_CASHIFY_BODY.looseHinges);
-  const [panelCondition, setPanelCondition] = useState(DEFAULT_CASHIFY_BODY.panelCondition);
-  const [screenScratch, setScreenScratch] = useState(DEFAULT_CASHIFY_SCREEN.screenScratch);
-  const [screenDiscolouration, setScreenDiscolouration] = useState(DEFAULT_CASHIFY_SCREEN.screenDiscolouration);
-  const [screenSpots, setScreenSpots] = useState(DEFAULT_CASHIFY_SCREEN.screenSpots);
-  const [screenLines, setScreenLines] = useState(DEFAULT_CASHIFY_SCREEN.screenLines);
-  const [isScreenOriginal, setIsScreenOriginal] = useState(DEFAULT_CASHIFY_SCREEN.isScreenOriginal);
-  const [softwareIssue, setSoftwareIssue] = useState('no');
+  const [bodyScratch, setBodyScratch] = useState(null);
+  const [dentTop, setDentTop] = useState(null);
+  const [dentBase, setDentBase] = useState(null);
+  const [looseHinges, setLooseHinges] = useState(null);
+  const [panelCondition, setPanelCondition] = useState(null);
+  const [screenScratch, setScreenScratch] = useState(null);
+  const [screenDiscolouration, setScreenDiscolouration] = useState(null);
+  const [screenSpots, setScreenSpots] = useState(null);
+  const [screenLines, setScreenLines] = useState(null);
+  const [isScreenOriginal, setIsScreenOriginal] = useState(null);
+  const [softwareIssue, setSoftwareIssue] = useState(null);
   const [accessories, setAccessories] = useState([]);
   const [age, setAge] = useState(null); // age option key
 
@@ -151,8 +149,10 @@ export default function LaptopConditionQuizPage() {
 
   const quizStorageKey = `devicekart_laptop_quiz_${slug}`;
 
-  const bodyHasIssue = bodyScratch !== 'none' || dentTop !== 'none' || dentBase !== 'none' || looseHinges === 'yes' || panelCondition !== 'none';
-  const screenHasIssue = screenScratch !== 'none' || screenDiscolouration !== 'none' || screenSpots !== 'none' || screenLines !== 'none' || isScreenOriginal === 'no';
+  const bodyHasIssue = [bodyScratch, dentTop, dentBase, panelCondition].some((v) => v && v !== 'none')
+    || looseHinges === 'yes';
+  const screenHasIssue = [screenScratch, screenDiscolouration, screenSpots, screenLines].some((v) => v && v !== 'none')
+    || isScreenOriginal === 'no';
 
   const getQuizReturnPath = () => `/sell-old-laptops/${brand}/${slug}/quiz`;
 
@@ -356,7 +356,8 @@ export default function LaptopConditionQuizPage() {
   };
 
   const pollValuationRecord = async (recordId) => {
-    for (let attempt = 0; attempt < 120; attempt += 1) {
+    // ~20 min max — queue can wait while higher-value jobs run first.
+    for (let attempt = 0; attempt < 240; attempt += 1) {
       const { data } = await valuationService.getLaptopStatus(recordId);
       setValuationAgentStatus(data.agentStatus);
       setValuationQueuePos(data.queuePosition || 0);
@@ -371,7 +372,7 @@ export default function LaptopConditionQuizPage() {
       }
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
-    throw new Error('Valuation is taking longer than expected. Please try again in a moment.');
+    throw new Error('Valuation is taking longer than expected. Please keep this tab open or try again in a moment.');
   };
 
   const runAgentValuation = async () => {
@@ -491,17 +492,17 @@ export default function LaptopConditionQuizPage() {
       setHasTouchScreen(null);
       setIsTouchScreenWorking(null);
       setIssuesList([]);
-      setBodyScratch(DEFAULT_CASHIFY_BODY.bodyScratch);
-      setDentTop(DEFAULT_CASHIFY_BODY.dentTop);
-      setDentBase(DEFAULT_CASHIFY_BODY.dentBase);
-      setLooseHinges(DEFAULT_CASHIFY_BODY.looseHinges);
-      setPanelCondition(DEFAULT_CASHIFY_BODY.panelCondition);
-      setScreenScratch(DEFAULT_CASHIFY_SCREEN.screenScratch);
-      setScreenDiscolouration(DEFAULT_CASHIFY_SCREEN.screenDiscolouration);
-      setScreenSpots(DEFAULT_CASHIFY_SCREEN.screenSpots);
-      setScreenLines(DEFAULT_CASHIFY_SCREEN.screenLines);
-      setIsScreenOriginal(DEFAULT_CASHIFY_SCREEN.isScreenOriginal);
-      setSoftwareIssue('no');
+      setBodyScratch(null);
+      setDentTop(null);
+      setDentBase(null);
+      setLooseHinges(null);
+      setPanelCondition(null);
+      setScreenScratch(null);
+      setScreenDiscolouration(null);
+      setScreenSpots(null);
+      setScreenLines(null);
+      setIsScreenOriginal(null);
+      setSoftwareIssue(null);
       setAccessories([]);
       setAge(null);
       try {
@@ -615,17 +616,17 @@ export default function LaptopConditionQuizPage() {
     setHasTouchScreen(null);
     setIsTouchScreenWorking(null);
     setIssuesList([]);
-    setBodyScratch(DEFAULT_CASHIFY_BODY.bodyScratch);
-    setDentTop(DEFAULT_CASHIFY_BODY.dentTop);
-    setDentBase(DEFAULT_CASHIFY_BODY.dentBase);
-    setLooseHinges(DEFAULT_CASHIFY_BODY.looseHinges);
-    setPanelCondition(DEFAULT_CASHIFY_BODY.panelCondition);
-    setScreenScratch(DEFAULT_CASHIFY_SCREEN.screenScratch);
-    setScreenDiscolouration(DEFAULT_CASHIFY_SCREEN.screenDiscolouration);
-    setScreenSpots(DEFAULT_CASHIFY_SCREEN.screenSpots);
-    setScreenLines(DEFAULT_CASHIFY_SCREEN.screenLines);
-    setIsScreenOriginal(DEFAULT_CASHIFY_SCREEN.isScreenOriginal);
-    setSoftwareIssue('no');
+    setBodyScratch(null);
+    setDentTop(null);
+    setDentBase(null);
+    setLooseHinges(null);
+    setPanelCondition(null);
+    setScreenScratch(null);
+    setScreenDiscolouration(null);
+    setScreenSpots(null);
+    setScreenLines(null);
+    setIsScreenOriginal(null);
+    setSoftwareIssue(null);
     setAccessories([]);
     setAge(null);
     setBreakdown(null);
@@ -1209,7 +1210,22 @@ export default function LaptopConditionQuizPage() {
                         (hasTouchScreen === 'yes' && isTouchScreenWorking === null) ||
                         hasGpu === null ||
                         (hasGpu === 'yes' && isGpuWorking === null)
-                      ))
+                      )) ||
+                      (STEPS[currentStepIndex]?.id === 'screen' && (
+                        screenScratch === null
+                        || screenDiscolouration === null
+                        || screenSpots === null
+                        || screenLines === null
+                        || isScreenOriginal === null
+                      )) ||
+                      (STEPS[currentStepIndex]?.id === 'body' && (
+                        bodyScratch === null
+                        || dentTop === null
+                        || dentBase === null
+                        || looseHinges === null
+                        || panelCondition === null
+                      )) ||
+                      (STEPS[currentStepIndex]?.id === 'software' && softwareIssue === null)
                     }
                     className="bg-primary text-white font-bold px-8 py-4 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50"
                   >

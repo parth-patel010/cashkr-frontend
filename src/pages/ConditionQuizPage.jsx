@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Smartphone, Palette, Camera, Battery, CircleDot, Wifi, Fingerprint, User,
-  Volume2, Plug, Zap, Phone, Bluetooth, Vibrate, Mic, Radar, FileText, Package, Cable,
+  Volume2, Plug, Zap, Phone, Bluetooth, Vibrate, Mic, Radar, FileText, Package, Cable, Monitor,
 } from 'lucide-react';
 import { deviceService } from '../services/device.service';
 import { valuationService } from '../services/valuation.service';
@@ -21,68 +21,69 @@ import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
 import { formatMobileQuizAnswerSummary } from '../utils/formatQuizAnswers';
 import { buildAgentPriceLock } from '../utils/buildPriceLock';
+import {
+  MOBILE_STEPS,
+  MOBILE_ACCESSORIES,
+  MOBILE_PHYSICAL_ISSUES,
+  MOBILE_TECHNICAL_ISSUES,
+  MOBILE_AGE_OPTIONS,
+  SCREEN_PHYSICAL_DETAIL_OPTIONS,
+  PANEL_CONDITION_OPTIONS,
+  BENT_CONDITION_OPTIONS,
+  SCREEN_PHYSICAL_DETAIL_LABELS,
+  PANEL_CONDITION_LABELS,
+  BENT_CONDITION_LABELS,
+  supportsESIM,
+  toEsimPayload,
+  fromEsimPayload,
+} from '../data/quiz/mobileQuiz';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
 );
 
-const ALL_STEPS = [
-  { id: 'warranty', label: 'Age & Warranty' },
-  { id: 'screen', label: 'General & Screen' },
-  { id: 'physical', label: 'Physical Issues' },
-  { id: 'technical', label: 'Technical Issues' },
-  { id: 'accessories', label: 'Accessories' }
-];
-
-const ALL_ACCESSORIES = [
-  { id: 'Bill', label: 'GST Valid Bill', desc: 'Valid GST invoice', Icon: FileText },
-  { id: 'Box', label: 'Original Box', desc: 'Original purchase box', Icon: Package },
-  { id: 'Charger', label: 'Original Charger', desc: 'Original charging adapter', Icon: Cable },
-];
-
-const PHYSICAL_ISSUES = [
-  { id: 'glass_crack', label: 'Glass Crack', desc: 'Screen glass contains cracks', Icon: Smartphone },
-  { id: 'back_panel', label: 'Back Panel Damage', desc: 'Scratches, dents or broken back panel', Icon: Palette },
-  { id: 'camera_glass_broken', label: 'Camera Glass Broken', desc: 'Camera lens glass is cracked/broken', Icon: Camera },
-];
-
-const TECHNICAL_ISSUES = [
-  { id: 'battery_service', label: 'Battery Warning', Icon: Battery, pct: '13%' },
-  { id: 'front_camera', label: 'Front Camera faulty', Icon: Camera, pct: '8%' },
-  { id: 'back_camera', label: 'Back Camera faulty', Icon: Camera, pct: '15%' },
-  { id: 'volume_button', label: 'Volume button issue', Icon: CircleDot, pct: '4%' },
-  { id: 'wifi_issue', label: 'Wifi issue', Icon: Wifi, pct: '39%' },
-  { id: 'finger_touch', label: 'Finger touch issue', Icon: Fingerprint, pct: '26%' },
-  { id: 'face_unlock', label: 'Face unlock issue', Icon: User, pct: '26%' },
-  { id: 'speaker_faulty', label: 'Speaker faulty', Icon: Volume2, pct: '4%' },
-  { id: 'power_button', label: 'Power button issue', Icon: Plug, pct: '2%' },
-  { id: 'charging_port', label: 'Charging port issue', Icon: Zap, pct: '10%' },
-  { id: 'audio_receiver', label: 'Audio receiver issue', Icon: Phone, pct: '7%' },
-  { id: 'bluetooth', label: 'Bluetooth issue', Icon: Bluetooth, pct: '39%' },
-  { id: 'vibrator', label: 'Vibrator issue', Icon: Vibrate, pct: '2%' },
-  { id: 'microphone', label: 'Microphone issue', Icon: Mic, pct: '2%' },
-  { id: 'proximity_sensor', label: 'Proximity sensor', Icon: Radar, pct: '3%' },
-];
-
-const AGE_OPTIONS = [
-  '0 - 3 Months', '3 - 6 Months', '6 - 11 Months', 'Above 11 Months'
-];
-
-const supportsESIM = (modelName) => {
-  if (!modelName) return false;
-  const name = modelName.toLowerCase();
-  // Only these 12 models support dual eSIM (no physical SIM tray)
-  const allowed = [
-    'iphone 13 pro', 'iphone 13 pro max',
-    'iphone 14 pro', 'iphone 14 pro max',
-    'iphone 15 pro', 'iphone 15 pro max',
-    'iphone 16 pro', 'iphone 16 pro max',
-    'iphone 17', 'iphone 17 air',
-    'iphone 17 pro', 'iphone 17 pro max',
-  ];
-  return allowed.some(pattern => name.includes(pattern));
+const PHYSICAL_ICON_MAP = {
+  glass_crack: Smartphone,
+  screen_spot: Monitor,
+  back_panel: Palette,
+  panel_missing: Package,
+  camera_glass_broken: Camera,
 };
+
+const TECHNICAL_ICON_MAP = {
+  battery_service: Battery,
+  front_camera: Camera,
+  back_camera: Camera,
+  volume_button: CircleDot,
+  wifi_issue: Wifi,
+  finger_touch: Fingerprint,
+  face_unlock: User,
+  speaker_faulty: Volume2,
+  power_button: Plug,
+  charging_port: Zap,
+  audio_receiver: Phone,
+  bluetooth: Bluetooth,
+  vibrator: Vibrate,
+  microphone: Mic,
+  proximity_sensor: Radar,
+  silent_button: CircleDot,
+};
+
+const ALL_STEPS = MOBILE_STEPS;
+const ALL_ACCESSORIES = MOBILE_ACCESSORIES.map((a) => ({
+  ...a,
+  Icon: a.id === 'Bill' ? FileText : a.id === 'Box' ? Package : Cable,
+}));
+const PHYSICAL_ISSUES = MOBILE_PHYSICAL_ISSUES.map((i) => ({
+  ...i,
+  Icon: PHYSICAL_ICON_MAP[i.id] || Smartphone,
+}));
+const TECHNICAL_ISSUES = MOBILE_TECHNICAL_ISSUES.map((i) => ({
+  ...i,
+  Icon: TECHNICAL_ICON_MAP[i.id] || Smartphone,
+}));
+const AGE_OPTIONS = MOBILE_AGE_OPTIONS;
 
 export default function ConditionQuizPage() {
   const { brand, slug } = useParams();
@@ -102,9 +103,9 @@ export default function ConditionQuizPage() {
   const ACCESSORIES = special ? ALL_ACCESSORIES.filter(a => a.id !== 'Bill') : ALL_ACCESSORIES;
   
   // Selections (matching new requirements)
-  const [deviceAge, setDeviceAge] = useState('3 - 6 Months');
+  const [deviceAge, setDeviceAge] = useState(null);
   const [underWarranty, setUnderWarranty] = useState(null);
-  const [eSIMSupport, seteSIMSupport] = useState(null); // 'physical+esim' | 'esim_only_global'
+  const [eSIMSupport, seteSIMSupport] = useState(null); // 'single' | 'dual'
 
   const [ableToMakeCalls, setAbleToMakeCalls] = useState(null);
   const [isTouchScreenWorking, setIsTouchScreenWorking] = useState(null);
@@ -113,6 +114,9 @@ export default function ConditionQuizPage() {
   const [physicalIssues, setPhysicalIssues] = useState([]);
   const [technicalIssues, setTechnicalIssues] = useState([]);
   const [selectedAccessories, setSelectedAccessories] = useState([]);
+  const [screenPhysicalDetail, setScreenPhysicalDetail] = useState(null);
+  const [panelCondition, setPanelCondition] = useState(null);
+  const [bentCondition, setBentCondition] = useState(null);
 
   // Special (out-of-warranty) models: no age/warranty quiz — persist as out of warranty
   useEffect(() => {
@@ -155,10 +159,13 @@ export default function ConditionQuizPage() {
       isTouchScreenWorking,
       isScreenOriginal,
       underWarranty: resolvedWarranty,
-      eSIMSupport,
+      eSIMSupport: toEsimPayload(eSIMSupport),
       physicalIssues,
       technicalIssues,
       accessories: selectedAccessories,
+      screenPhysicalDetail,
+      panelCondition,
+      bentCondition,
     };
     const answerSummary = formatMobileQuizAnswerSummary(quizPayload);
     return {
@@ -187,6 +194,9 @@ export default function ConditionQuizPage() {
         physicalIssues,
         technicalIssues,
         selectedAccessories,
+        screenPhysicalDetail,
+        panelCondition,
+        bentCondition,
         ...extra,
       }));
     } catch {
@@ -198,13 +208,16 @@ export default function ConditionQuizPage() {
     if (saved.currentStepIndex != null) setCurrentStepIndex(saved.currentStepIndex);
     if (saved.deviceAge) setDeviceAge(saved.deviceAge);
     if (saved.underWarranty !== undefined) setUnderWarranty(saved.underWarranty);
-    if (saved.eSIMSupport) seteSIMSupport(saved.eSIMSupport);
     if (saved.ableToMakeCalls !== undefined) setAbleToMakeCalls(saved.ableToMakeCalls);
     if (saved.isTouchScreenWorking !== undefined) setIsTouchScreenWorking(saved.isTouchScreenWorking);
     if (saved.isScreenOriginal !== undefined) setIsScreenOriginal(saved.isScreenOriginal);
     if (saved.physicalIssues) setPhysicalIssues(saved.physicalIssues);
     if (saved.technicalIssues) setTechnicalIssues(saved.technicalIssues);
     if (saved.selectedAccessories) setSelectedAccessories(saved.selectedAccessories);
+    if (saved.screenPhysicalDetail) setScreenPhysicalDetail(saved.screenPhysicalDetail);
+    if (saved.panelCondition) setPanelCondition(saved.panelCondition);
+    if (saved.bentCondition) setBentCondition(saved.bentCondition);
+    if (saved.eSIMSupport) seteSIMSupport(fromEsimPayload(saved.eSIMSupport));
   };
 
   const redirectToLogin = (pendingShowResult = false) => {
@@ -257,7 +270,7 @@ export default function ConditionQuizPage() {
       setCurrentPrice(selectedVariant.basePrice);
       
       if (!supportsESIM(dev.modelName)) {
-        seteSIMSupport('physical+esim');
+        seteSIMSupport('single');
       }
 
       if (!quizRestoredRef.current) {
@@ -363,6 +376,9 @@ export default function ConditionQuizPage() {
         physicalIssues,
         technicalIssues,
         accessories: selectedAccessories,
+        screenPhysicalDetail,
+        panelCondition,
+        bentCondition,
         answerSummary: quizCtx.answerSummary,
       },
       priceBreakdown,
@@ -387,7 +403,8 @@ export default function ConditionQuizPage() {
   };
 
   const pollMobileValuation = async (recordId) => {
-    for (let attempt = 0; attempt < 120; attempt += 1) {
+    // ~20 min max — queue can wait while higher-value jobs run first.
+    for (let attempt = 0; attempt < 480; attempt += 1) {
       const { data } = await valuationService.getMobileStatus(recordId);
       setValuationAgentStatus(data.agentStatus);
       setValuationQueuePos(data.queuePosition || 0);
@@ -399,7 +416,7 @@ export default function ConditionQuizPage() {
       }
       await new Promise((resolve) => setTimeout(resolve, 2500));
     }
-    throw new Error('Valuation is taking longer than expected. Please try again in a moment.');
+    throw new Error('Valuation is taking longer than expected. Please keep this tab open or try again in a moment.');
   };
 
   const runAgentValuation = async () => {
@@ -576,7 +593,7 @@ export default function ConditionQuizPage() {
                         leadTrackedRef.current = false;
                         setShowResult(false);
                         setCurrentStepIndex(0);
-                        setDeviceAge(special ? 'Above 11 Months' : '3 - 6 Months');
+                        setDeviceAge(special ? 'Above 11 Months' : null);
                         setUnderWarranty(special ? false : null);
                         seteSIMSupport(null);
                         setAbleToMakeCalls(null);
@@ -584,6 +601,9 @@ export default function ConditionQuizPage() {
                         setIsScreenOriginal(null);
                         setPhysicalIssues([]);
                         setTechnicalIssues([]);
+                        setScreenPhysicalDetail(null);
+                        setPanelCondition(null);
+                        setBentCondition(null);
                         setSelectedAccessories(special ? [] : []);
                         setBreakdown(null);
                         try {
@@ -652,12 +672,21 @@ export default function ConditionQuizPage() {
                   {!special && <EvaluationRow label="Device Age" value={deviceAge} color="#0565E6" />}
                   {!special && <EvaluationRow label="Under Warranty" value={underWarranty ? 'Yes' : 'No'} color={underWarranty ? '#0565E6' : '#EF4444'} />}
                   {supportsESIM(device?.modelName) && (
-                    <EvaluationRow label="eSIM Support" value={eSIMSupport === 'esim_only_global' ? 'eSIM Only' : 'Physical + eSIM'} color={eSIMSupport === 'esim_only_global' ? '#EF4444' : '#0565E6'} />
+                    <EvaluationRow label="eSIM Support" value={eSIMSupport === 'dual' ? 'Dual eSIM' : 'Single eSIM'} color={eSIMSupport === 'dual' ? '#EF4444' : '#0565E6'} />
                   )}
                   <EvaluationRow label="Calls Functional" value={ableToMakeCalls ? 'Yes' : 'No (Dead)'} color={ableToMakeCalls ? '#0565E6' : '#EF4444'} />
                   <EvaluationRow label="Touch Screen working" value={isTouchScreenWorking ? 'Yes' : 'No'} color={isTouchScreenWorking ? '#0565E6' : '#EF4444'} />
                   <EvaluationRow label="Screen Original" value={isScreenOriginal ? 'Yes' : 'No (Copy Screen)'} color={isScreenOriginal ? '#0565E6' : '#EF4444'} />
-                  <EvaluationRow label="Physical Issues" value={physicalIssues.length > 0 ? physicalIssues.join(', ') : 'No Issues'} color={physicalIssues.length > 0 ? '#EF4444' : '#0565E6'} />
+                  <EvaluationRow label="Physical Issues" value={physicalIssues.length > 0 ? physicalIssues.map((id) => PHYSICAL_ISSUES.find((i) => i.id === id)?.label || id).join(', ') : 'No Issues'} color={physicalIssues.length > 0 ? '#EF4444' : '#0565E6'} />
+                  {screenPhysicalDetail && (
+                    <EvaluationRow label="Screen Detail" value={SCREEN_PHYSICAL_DETAIL_LABELS[screenPhysicalDetail]} color="#EF4444" />
+                  )}
+                  {panelCondition && (
+                    <EvaluationRow label="Panel Condition" value={PANEL_CONDITION_LABELS[panelCondition]} color={panelCondition === 'none' ? '#0565E6' : '#EF4444'} />
+                  )}
+                  {bentCondition && (
+                    <EvaluationRow label="Bent / Loose" value={BENT_CONDITION_LABELS[bentCondition]} color={bentCondition === 'none' ? '#0565E6' : '#EF4444'} />
+                  )}
                   <EvaluationRow label="Technical Issues" value={technicalIssues.length > 0 ? technicalIssues.join(', ') : 'No Issues'} color={technicalIssues.length > 0 ? '#EF4444' : '#0565E6'} />
                   <EvaluationRow label="Accessories" value={selectedAccessories.join(', ') || 'None'} color="#0565E6" />
                 </div>
@@ -837,24 +866,27 @@ export default function ConditionQuizPage() {
                     {supportsESIM(device?.modelName) && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-bold text-gray-900">3. How many eSIMs does your device support?</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest -mt-2">Same options as Cashify</p>
                         <div className="grid grid-cols-2 gap-4">
                           <button
-                            onClick={() => seteSIMSupport('physical+esim')}
+                            type="button"
+                            onClick={() => seteSIMSupport('single')}
                             className={`py-4 rounded-xl border-2 font-bold text-sm transition-all
-                              ${eSIMSupport === 'physical+esim' 
-                                ? 'border-primary bg-primary-light text-primary' 
+                              ${eSIMSupport === 'single'
+                                ? 'border-primary bg-primary-light text-primary'
                                 : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'}`}
                           >
-                            Physical SIM + eSIM
+                            Single eSIM
                           </button>
                           <button
-                            onClick={() => seteSIMSupport('esim_only_global')}
+                            type="button"
+                            onClick={() => seteSIMSupport('dual')}
                             className={`py-4 rounded-xl border-2 font-bold text-sm transition-all
-                              ${eSIMSupport === 'esim_only_global' 
-                                ? 'border-primary bg-primary-light text-primary' 
+                              ${eSIMSupport === 'dual'
+                                ? 'border-primary bg-primary-light text-primary'
                                 : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'}`}
                           >
-                            Dual eSIM Only (Global/US variant)
+                            Dual eSIM
                           </button>
                         </div>
                       </div>
@@ -944,24 +976,27 @@ export default function ConditionQuizPage() {
                     {special && supportsESIM(device?.modelName) && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-bold text-gray-900">4. How many eSIMs does your device support?</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest -mt-2">Same options as Cashify</p>
                         <div className="grid grid-cols-2 gap-4">
                           <button
-                            onClick={() => seteSIMSupport('physical+esim')}
+                            type="button"
+                            onClick={() => seteSIMSupport('single')}
                             className={`py-4 rounded-xl border-2 font-bold text-sm transition-all
-                              ${eSIMSupport === 'physical+esim' 
-                                ? 'border-primary bg-primary-light text-primary' 
+                              ${eSIMSupport === 'single'
+                                ? 'border-primary bg-primary-light text-primary'
                                 : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'}`}
                           >
-                            Physical SIM + eSIM
+                            Single eSIM
                           </button>
                           <button
-                            onClick={() => seteSIMSupport('esim_only_global')}
+                            type="button"
+                            onClick={() => seteSIMSupport('dual')}
                             className={`py-4 rounded-xl border-2 font-bold text-sm transition-all
-                              ${eSIMSupport === 'esim_only_global' 
-                                ? 'border-primary bg-primary-light text-primary' 
+                              ${eSIMSupport === 'dual'
+                                ? 'border-primary bg-primary-light text-primary'
                                 : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'}`}
                           >
-                            Dual eSIM Only (Global/US variant)
+                            Dual eSIM
                           </button>
                         </div>
                       </div>
@@ -971,27 +1006,34 @@ export default function ConditionQuizPage() {
 
                 {/* STEP: Physical Issues */}
                 {STEPS[currentStepIndex]?.id === 'physical' && (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Select physical issues (if any)</h3>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Leave unselected if none apply</p>
+                      <h3 className="text-lg font-bold text-gray-900">Select screen / body defects (if any)</h3>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+                        Same options as Cashify — leave unselected if none apply, then answer detail questions below
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {PHYSICAL_ISSUES.map(issue => {
                         const selected = physicalIssues.includes(issue.id);
                         const Icon = issue.Icon;
                         return (
                           <button
                             key={issue.id}
+                            type="button"
                             onClick={() => {
-                              setPhysicalIssues(prev => 
-                                prev.includes(issue.id) ? prev.filter(i => i !== issue.id) : [...prev, issue.id]
-                              );
+                              setPhysicalIssues((prev) => {
+                                const next = prev.includes(issue.id)
+                                  ? prev.filter((i) => i !== issue.id)
+                                  : [...prev, issue.id];
+                                if (!next.includes('glass_crack')) setScreenPhysicalDetail(null);
+                                return next;
+                              });
                             }}
-                            className={`p-6 rounded-2xl border-2 text-left transition-all flex flex-col justify-between h-40
-                              ${selected 
-                                ? 'border-primary bg-primary-light' 
+                            className={`p-5 rounded-2xl border-2 text-left transition-all flex flex-col justify-between min-h-[9rem]
+                              ${selected
+                                ? 'border-primary bg-primary-light'
                                 : 'border-gray-100 bg-white hover:border-gray-200'}`}
                           >
                             <Icon size={28} strokeWidth={1.6} className={selected ? 'text-primary' : 'text-gray-500'} />
@@ -1002,6 +1044,72 @@ export default function ConditionQuizPage() {
                           </button>
                         );
                       })}
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-gray-100">
+                      <h4 className="text-base font-extrabold text-gray-900">Screen scratch / crack detail</h4>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        {physicalIssues.includes('glass_crack')
+                          ? 'Required — choose one (Cashify follow-up)'
+                          : 'Select “Broken/scratch on device screen” above to unlock this (Cashify only asks when selected)'}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {SCREEN_PHYSICAL_DETAIL_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            disabled={!physicalIssues.includes('glass_crack')}
+                            onClick={() => setScreenPhysicalDetail(opt.key)}
+                            className={`py-4 px-4 rounded-2xl border-2 font-bold text-sm text-left transition-all
+                              ${!physicalIssues.includes('glass_crack') ? 'opacity-40 cursor-not-allowed' : ''}
+                              ${screenPhysicalDetail === opt.key
+                                ? 'border-primary bg-primary-light text-primary'
+                                : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-gray-100">
+                      <h4 className="text-base font-extrabold text-gray-900">Side / back panel condition</h4>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Required — choose one</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {PANEL_CONDITION_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setPanelCondition(opt.key)}
+                            className={`py-4 px-4 rounded-2xl border-2 font-bold text-sm text-left transition-all
+                              ${panelCondition === opt.key
+                                ? 'border-primary bg-primary-light text-primary'
+                                : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-gray-100">
+                      <h4 className="text-base font-extrabold text-gray-900">Bent / loose screen</h4>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Required — choose one</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {BENT_CONDITION_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setBentCondition(opt.key)}
+                            className={`py-4 px-4 rounded-2xl border-2 font-bold text-sm text-left transition-all
+                              ${bentCondition === opt.key
+                                ? 'border-primary bg-primary-light text-primary'
+                                : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1099,12 +1207,21 @@ export default function ConditionQuizPage() {
                     type="button"
                     onClick={() => setCurrentStepIndex(prev => prev + 1)}
                     disabled={
-                      (STEPS[currentStepIndex]?.id === 'warranty' && (underWarranty === null || eSIMSupport === null)) ||
+                      (STEPS[currentStepIndex]?.id === 'warranty' && (
+                        deviceAge === null
+                        || underWarranty === null
+                        || (supportsESIM(device?.modelName) && eSIMSupport === null)
+                      )) ||
                       (STEPS[currentStepIndex]?.id === 'screen' && (
                         ableToMakeCalls === null ||
                         isTouchScreenWorking === null ||
                         isScreenOriginal === null ||
                         (special && supportsESIM(device?.modelName) && eSIMSupport === null)
+                      )) ||
+                      (STEPS[currentStepIndex]?.id === 'physical' && (
+                        (physicalIssues.includes('glass_crack') && screenPhysicalDetail === null)
+                        || panelCondition === null
+                        || bentCondition === null
                       ))
                     }
                     className="bg-primary text-white font-bold px-6 py-3.5 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50 shadow-[0_4px_14px_rgba(5,101,230,0.25)]"
@@ -1132,13 +1249,26 @@ export default function ConditionQuizPage() {
 
             {/* Summary List */}
             <div className="space-y-6">
-              {!special && <SummaryItem label="Device Age" value={deviceAge} active />}
+              {!special && <SummaryItem label="Device Age" value={deviceAge || 'Not answered'} active={deviceAge != null} />}
               {!special && <SummaryItem label="Warranty" value={underWarranty === null ? 'Not answered' : (underWarranty ? 'Under Warranty' : 'Out of Warranty')} active={underWarranty !== null} />}
               {supportsESIM(device?.modelName) && (
-                <SummaryItem label="eSIM Support" value={eSIMSupport === null ? 'Not answered' : (eSIMSupport === 'esim_only_global' ? 'Dual eSIM Only' : 'Physical + eSIM')} active={eSIMSupport !== null} />
+                <SummaryItem label="eSIM Support" value={eSIMSupport === null ? 'Not answered' : (eSIMSupport === 'dual' ? 'Dual eSIM' : 'Single eSIM')} active={eSIMSupport !== null} />
               )}
               <SummaryItem label="General & Screen" value={ableToMakeCalls === null ? 'Not answered' : `Calls: ${ableToMakeCalls ? 'Yes' : 'No'}, Touch: ${isTouchScreenWorking ? 'Yes' : 'No'}, Original: ${isScreenOriginal ? 'Yes' : 'No'}`} active={ableToMakeCalls !== null} />
-              <SummaryItem label="Physical Issues" value={physicalIssues.length > 0 ? `${physicalIssues.length} issues selected` : 'No Issues'} active={STEPS.findIndex(s=>s.id==='physical') <= currentStepIndex} />
+              <SummaryItem
+                label="Physical Issues"
+                value={
+                  STEPS.findIndex((s) => s.id === 'physical') > currentStepIndex
+                    ? '-'
+                    : [
+                        physicalIssues.length ? `${physicalIssues.length} defects` : 'No multi-select defects',
+                        screenPhysicalDetail ? SCREEN_PHYSICAL_DETAIL_LABELS[screenPhysicalDetail] : null,
+                        panelCondition ? PANEL_CONDITION_LABELS[panelCondition] : null,
+                        bentCondition ? BENT_CONDITION_LABELS[bentCondition] : null,
+                      ].filter(Boolean).join(' · ')
+                }
+                active={STEPS.findIndex((s) => s.id === 'physical') <= currentStepIndex}
+              />
               <SummaryItem label="Technical Issues" value={technicalIssues.length > 0 ? `${technicalIssues.length} issues selected` : 'No Issues'} active={STEPS.findIndex(s=>s.id==='technical') <= currentStepIndex} />
               <SummaryItem label="Accessories" value={selectedAccessories.length > 0 ? selectedAccessories.join(', ') : 'None selected'} active={STEPS.findIndex(s=>s.id==='accessories') <= currentStepIndex} />
             </div>

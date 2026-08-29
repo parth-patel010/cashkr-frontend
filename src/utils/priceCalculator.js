@@ -9,7 +9,9 @@ import { findMacbookOverridePrice } from './macbookPriceOverrides';
 export const ISSUE_DEDUCTIONS = {
   // Physical Issues
   glass_crack: 40,
+  screen_spot: 25,
   back_panel: 17,
+  panel_missing: 20,
   camera_glass_broken: 8,
   // Technical Issues
   battery_service: 13,
@@ -27,6 +29,7 @@ export const ISSUE_DEDUCTIONS = {
   vibrator: 2,
   microphone: 2,
   proximity_sensor: 3,
+  silent_button: 2,
 };
 
 // ─── MOBILE PRICE CALCULATOR (Sequential / Cascading deduction model) ───────
@@ -84,8 +87,8 @@ export function calculatePrice({
     applyDeduction('outOfWarranty', 0);
   }
 
-  // 6. eSIM only global variant — 6%
-  if (eSIMSupport === 'esim_only_global') {
+  // 6. eSIM only global / Dual eSIM variant — 6%
+  if (eSIMSupport === 'esim_only_global' || eSIMSupport === 'dual') {
     applyDeduction('eSIM', 6);
   }
 
