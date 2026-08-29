@@ -235,7 +235,7 @@ export default function AdminPricingAgent() {
 
   useEffect(() => {
     if (!shouldPoll) return undefined;
-    const timer = setInterval(() => loadData(true), 3000);
+    const timer = setInterval(() => loadData(true), 8000);
     return () => clearInterval(timer);
   }, [shouldPoll, loadData]);
 

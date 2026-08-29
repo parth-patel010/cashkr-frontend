@@ -11,6 +11,7 @@ export function QuoteProvider({ children }) {
     functionalIssues: [],
     accessories: null,
     priceBreakdown: null,
+    priceLock: null,
     // Laptop-specific fields
     ram: null,
     storageType: null,
@@ -25,7 +26,7 @@ export function QuoteProvider({ children }) {
     setQuote({
       device: null, storage: null, condition: null,
       screenCondition: null, functionalIssues: [],
-      accessories: null, priceBreakdown: null,
+      accessories: null, priceBreakdown: null, priceLock: null,
       ram: null, storageType: null, yearBracket: null,
     });
   };

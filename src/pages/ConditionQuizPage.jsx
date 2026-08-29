@@ -16,8 +16,9 @@ import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneLead, trackPhoneInitiateCheckout } from '../utils/metaPixel';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
-import { formatMobileQuizAnswerSummary } from '../utils/formatQuizAnswers';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
+import { formatMobileQuizAnswerSummary } from '../utils/formatQuizAnswers';
+import { buildAgentPriceLock } from '../utils/buildPriceLock';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -278,7 +279,7 @@ export default function ConditionQuizPage() {
   }, [deviceAge]);
 
   useEffect(() => {
-    if (!device) return;
+    if (showResult || !device) return;
     const variant = device.variants.find(v => v.storage === storage) || device.variants[0];
     
     // Calculate new price based on user inputs
@@ -313,7 +314,8 @@ export default function ConditionQuizPage() {
     eSIMSupport, 
     physicalIssues, 
     technicalIssues, 
-    selectedAccessories
+    selectedAccessories,
+    showResult,
   ]);
 
   useEffect(() => {
@@ -341,7 +343,12 @@ export default function ConditionQuizPage() {
         accessories: selectedAccessories,
         answerSummary: quizCtx.answerSummary,
       },
-      priceBreakdown: breakdown,
+      priceBreakdown: {
+        ...breakdown,
+        quotedFinalPrice: quoteValue,
+        priceSource: breakdown?.priceSource || 'mobile_v2_calculator',
+      },
+      priceLock: buildAgentPriceLock(quoteValue),
     });
     if (!leadTrackedRef.current) {
       leadTrackedRef.current = true;
@@ -383,7 +390,12 @@ export default function ConditionQuizPage() {
         accessories: selectedAccessories,
         answerSummary: quizCtx.answerSummary,
       },
-      priceBreakdown: breakdown,
+      priceBreakdown: {
+        ...breakdown,
+        quotedFinalPrice: quoteValue,
+        priceSource: breakdown?.priceSource || 'mobile_v2_calculator',
+      },
+      priceLock: buildAgentPriceLock(quoteValue),
     });
     leadTrackedRef.current = true;
     trackPhoneLead({

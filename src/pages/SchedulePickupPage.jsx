@@ -16,6 +16,7 @@ import {
 import PageCanvas from '../components/layout/PageCanvas';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
 import { trackPhoneInitiateCheckout, isMobileQuote } from '../utils/metaPixel';
+import { buildPriceLock } from '../utils/buildPriceLock';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002/api';
 
@@ -126,10 +127,16 @@ export default function SchedulePickupPage() {
         }
       }
 
+      const priceLock = buildPriceLock(quote);
+      if (!priceLock) {
+        throw new Error('No locked offer price found. Please complete your device valuation again.');
+      }
+
       const { _id, isDefault, ...addressFields } = selectedAddr || {};
       const { data } = await orderService.createOrder({
         device: quote.device || {},
         priceBreakdown: quote.priceBreakdown || {},
+        priceLock,
         pickup: { 
           ...addressFields,
           phone: addressFields.phone || user.phone || '',

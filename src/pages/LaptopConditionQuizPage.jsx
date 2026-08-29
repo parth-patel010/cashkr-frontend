@@ -17,6 +17,7 @@ import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
 import { formatLaptopQuizAnswerSummary } from '../utils/formatQuizAnswers';
+import { buildAgentPriceLock } from '../utils/buildPriceLock';
 import {
   BODY_SCRATCH_OPTIONS,
   DENT_TOP_OPTIONS,
@@ -305,8 +306,14 @@ export default function LaptopConditionQuizPage() {
     const priceBreakdown = {
       ...breakdown,
       ...agentBreakdown,
+      finalPrice: offerPrice,
+      quotedFinalPrice: offerPrice,
       priceSource: agentBreakdown.priceSource || 'agent_valuation',
     };
+    const priceLock = buildAgentPriceLock(offerPrice, {
+      valuationRecordId: agentBreakdown.valuationRecordId,
+      quizHash: agentBreakdown.quizHash,
+    });
 
     setCurrentPrice(offerPrice);
     setBreakdown(priceBreakdown);
@@ -339,6 +346,7 @@ export default function LaptopConditionQuizPage() {
         answerSummary,
       },
       priceBreakdown,
+      priceLock,
       price: offerPrice,
     });
     setLoginContext(quizCtx);
@@ -361,7 +369,7 @@ export default function LaptopConditionQuizPage() {
         }
         throw new Error(data.error || 'Could not fetch live valuation. Please try again.');
       }
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
     throw new Error('Valuation is taking longer than expected. Please try again in a moment.');
   };
@@ -416,6 +424,8 @@ export default function LaptopConditionQuizPage() {
         internalPrice: result.internalPrice,
         priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
         agentStatus: result.agentStatus,
+        valuationRecordId: start.recordId || result.recordId,
+        quizHash: result.record?.quizHash || start.quizHash,
       });
     } catch (err) {
       setValuationError(err.response?.data?.message || err.message || 'Valuation failed');
@@ -543,6 +553,7 @@ export default function LaptopConditionQuizPage() {
   }, [isAuthenticated, device, quizStorageKey]);
 
   useEffect(() => {
+    if (showResult || valuationOpen) return;
     if (!device || !specs || !age || !powerStatus || !screenSize) return;
     if (hasGpu === 'yes' && !isGpuWorking) return;
     if (hasGpu === null) return;
@@ -579,7 +590,7 @@ export default function LaptopConditionQuizPage() {
     return () => {
       cancelled = true;
     };
-  }, [device, specs, age, powerStatus, screenSize, hasTouchScreen, isTouchScreenWorking, hasGpu, isGpuWorking, issuesList, bodyScratch, dentTop, dentBase, looseHinges, panelCondition, screenScratch, screenDiscolouration, screenSpots, screenLines, accessories, slug]);
+  }, [device, specs, age, powerStatus, screenSize, hasTouchScreen, isTouchScreenWorking, hasGpu, isGpuWorking, issuesList, bodyScratch, dentTop, dentBase, looseHinges, panelCondition, screenScratch, screenDiscolouration, screenSpots, screenLines, accessories, slug, showResult, valuationOpen]);
 
   // Auto-run agent valuation after login redirect
   useEffect(() => {
