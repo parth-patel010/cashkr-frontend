@@ -11,23 +11,29 @@ import { adminService } from '../../services/admin.service';
 import { formatCurrency } from '../../utils/formatCurrency';
 import './admin.css';
 
+function normalizeStatus(status) {
+  return status === 'skipped' ? 'overridden' : status;
+}
+
 const STATUS_STYLES = {
   pending: { bg: '#FEF3C7', color: '#92400E', label: 'Pending' },
   running: { bg: '#DBEAFE', color: '#1D4ED8', label: 'Running' },
   completed: { bg: '#D1FAE5', color: '#065F46', label: 'Completed' },
   partial: { bg: '#E0E7FF', color: '#3730A3', label: 'Partial' },
   failed: { bg: '#FEE2E2', color: '#991B1B', label: 'Failed' },
-  skipped: { bg: '#F1F5F9', color: '#475569', label: 'Skipped' },
+  overridden: { bg: '#FEF9C3', color: '#854D0E', label: 'Overridden' },
+  skipped: { bg: '#FEF9C3', color: '#854D0E', label: 'Overridden' },
 };
 
 function StatusBadge({ status }) {
-  const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
+  const normalized = normalizeStatus(status);
+  const style = STATUS_STYLES[normalized] || STATUS_STYLES.pending;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-800 uppercase tracking-wide ${status === 'running' ? 'pricing-agent-pulse' : ''}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-800 uppercase tracking-wide ${normalized === 'running' ? 'pricing-agent-pulse' : ''}`}
       style={{ background: style.bg, color: style.color }}
     >
-      {status === 'running' && (
+      {normalized === 'running' && (
         <span className="w-1.5 h-1.5 rounded-full bg-current pricing-agent-dot" />
       )}
       {style.label}
@@ -44,6 +50,7 @@ function ComparisonModal({ record, onClose }) {
   if (!record) return null;
   const diff = record.difference;
   const diffColor = diff == null ? 'text-slate-400' : diff >= 0 ? 'text-emerald-600' : 'text-red-600';
+  const isOverridden = normalizeStatus(record.agentStatus) === 'overridden';
 
   return (
     <div className="admin-modal-backdrop" onClick={onClose}>
@@ -60,6 +67,16 @@ function ComparisonModal({ record, onClose }) {
           </button>
         </div>
         <div className="admin-modal-body">
+          {isOverridden && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm font-600 text-amber-900">
+              Quiz overridden — this exact quiz always returns the locked override price below.
+              {record.overridePrice != null && (
+                <span className="block mt-1 font-800 text-base">
+                  Override price: {formatCurrency(record.overridePrice)}
+                </span>
+              )}
+            </div>
+          )}
           <div className="grid md:grid-cols-2 gap-5">
             <div className="rounded-2xl border border-amber-100 bg-amber-50/40 overflow-hidden">
               <div className="px-4 py-3 border-b border-amber-100 bg-amber-100/50">
@@ -92,8 +109,16 @@ function ComparisonModal({ record, onClose }) {
               <div className="divide-y divide-blue-50 bg-white/80">
                 <div className="flex justify-between gap-4 px-4 py-2.5">
                   <span className="text-[11px] font-700 text-slate-500 uppercase">Agent Status</span>
-                  <StatusBadge status={record.agentStatus} />
+                  <StatusBadge status={normalizeStatus(record.displayStatus || record.agentStatus)} />
                 </div>
+                {isOverridden && (
+                  <div className="flex justify-between gap-4 px-4 py-2.5">
+                    <span className="text-[11px] font-700 text-slate-500 uppercase">Override Price</span>
+                    <span className="text-sm font-800 text-amber-800">
+                      {record.overridePrice != null ? formatCurrency(record.overridePrice) : '—'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between gap-4 px-4 py-2.5">
                   <span className="text-[11px] font-700 text-slate-500 uppercase">Our Offer (+ markup)</span>
                   <span className="text-sm font-700 text-slate-800">
@@ -149,24 +174,16 @@ function ComparisonModal({ record, onClose }) {
   );
 }
 
-function QuizChips({ summary = [] }) {
+function QuizSummaryList({ summary = [], compact = false }) {
   if (!summary.length) return <span className="text-slate-400 text-xs">—</span>;
-  const preview = summary.slice(0, 3);
   return (
-    <div className="flex flex-wrap gap-1 max-w-[220px]">
-      {preview.map((row, idx) => (
-        <span
-          key={`${row.question}-${idx}`}
-          className="text-[10px] font-700 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600"
-          title={`${row.question}: ${row.answer}`}
-        >
-          {row.question.replace(/ Issues?$/i, '')}: {String(row.answer).slice(0, 18)}
-          {String(row.answer).length > 18 ? '…' : ''}
-        </span>
+    <div className={`space-y-1 ${compact ? 'max-w-[280px]' : ''}`}>
+      {summary.map((row, idx) => (
+        <div key={`${row.question}-${idx}`} className="flex justify-between gap-2 text-[11px] leading-snug">
+          <span className="font-700 text-slate-500 shrink-0">{row.question}</span>
+          <span className="font-600 text-slate-800 text-right">{row.answer}</span>
+        </div>
       ))}
-      {summary.length > 3 && (
-        <span className="text-[10px] font-700 text-slate-400">+{summary.length - 3}</span>
-      )}
     </div>
   );
 }
@@ -186,7 +203,7 @@ export default function AdminPricingAgent() {
   const pages = Math.max(1, Math.ceil(total / 50));
 
   const progressPct = useMemo(() => {
-    const done = (stats.completed || 0) + (stats.partial || 0) + (stats.skipped || 0);
+    const done = (stats.completed || 0) + (stats.partial || 0) + (stats.overridden || 0);
     const all = stats.total || 0;
     if (!all) return 0;
     return Math.round((done / all) * 100);
@@ -252,7 +269,7 @@ export default function AdminPricingAgent() {
     try {
       const { data } = await adminService.runAllPricingAgent();
       setMessage(
-        `Enqueued ${data.pending ?? 0} pending · ${data.skipped ?? 0} skipped · ${data.alreadyCompleted ?? 0} already completed.`,
+        `Enqueued ${data.pending ?? 0} pending · ${data.overridden ?? data.skipped ?? 0} overridden · ${data.alreadyCompleted ?? 0} already completed.`,
       );
       await loadData(true);
     } catch (err) {
@@ -337,7 +354,7 @@ export default function AdminPricingAgent() {
         <div>
           <h2 className="text-xl font-900 text-slate-900 tracking-tight">Pricing Agent</h2>
           <p className="text-sm text-slate-500 mt-1 max-w-xl">
-            Batch Cashify pricing for captured mobile and laptop quizzes. Runs in the background on the server — close this tab anytime.
+            Batch Cashify pricing for captured quizzes. Duplicate quizzes appear as Overridden with a locked price — filling the same quiz again always returns that override price.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -412,7 +429,7 @@ export default function AdminPricingAgent() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {['pending', 'running', 'completed', 'skipped', 'failed'].map((key) => (
+            {['pending', 'running', 'completed', 'overridden', 'failed'].map((key) => (
               <span key={key} className="pricing-agent-stat-chip">
                 <span className="capitalize text-slate-500">{key}</span>
                 <span className="text-slate-900">{stats[key] ?? 0}</span>
@@ -439,6 +456,7 @@ export default function AdminPricingAgent() {
                 <th>Our Price</th>
                 <th>Quiz</th>
                 <th>Status</th>
+                <th>Override Price</th>
                 <th>Cashify</th>
                 <th>Diff</th>
               </tr>
@@ -446,13 +464,13 @@ export default function AdminPricingAgent() {
             <tbody>
               {loading && !records.length ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={9} className="text-center py-10 text-slate-400 font-600">
                     Loading…
                   </td>
                 </tr>
               ) : !records.length ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={9} className="text-center py-10 text-slate-400 font-600">
                     No quiz-filled records yet. Complete a quiz or click Sync Quizzes.
                   </td>
                 </tr>
@@ -461,10 +479,11 @@ export default function AdminPricingAgent() {
                   const sr = (page - 1) * 50 + idx + 1;
                   const diff = row.difference;
                   const diffColor = diff == null ? 'text-slate-400' : diff >= 0 ? 'text-emerald-600' : 'text-red-600';
+                  const isOverridden = normalizeStatus(row.displayStatus || row.agentStatus) === 'overridden';
                   return (
                     <tr
                       key={row.id}
-                      className={`cursor-pointer hover:bg-slate-50/80 ${row.agentStatus === 'running' ? 'pricing-agent-pulse' : ''}`}
+                      className={`cursor-pointer hover:bg-slate-50/80 ${row.agentStatus === 'running' ? 'pricing-agent-pulse' : ''} ${isOverridden ? 'bg-amber-50/30' : ''}`}
                       onClick={() => setSelectedRecord(row)}
                     >
                       <td className="font-800 text-slate-400">{sr}</td>
@@ -483,8 +502,15 @@ export default function AdminPricingAgent() {
                       <td className="font-700 text-sm">
                         {row.internalPrice != null ? formatCurrency(row.internalPrice) : '—'}
                       </td>
-                      <td><QuizChips summary={row.quizSummary} /></td>
-                      <td><StatusBadge status={row.agentStatus} /></td>
+                      <td><QuizSummaryList summary={row.quizSummary} compact /></td>
+                      <td><StatusBadge status={row.displayStatus || row.agentStatus} /></td>
+                      <td className="font-800 text-sm text-amber-800">
+                        {isOverridden && row.overridePrice != null
+                          ? formatCurrency(row.overridePrice)
+                          : isOverridden && row.ourOffer != null
+                            ? formatCurrency(row.ourOffer)
+                            : '—'}
+                      </td>
                       <td className="font-700 text-sm">
                         {row.cashifyPrice != null ? formatCurrency(row.cashifyPrice) : '—'}
                       </td>

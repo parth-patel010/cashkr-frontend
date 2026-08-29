@@ -12,7 +12,7 @@ import { useAuth } from '../hooks/useAuth';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
-import LaptopValuationModal from '../components/LaptopValuationModal';
+import LaptopValuationModal, { VALUATION_DURATION_SEC } from '../components/LaptopValuationModal';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
@@ -284,6 +284,15 @@ export default function LaptopConditionQuizPage() {
     setValuationAgentStatus('pending');
     setValuationCached(false);
     setValuationQueuePos(0);
+    const waitStartedAt = Date.now();
+    const minWaitMs = (cached) => (cached ? 2800 : VALUATION_DURATION_SEC * 1000);
+
+    const ensureMinWait = async (cached) => {
+      const remaining = minWaitMs(cached) - (Date.now() - waitStartedAt);
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
+    };
 
     try {
       const { data: start } = await valuationService.submitLaptopQuote({
@@ -303,10 +312,12 @@ export default function LaptopConditionQuizPage() {
       let result = start;
       if (start.cached && start.ourOffer != null) {
         setValuationCached(true);
-        setValuationAgentStatus(start.agentStatus || 'skipped');
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setValuationAgentStatus('overridden');
+        await ensureMinWait(true);
       } else {
         result = await pollValuationRecord(start.recordId);
+        setValuationAgentStatus(result.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
       }
 
       finalizeValuationResult(result.ourOffer, {
