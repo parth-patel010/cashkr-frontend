@@ -6,11 +6,13 @@ import {
   AlertTriangle, Minus, FileText, Package, Cable,
 } from 'lucide-react';
 import { deviceService } from '../services/device.service';
+import { valuationService } from '../services/valuation.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
 import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import LaptopSpecModal from '../components/LaptopSpecModal';
+import LaptopValuationModal from '../components/LaptopValuationModal';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
@@ -105,6 +107,12 @@ export default function LaptopConditionQuizPage() {
 
   const [currentPrice, setCurrentPrice] = useState(0);
   const [breakdown, setBreakdown] = useState(null);
+  const [valuationOpen, setValuationOpen] = useState(false);
+  const [valuationAgentStatus, setValuationAgentStatus] = useState('pending');
+  const [valuationCached, setValuationCached] = useState(false);
+  const [valuationQueuePos, setValuationQueuePos] = useState(0);
+  const [valuationAgentBusy, setValuationAgentBusy] = useState(false);
+  const [valuationError, setValuationError] = useState(null);
 
   const quizStorageKey = `devicekart_laptop_quiz_${slug}`;
 
@@ -133,6 +141,191 @@ export default function LaptopConditionQuizPage() {
     if (saved.bodyIssuesList) setBodyIssuesList(saved.bodyIssuesList);
     if (saved.accessories) setAccessories(saved.accessories);
     if (saved.currentStepIndex != null) setCurrentStepIndex(saved.currentStepIndex);
+  };
+
+  const buildQuizPayload = () => ({
+    slug,
+    processor: specs?.processor || '',
+    ram: specs?.ram || '',
+    storage: specs?.storage || '',
+    powerStatus,
+    screenSize,
+    hasGpu: hasGpu === 'yes',
+    isGpuWorking: isGpuWorking === 'yes',
+    functionalIssues: issuesList,
+    screenIssues: screenIssuesList,
+    bodyIssues: bodyIssuesList,
+    accessories,
+    yearBracket: age,
+    age,
+  });
+
+  const buildQuizContext = () => {
+    const ageLabel = AGE_OPTIONS.find((o) => o.key === age)?.label || age;
+    const answerSummary = formatLaptopQuizAnswerSummary({
+      specs,
+      age,
+      ageLabel,
+      powerStatus,
+      screenSize,
+      hasGpu,
+      isGpuWorking,
+      functionalIssues: issuesList,
+      screenIssues: screenIssuesList,
+      bodyIssues: bodyIssuesList,
+      accessories,
+    });
+    return {
+      category: 'laptop',
+      brand: device?.brand || brand,
+      modelName: device?.modelName || '',
+      slug,
+      storage: specs?.storage || '',
+      quizPath: getQuizReturnPath(),
+      answerSummary,
+      answers: {
+        powerStatus,
+        screenSize,
+        hasGpu,
+        isGpuWorking,
+        functionalIssues: issuesList,
+        screenIssues: screenIssuesList,
+        bodyIssues: bodyIssuesList,
+        accessories,
+        age,
+      },
+      quizPayload: buildQuizPayload(),
+    };
+  };
+
+  const finalizeValuationResult = (offerPrice, agentBreakdown = {}) => {
+    const ageLabel = AGE_OPTIONS.find((o) => o.key === age)?.label || age;
+    const answerSummary = formatLaptopQuizAnswerSummary({
+      specs,
+      age,
+      ageLabel,
+      powerStatus,
+      screenSize,
+      hasGpu,
+      isGpuWorking,
+      functionalIssues: issuesList,
+      screenIssues: screenIssuesList,
+      bodyIssues: bodyIssuesList,
+      accessories,
+    });
+    const quizCtx = buildQuizContext();
+    const priceBreakdown = {
+      ...breakdown,
+      ...agentBreakdown,
+      priceSource: agentBreakdown.priceSource || 'agent_valuation',
+    };
+
+    setCurrentPrice(offerPrice);
+    setBreakdown(priceBreakdown);
+    updateQuote({
+      device: {
+        ...device,
+        category: 'laptop',
+        brand,
+        modelName: device.modelName,
+        slug,
+        ...specs,
+        deviceAge: ageLabel,
+        yearBracket: age,
+        powerStatus,
+        screenSize,
+        hasGpu: hasGpu === 'yes',
+        hasDedicatedGpu: hasGpu === 'yes',
+        isGpuWorking: isGpuWorking === 'yes',
+        graphicsCard:
+          hasGpu === 'yes'
+            ? `Dedicated (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})`
+            : 'Not Available',
+        functionalIssues: issuesList,
+        screenIssues: screenIssuesList,
+        bodyIssues: bodyIssuesList,
+        accessories,
+        answerSummary,
+      },
+      priceBreakdown,
+      price: offerPrice,
+    });
+    setLoginContext(quizCtx);
+    reportLastQuizDevice(quizCtx);
+    setValuationOpen(false);
+    setShowResult(true);
+  };
+
+  const pollValuationRecord = async (recordId) => {
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      const { data } = await valuationService.getLaptopStatus(recordId);
+      setValuationAgentStatus(data.agentStatus);
+      setValuationQueuePos(data.queuePosition || 0);
+      setValuationAgentBusy(Boolean(data.agentBusy));
+      setValuationCached(Boolean(data.cached));
+
+      if (data.done) {
+        if (data.success && data.ourOffer != null) {
+          return data;
+        }
+        throw new Error(data.error || 'Could not fetch live valuation. Please try again.');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+    }
+    throw new Error('Valuation is taking longer than expected. Please try again in a moment.');
+  };
+
+  const runAgentValuation = async () => {
+    if (!device || !specs || age == null) return;
+
+    const quizCtx = buildQuizContext();
+    setValuationError(null);
+    setValuationOpen(true);
+    setValuationAgentStatus('pending');
+    setValuationCached(false);
+    setValuationQueuePos(0);
+
+    try {
+      const { data: start } = await valuationService.submitLaptopQuote({
+        slug,
+        brand: device.brand || brand,
+        modelName: device.modelName,
+        storage: specs.storage || '',
+        quizPayload: quizCtx.quizPayload,
+        quizSummary: quizCtx.answerSummary,
+      });
+
+      setValuationAgentStatus(start.agentStatus || 'pending');
+      setValuationQueuePos(start.queuePosition || 0);
+      setValuationAgentBusy(Boolean(start.agentBusy));
+      setValuationCached(Boolean(start.cached));
+
+      let result = start;
+      if (start.cached && start.ourOffer != null) {
+        setValuationCached(true);
+        setValuationAgentStatus(start.agentStatus || 'skipped');
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } else {
+        result = await pollValuationRecord(start.recordId);
+      }
+
+      finalizeValuationResult(result.ourOffer, {
+        cashifyEstimate: result.cashifyPrice,
+        internalPrice: result.internalPrice,
+        priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
+        agentStatus: result.agentStatus,
+      });
+    } catch (err) {
+      setValuationError(err.response?.data?.message || err.message || 'Valuation failed');
+      setValuationAgentStatus('failed');
+    }
+  };
+
+  const handleValuationModalComplete = ({ failed } = {}) => {
+    if (failed) {
+      setValuationOpen(false);
+      setValuationError(null);
+    }
   };
 
   const redirectToLogin = (pendingShowResult = false) => {
@@ -304,54 +497,13 @@ export default function LaptopConditionQuizPage() {
     };
   }, [device, specs, age, powerStatus, screenSize, hasGpu, isGpuWorking, issuesList, screenIssuesList, bodyIssuesList, accessories, slug]);
 
-  // Auto-show result after login redirect
+  // Auto-run agent valuation after login redirect
   useEffect(() => {
-    if (!autoShowResultRef.current || !breakdown || !isAuthenticated || !device) return;
+    if (!autoShowResultRef.current || !isAuthenticated || !device || age == null) return;
     autoShowResultRef.current = false;
-    updateQuote({
-      device: {
-        ...device,
-        category: 'laptop',
-        brand,
-        modelName: device.modelName,
-        slug,
-        ...specs,
-        deviceAge: AGE_OPTIONS.find(o => o.key === age)?.label || age,
-        yearBracket: age,
-        powerStatus,
-        screenSize,
-        hasGpu: hasGpu === 'yes',
-        hasDedicatedGpu: hasGpu === 'yes',
-        isGpuWorking: isGpuWorking === 'yes',
-        graphicsCard:
-          hasGpu === 'yes'
-            ? `Dedicated (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})`
-            : hasGpu === 'no'
-              ? 'Not Available'
-              : undefined,
-        functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
-        accessories,
-        answerSummary: formatLaptopQuizAnswerSummary({
-          specs,
-          age,
-          ageLabel: AGE_OPTIONS.find(o => o.key === age)?.label || age,
-          powerStatus,
-          screenSize,
-          hasGpu,
-          isGpuWorking,
-          functionalIssues: issuesList,
-          screenIssues: screenIssuesList,
-          bodyIssues: bodyIssuesList,
-          accessories,
-        }),
-      },
-      priceBreakdown: breakdown,
-      price: currentPrice
-    });
-    setShowResult(true);
-  }, [breakdown, isAuthenticated, device, currentPrice, specs, age, powerStatus, screenSize, hasGpu, isGpuWorking, issuesList, screenIssuesList, bodyIssuesList, accessories, updateQuote, brand, slug]);
+    runAgentValuation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, device, age]);
 
   const handleSpecsUpdate = (newSpecs) => {
     setSpecs(newSpecs);
@@ -381,95 +533,12 @@ export default function LaptopConditionQuizPage() {
     } catch { /* ignore */ }
   };
 
-  const handleGetBestPrice = () => {
+  const handleGetValuation = () => {
     if (!isAuthenticated) {
       redirectToLogin(true);
       return;
     }
-
-    const ageLabel = AGE_OPTIONS.find(o => o.key === age)?.label || age;
-    const answerSummary = formatLaptopQuizAnswerSummary({
-      specs,
-      age,
-      ageLabel,
-      powerStatus,
-      screenSize,
-      hasGpu,
-      isGpuWorking,
-      functionalIssues: issuesList,
-      screenIssues: screenIssuesList,
-      bodyIssues: bodyIssuesList,
-      accessories,
-    });
-    const quizCtx = {
-      category: 'laptop',
-      brand: device?.brand || brand,
-      modelName: device.modelName,
-      slug,
-      storage: specs?.storage || '',
-      quizPath: getQuizReturnPath(),
-      answerSummary,
-      answers: {
-        powerStatus,
-        screenSize,
-        hasGpu,
-        isGpuWorking,
-        functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
-        accessories,
-        age,
-      },
-      quizPayload: {
-        slug,
-        processor: specs?.processor || '',
-        ram: specs?.ram || '',
-        storage: specs?.storage || '',
-        powerStatus,
-        screenSize,
-        hasGpu: hasGpu === 'yes',
-        isGpuWorking: isGpuWorking === 'yes',
-        functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
-        accessories,
-        yearBracket: age,
-        age,
-      },
-    };
-
-    updateQuote({
-      device: {
-        ...device,
-        category: 'laptop',
-        brand,
-        modelName: device.modelName,
-        slug,
-        ...specs,
-        deviceAge: ageLabel,
-        yearBracket: age,
-        powerStatus,
-        screenSize,
-        hasGpu: hasGpu === 'yes',
-        hasDedicatedGpu: hasGpu === 'yes',
-        isGpuWorking: isGpuWorking === 'yes',
-        graphicsCard:
-          hasGpu === 'yes'
-            ? `Dedicated (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})`
-            : 'Not Available',
-        functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
-        accessories,
-        answerSummary,
-      },
-      priceBreakdown: breakdown,
-      price: currentPrice
-    });
-
-    setLoginContext(quizCtx);
-    reportLastQuizDevice(quizCtx);
-    setShowResult(true);
+    runAgentValuation();
   };
 
   const handleSchedulePickup = () => {
@@ -477,12 +546,26 @@ export default function LaptopConditionQuizPage() {
     else navigate('/schedule-pickup');
   };
 
+  const valuationOverlay = (
+    <LaptopValuationModal
+      open={valuationOpen}
+      agentStatus={valuationAgentStatus}
+      cached={valuationCached}
+      queuePosition={valuationQueuePos}
+      agentBusy={valuationAgentBusy}
+      error={valuationError}
+      onComplete={handleValuationModalComplete}
+    />
+  );
+
   if (loading) return <Loader />;
   if (!device) return <div className="text-center py-20 font-extrabold text-gray-700">Device not found</div>;
 
   // --- RESULT VIEW ---
   if (showResult) {
     return (
+      <>
+        {valuationOverlay}
       <div className="bg-[#F7F9FC] min-h-[70vh] py-10 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto space-y-10">
           
@@ -509,7 +592,7 @@ export default function LaptopConditionQuizPage() {
                     <img src={device.imageUrl} alt={device.modelName} className="max-h-full object-contain" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <span className="text-primary text-xs font-extrabold uppercase tracking-wider mb-2 block">Offer ready — instant payout</span>
+                    <span className="text-primary text-xs font-extrabold uppercase tracking-wider mb-2 block">Live market valuation — price locked</span>
                     <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">
                       {device.modelName} {specs.ram && specs.storage && <span className="text-gray-600 font-bold text-sm">({specs.ram}/{specs.storage})</span>}
                     </h1>
@@ -594,11 +677,14 @@ export default function LaptopConditionQuizPage() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // --- QUIZ VIEW ---
   return (
+    <>
+      {valuationOverlay}
     <div className="bg-[#F7F9FC] min-h-[70vh] py-8 px-4 sm:px-10">
       <div className="max-w-[1400px] mx-auto">
         
@@ -971,11 +1057,11 @@ export default function LaptopConditionQuizPage() {
                   </button>
                 ) : (
                   <button
-                    onClick={handleGetBestPrice}
+                    onClick={handleGetValuation}
                     disabled={age === null}
                     className="bg-primary text-white font-extrabold px-6 py-3.5 rounded-xl hover:bg-primary-dark shadow-[0_4px_14px_rgba(5,101,230,0.25)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Get Best Price <span className="text-lg">›</span>
+                    Get Valuation <span className="text-lg">›</span>
                   </button>
                 )}
               </div>
@@ -1010,6 +1096,7 @@ export default function LaptopConditionQuizPage() {
 
       <LaptopSpecModal isOpen={isSpecsModalOpen} onClose={() => setIsSpecsModalOpen(false)} device={device} onComplete={handleSpecsUpdate} initialValues={specs} />
     </div>
+    </>
   );
 }
 
