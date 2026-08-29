@@ -17,15 +17,39 @@ import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
 import { reportLastQuizDevice } from '../utils/reportLastQuiz';
 import { formatLaptopQuizAnswerSummary } from '../utils/formatQuizAnswers';
+import {
+  BODY_SCRATCH_OPTIONS,
+  DENT_TOP_OPTIONS,
+  DENT_BASE_OPTIONS,
+  LOOSE_HINGES_OPTIONS,
+  PANEL_OPTIONS,
+  SCREEN_SCRATCH_OPTIONS,
+  SCREEN_DISCOLOUR_OPTIONS,
+  SCREEN_SPOTS_OPTIONS,
+  SCREEN_LINES_OPTIONS,
+  SCREEN_ORIGINAL_OPTIONS,
+  SOFTWARE_OPTIONS,
+  DEFAULT_CASHIFY_BODY,
+  DEFAULT_CASHIFY_SCREEN,
+  toLegacyBodyIssues,
+  toLegacyScreenIssues,
+  buildCashifyAnswerSummary,
+} from '../data/quiz/laptopCashifyQuiz';
+import {
+  LaptopScreenCashifyStep,
+  LaptopBodyCashifyStep,
+  LaptopSoftwareStep,
+} from '../components/LaptopCashifySteps';
 
 const STEPS = [
   { id: 'specs', label: 'Specs' },
   { id: 'power', label: 'Power Status' },
-  { id: 'screenSize', label: 'Screen Size' },
+  { id: 'screenSize', label: 'Screen & Features' },
   { id: 'functional', label: 'Functional Issues' },
-  { id: 'screen', label: 'Screen Assessment' },
-  { id: 'body', label: 'Body Condition' },
+  { id: 'screen', label: 'Screen Condition' },
+  { id: 'body', label: 'Physical Condition' },
   { id: 'accessories', label: 'Accessories' },
+  { id: 'software', label: 'Software Issue' },
   { id: 'age', label: 'Device Age' },
 ];
 
@@ -53,23 +77,22 @@ const functionalOptions = [
   { id: 'webcam', label: 'Web Cam not working', Icon: Camera, pct: '6%' },
   { id: 'charging', label: 'Charging Port not working', Icon: Plug, pct: '8%' },
   { id: 'hardDisk', label: 'Hard Drive Missing / Defective', Icon: HardDrive, pct: '10%' },
-  { id: 'motherboard', label: 'Motherboard issue (restart/hang/heat)', Icon: Cpu, pct: '35%' },
-  { id: 'bluetooth', label: 'Bluetooth not working', Icon: Bluetooth, pct: '6%' },
+  { id: 'motherboard', label: 'Motherboard issue - auto restart, hanging, heating/not booting', Icon: Cpu, pct: '35%' },
 ];
 
-const screenOptions = [
-  { id: 'screenCracked', label: 'Screen cracked or broken', Icon: MonitorX, pct: '18%' },
-  { id: 'lineDiscolour', label: 'Line, discolouration or spot', Icon: Monitor, pct: '18%' },
-];
-
-const bodyOptions = [
-  { id: 'minorDentTop', label: 'Minor dent on top panel', Icon: Laptop, pct: '8%' },
-  { id: 'minorDentBase', label: 'Minor dent on base panel', Icon: Laptop, pct: '8%' },
-  { id: 'majorDentTop', label: 'Major dent on top panel', Icon: AlertTriangle, pct: '35%' },
-  { id: 'majorDentBase', label: 'Major dent on base panel', Icon: AlertTriangle, pct: '40%' },
-  { id: 'minorScratch', label: 'Minor scratch on body', Icon: Minus, pct: '5%' },
-  { id: 'majorScratch', label: 'Major scratch on body', Icon: AlertTriangle, pct: '8%' },
-];
+const CASHIFY_STEP_OPTIONS = {
+  BODY_SCRATCH_OPTIONS,
+  DENT_TOP_OPTIONS,
+  DENT_BASE_OPTIONS,
+  LOOSE_HINGES_OPTIONS,
+  PANEL_OPTIONS,
+  SCREEN_SCRATCH_OPTIONS,
+  SCREEN_DISCOLOUR_OPTIONS,
+  SCREEN_SPOTS_OPTIONS,
+  SCREEN_LINES_OPTIONS,
+  SCREEN_ORIGINAL_OPTIONS,
+  SOFTWARE_OPTIONS,
+};
 
 const accessoryOptions = [
   { id: 'bill', label: 'GST Valid Bill', desc: 'Valid purchase invoice', Icon: FileText },
@@ -99,10 +122,21 @@ export default function LaptopConditionQuizPage() {
   const [screenSize, setScreenSize] = useState(null); // '10-11' | '12-13' | '14-15' | 'above15'
   const [hasGpu, setHasGpu] = useState(null); // 'yes' | 'no'
   const [isGpuWorking, setIsGpuWorking] = useState(null); // 'yes' | 'no'
-  const [issuesList, setIssuesList] = useState([]); // functional issues
-  const [screenIssuesList, setScreenIssuesList] = useState([]);
-  const [bodyIssuesList, setBodyIssuesList] = useState([]);
-  const [accessories, setAccessories] = useState([]); // default active
+  const [hasTouchScreen, setHasTouchScreen] = useState(null); // 'yes' | 'no'
+  const [isTouchScreenWorking, setIsTouchScreenWorking] = useState(null); // 'yes' | 'no'
+  const [issuesList, setIssuesList] = useState([]);
+  const [bodyScratch, setBodyScratch] = useState(DEFAULT_CASHIFY_BODY.bodyScratch);
+  const [dentTop, setDentTop] = useState(DEFAULT_CASHIFY_BODY.dentTop);
+  const [dentBase, setDentBase] = useState(DEFAULT_CASHIFY_BODY.dentBase);
+  const [looseHinges, setLooseHinges] = useState(DEFAULT_CASHIFY_BODY.looseHinges);
+  const [panelCondition, setPanelCondition] = useState(DEFAULT_CASHIFY_BODY.panelCondition);
+  const [screenScratch, setScreenScratch] = useState(DEFAULT_CASHIFY_SCREEN.screenScratch);
+  const [screenDiscolouration, setScreenDiscolouration] = useState(DEFAULT_CASHIFY_SCREEN.screenDiscolouration);
+  const [screenSpots, setScreenSpots] = useState(DEFAULT_CASHIFY_SCREEN.screenSpots);
+  const [screenLines, setScreenLines] = useState(DEFAULT_CASHIFY_SCREEN.screenLines);
+  const [isScreenOriginal, setIsScreenOriginal] = useState(DEFAULT_CASHIFY_SCREEN.isScreenOriginal);
+  const [softwareIssue, setSoftwareIssue] = useState('no');
+  const [accessories, setAccessories] = useState([]);
   const [age, setAge] = useState(null); // age option key
 
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -116,65 +150,129 @@ export default function LaptopConditionQuizPage() {
 
   const quizStorageKey = `devicekart_laptop_quiz_${slug}`;
 
+  const bodyHasIssue = bodyScratch !== 'none' || dentTop !== 'none' || dentBase !== 'none' || looseHinges === 'yes' || panelCondition !== 'none';
+  const screenHasIssue = screenScratch !== 'none' || screenDiscolouration !== 'none' || screenSpots !== 'none' || screenLines !== 'none' || isScreenOriginal === 'no';
+
   const getQuizReturnPath = () => `/sell-old-laptops/${brand}/${slug}/quiz`;
+
+  const getCashifyFields = () => ({
+    bodyScratch,
+    dentTop,
+    dentBase,
+    looseHinges,
+    panelCondition,
+    screenScratch,
+    screenDiscolouration,
+    screenSpots,
+    screenLines,
+    isScreenOriginal,
+    softwareIssue,
+  });
 
   const persistQuizState = (extra = {}) => {
     try {
       sessionStorage.setItem(quizStorageKey, JSON.stringify({
         specs, age, powerStatus, screenSize, hasGpu, isGpuWorking,
-        issuesList, screenIssuesList, bodyIssuesList, accessories,
+        hasTouchScreen, isTouchScreenWorking,
+        issuesList, accessories,
+        ...getCashifyFields(),
         currentStepIndex,
         ...extra,
       }));
     } catch { /* ignore */ }
   };
 
-  const applySavedQuizState = (saved) => {
-    if (saved.specs) setSpecs(saved.specs);
-    if (saved.age) setAge(saved.age);
-    if (saved.powerStatus) setPowerStatus(saved.powerStatus);
-    if (saved.screenSize) setScreenSize(saved.screenSize);
-    if (saved.hasGpu) setHasGpu(saved.hasGpu);
-    if (saved.isGpuWorking) setIsGpuWorking(saved.isGpuWorking);
-    if (saved.issuesList) setIssuesList(saved.issuesList);
-    if (saved.screenIssuesList) setScreenIssuesList(saved.screenIssuesList);
-    if (saved.bodyIssuesList) setBodyIssuesList(saved.bodyIssuesList);
-    if (saved.accessories) setAccessories(saved.accessories);
-    if (saved.currentStepIndex != null) setCurrentStepIndex(saved.currentStepIndex);
+  const migrateLegacySaved = (saved) => {
+    if (saved.bodyScratch || saved.screenScratch) return saved;
+    const next = { ...saved };
+    const body = saved.bodyIssuesList || [];
+    const screen = saved.screenIssuesList || [];
+    if (body.includes('majorScratch')) next.bodyScratch = 'major';
+    else if (body.includes('minorScratch')) next.bodyScratch = 'minor';
+    if (body.includes('majorDentTop')) next.dentTop = 'major';
+    else if (body.includes('minorDentTop')) next.dentTop = 'minor2';
+    if (body.includes('majorDentBase')) next.dentBase = 'major';
+    else if (body.includes('minorDentBase')) next.dentBase = 'minor2';
+    if (screen.includes('screenCracked')) next.screenScratch = 'cracked';
+    else if (screen.includes('lineDiscolour')) {
+      next.screenDiscolouration = 'minor';
+      next.screenSpots = 'minor12';
+      next.screenLines = 'visible';
+    }
+    return next;
   };
 
-  const buildQuizPayload = () => ({
-    slug,
-    processor: specs?.processor || '',
-    ram: specs?.ram || '',
-    storage: specs?.storage || '',
-    powerStatus,
-    screenSize,
-    hasGpu: hasGpu === 'yes',
-    isGpuWorking: isGpuWorking === 'yes',
-    functionalIssues: issuesList,
-    screenIssues: screenIssuesList,
-    bodyIssues: bodyIssuesList,
-    accessories,
-    yearBracket: age,
-    age,
-  });
+  const applySavedQuizState = (saved) => {
+    const data = migrateLegacySaved(saved);
+    if (data.specs) setSpecs(data.specs);
+    if (data.age) setAge(data.age);
+    if (data.powerStatus) setPowerStatus(data.powerStatus);
+    if (data.screenSize) setScreenSize(data.screenSize);
+    if (data.hasGpu) setHasGpu(data.hasGpu);
+    if (data.isGpuWorking) setIsGpuWorking(data.isGpuWorking);
+    if (data.hasTouchScreen) setHasTouchScreen(data.hasTouchScreen);
+    if (data.isTouchScreenWorking) setIsTouchScreenWorking(data.isTouchScreenWorking);
+    if (data.issuesList) setIssuesList(data.issuesList);
+    if (data.bodyScratch) setBodyScratch(data.bodyScratch);
+    if (data.dentTop) setDentTop(data.dentTop);
+    if (data.dentBase) setDentBase(data.dentBase);
+    if (data.looseHinges) setLooseHinges(data.looseHinges);
+    if (data.panelCondition) setPanelCondition(data.panelCondition);
+    if (data.screenScratch) setScreenScratch(data.screenScratch);
+    if (data.screenDiscolouration) setScreenDiscolouration(data.screenDiscolouration);
+    if (data.screenSpots) setScreenSpots(data.screenSpots);
+    if (data.screenLines) setScreenLines(data.screenLines);
+    if (data.isScreenOriginal) setIsScreenOriginal(data.isScreenOriginal);
+    if (data.softwareIssue) setSoftwareIssue(data.softwareIssue);
+    if (data.accessories) setAccessories(data.accessories);
+    if (data.currentStepIndex != null) setCurrentStepIndex(data.currentStepIndex);
+  };
 
-  const buildQuizContext = () => {
+  const buildQuizPayload = () => {
+    const cashify = getCashifyFields();
+    return {
+      slug,
+      processor: specs?.processor || '',
+      ram: specs?.ram || '',
+      storage: specs?.storage || '',
+      powerStatus,
+      screenSize,
+      hasTouchScreen: hasTouchScreen === 'yes',
+      isTouchScreenWorking: isTouchScreenWorking === 'yes',
+      hasGpu: hasGpu === 'yes',
+      isGpuWorking: isGpuWorking === 'yes',
+      ...cashify,
+      functionalIssues: issuesList,
+      screenIssues: toLegacyScreenIssues(cashify),
+      bodyIssues: toLegacyBodyIssues(cashify),
+      accessories,
+      yearBracket: age,
+      age,
+    };
+  };
+
+  const buildAnswerSummary = () => {
     const ageLabel = AGE_OPTIONS.find((o) => o.key === age)?.label || age;
-    const answerSummary = formatLaptopQuizAnswerSummary({
+    const base = formatLaptopQuizAnswerSummary({
       specs,
       age,
       ageLabel,
       powerStatus,
       screenSize,
+      hasTouchScreen,
+      isTouchScreenWorking,
       hasGpu,
       isGpuWorking,
       functionalIssues: issuesList,
-      screenIssues: screenIssuesList,
-      bodyIssues: bodyIssuesList,
+      screenIssues: [],
+      bodyIssues: [],
       accessories,
     });
+    return [...base, ...buildCashifyAnswerSummary(getCashifyFields())];
+  };
+
+  const buildQuizContext = () => {
+    const answerSummary = buildAnswerSummary();
     return {
       category: 'laptop',
       brand: device?.brand || brand,
@@ -186,11 +284,12 @@ export default function LaptopConditionQuizPage() {
       answers: {
         powerStatus,
         screenSize,
+        hasTouchScreen,
+        isTouchScreenWorking,
         hasGpu,
         isGpuWorking,
         functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
+        ...getCashifyFields(),
         accessories,
         age,
       },
@@ -200,19 +299,8 @@ export default function LaptopConditionQuizPage() {
 
   const finalizeValuationResult = (offerPrice, agentBreakdown = {}) => {
     const ageLabel = AGE_OPTIONS.find((o) => o.key === age)?.label || age;
-    const answerSummary = formatLaptopQuizAnswerSummary({
-      specs,
-      age,
-      ageLabel,
-      powerStatus,
-      screenSize,
-      hasGpu,
-      isGpuWorking,
-      functionalIssues: issuesList,
-      screenIssues: screenIssuesList,
-      bodyIssues: bodyIssuesList,
-      accessories,
-    });
+    const answerSummary = buildAnswerSummary();
+    const cashify = getCashifyFields();
     const quizCtx = buildQuizContext();
     const priceBreakdown = {
       ...breakdown,
@@ -234,6 +322,8 @@ export default function LaptopConditionQuizPage() {
         yearBracket: age,
         powerStatus,
         screenSize,
+        hasTouchScreen: hasTouchScreen === 'yes',
+        isTouchScreenWorking: isTouchScreenWorking === 'yes',
         hasGpu: hasGpu === 'yes',
         hasDedicatedGpu: hasGpu === 'yes',
         isGpuWorking: isGpuWorking === 'yes',
@@ -242,8 +332,9 @@ export default function LaptopConditionQuizPage() {
             ? `Dedicated (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})`
             : 'Not Available',
         functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
+        screenIssues: toLegacyScreenIssues(cashify),
+        bodyIssues: toLegacyBodyIssues(cashify),
+        ...cashify,
         accessories,
         answerSummary,
       },
@@ -341,40 +432,8 @@ export default function LaptopConditionQuizPage() {
 
   const redirectToLogin = (pendingShowResult = false) => {
     persistQuizState({ pendingShowResult });
-    const ageLabel = AGE_OPTIONS.find((o) => o.key === age)?.label || age;
-    const answerSummary = formatLaptopQuizAnswerSummary({
-      specs,
-      age,
-      ageLabel,
-      powerStatus,
-      screenSize,
-      hasGpu,
-      isGpuWorking,
-      functionalIssues: issuesList,
-      screenIssues: screenIssuesList,
-      bodyIssues: bodyIssuesList,
-      accessories,
-    });
-    setLoginContext({
-      category: 'laptop',
-      brand: device?.brand || brand,
-      modelName: device?.modelName || '',
-      slug,
-      storage: specs?.storage || '',
-      quizPath: getQuizReturnPath(),
-      answerSummary,
-      answers: {
-        powerStatus,
-        screenSize,
-        hasGpu,
-        isGpuWorking,
-        functionalIssues: issuesList,
-        screenIssues: screenIssuesList,
-        bodyIssues: bodyIssuesList,
-        accessories,
-        age,
-      },
-    });
+    const quizCtx = buildQuizContext();
+    setLoginContext(quizCtx);
     const returnUrl = encodeURIComponent(getQuizReturnPath());
     navigate(`/login?returnUrl=${returnUrl}`);
   };
@@ -476,8 +535,11 @@ export default function LaptopConditionQuizPage() {
     if (!device || !specs || !age || !powerStatus || !screenSize) return;
     if (hasGpu === 'yes' && !isGpuWorking) return;
     if (hasGpu === null) return;
+    if (hasTouchScreen === 'yes' && !isTouchScreenWorking) return;
+    if (hasTouchScreen === null) return;
 
     let cancelled = false;
+    const cashify = getCashifyFields();
     (async () => {
       try {
         const { data: result } = await deviceService.calculatePrice({
@@ -489,8 +551,8 @@ export default function LaptopConditionQuizPage() {
           hasGpu: hasGpu === 'yes',
           isGpuWorking: isGpuWorking === 'yes',
           functionalIssues: issuesList,
-          screenIssues: screenIssuesList,
-          bodyIssues: bodyIssuesList,
+          screenIssues: toLegacyScreenIssues(cashify),
+          bodyIssues: toLegacyBodyIssues(cashify),
           accessories: accessories.length > 0 ? accessories : ['none'],
         });
         if (cancelled || !result) return;
@@ -506,7 +568,7 @@ export default function LaptopConditionQuizPage() {
     return () => {
       cancelled = true;
     };
-  }, [device, specs, age, powerStatus, screenSize, hasGpu, isGpuWorking, issuesList, screenIssuesList, bodyIssuesList, accessories, slug]);
+  }, [device, specs, age, powerStatus, screenSize, hasTouchScreen, isTouchScreenWorking, hasGpu, isGpuWorking, issuesList, bodyScratch, dentTop, dentBase, looseHinges, panelCondition, screenScratch, screenDiscolouration, screenSpots, screenLines, accessories, slug]);
 
   // Auto-run agent valuation after login redirect
   useEffect(() => {
@@ -528,9 +590,20 @@ export default function LaptopConditionQuizPage() {
     setScreenSize(null);
     setHasGpu(null);
     setIsGpuWorking(null);
+    setHasTouchScreen(null);
+    setIsTouchScreenWorking(null);
     setIssuesList([]);
-    setScreenIssuesList([]);
-    setBodyIssuesList([]);
+    setBodyScratch(DEFAULT_CASHIFY_BODY.bodyScratch);
+    setDentTop(DEFAULT_CASHIFY_BODY.dentTop);
+    setDentBase(DEFAULT_CASHIFY_BODY.dentBase);
+    setLooseHinges(DEFAULT_CASHIFY_BODY.looseHinges);
+    setPanelCondition(DEFAULT_CASHIFY_BODY.panelCondition);
+    setScreenScratch(DEFAULT_CASHIFY_SCREEN.screenScratch);
+    setScreenDiscolouration(DEFAULT_CASHIFY_SCREEN.screenDiscolouration);
+    setScreenSpots(DEFAULT_CASHIFY_SCREEN.screenSpots);
+    setScreenLines(DEFAULT_CASHIFY_SCREEN.screenLines);
+    setIsScreenOriginal(DEFAULT_CASHIFY_SCREEN.isScreenOriginal);
+    setSoftwareIssue('no');
     setAccessories([]);
     setAge(null);
     setBreakdown(null);
@@ -649,11 +722,15 @@ export default function LaptopConditionQuizPage() {
                    <EvaluationDetailRow label="Storage" value={specs.storage || 'Standard'} color="#0565E6" />
                    <EvaluationDetailRow label="Power Status" value={powerStatus === 'on' ? 'Turns On' : 'Does Not Turn On (Off)'} color={powerStatus === 'on' ? '#0565E6' : '#EF4444'} />
                    <EvaluationDetailRow label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} color="#0565E6" />
+                   <EvaluationDetailRow label="Touch Screen" value={hasTouchScreen === 'yes' ? `Available (${isTouchScreenWorking === 'yes' ? 'Working' : 'Not Working'})` : hasTouchScreen === 'no' ? 'Not Available' : '-'} color={hasTouchScreen === 'yes' && isTouchScreenWorking === 'yes' ? '#0565E6' : '#EF4444'} />
                    <EvaluationDetailRow label="Graphic Card" value={hasGpu === 'yes' ? `Available (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'Not Available'} color={hasGpu === 'yes' && isGpuWorking === 'yes' ? '#0565E6' : '#EF4444'} />
                    <EvaluationDetailRow label="Device Age" value={age ? AGE_OPTIONS.find(o => o.key === age).label : '-'} color="#0565E6" />
                    <EvaluationDetailRow label="Functional Issues" value={issuesList.length > 0 ? issuesList.length + ' issue(s)' : 'No Issues'} color={issuesList.length > 0 ? '#EF4444' : '#0565E6'} />
-                   <EvaluationDetailRow label="Screen Condition" value={screenIssuesList.length > 0 ? screenIssuesList.length + ' issue(s)' : 'No Issues'} color={screenIssuesList.length > 0 ? '#EF4444' : '#0565E6'} />
-                   <EvaluationDetailRow label="Body Condition" value={bodyIssuesList.length > 0 ? bodyIssuesList.length + ' issue(s)' : 'No Issues'} color={bodyIssuesList.length > 0 ? '#EF4444' : '#0565E6'} />
+                   <EvaluationDetailRow label="Screen Condition" value={screenHasIssue ? 'Issues reported' : 'No Issues'} color={screenHasIssue ? '#EF4444' : '#0565E6'} />
+                   <EvaluationDetailRow label="Body Condition" value={bodyHasIssue ? 'Issues reported' : 'No Issues'} color={bodyHasIssue ? '#EF4444' : '#0565E6'} />
+                   <EvaluationDetailRow label="Loose Hinges" value={LOOSE_HINGES_OPTIONS.find((o) => o.key === looseHinges)?.label || '-'} color={looseHinges === 'yes' ? '#EF4444' : '#0565E6'} />
+                   <EvaluationDetailRow label="Panel Condition" value={PANEL_OPTIONS.find((o) => o.key === panelCondition)?.label || '-'} color={panelCondition !== 'none' ? '#EF4444' : '#0565E6'} />
+                   <EvaluationDetailRow label="Software" value={SOFTWARE_OPTIONS.find((o) => o.key === softwareIssue)?.label || '-'} color={softwareIssue === 'yes' ? '#EF4444' : '#0565E6'} />
                    <EvaluationDetailRow label="Accessories" value={accessories.length > 0 ? accessories.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') : 'None'} color="#0565E6" />
                 </div>
               </div>
@@ -821,6 +898,69 @@ export default function LaptopConditionQuizPage() {
                     </div>
                   </div>
 
+                  {/* Touch Screen Question */}
+                  <div className="space-y-4 pt-6 border-t border-gray-100">
+                    <div>
+                      <h3 className="text-lg font-extrabold text-gray-900">Does the laptop have a touch screen?</h3>
+                      <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Select touch screen availability</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <button
+                        onClick={() => {
+                          setHasTouchScreen('yes');
+                          setIsTouchScreenWorking(null);
+                        }}
+                        className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
+                          ${hasTouchScreen === 'yes'
+                            ? 'border-primary bg-primary-light text-primary'
+                            : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                      >
+                        Yes, Touch Screen Available
+                      </button>
+                      <button
+                        onClick={() => {
+                          setHasTouchScreen('no');
+                          setIsTouchScreenWorking(null);
+                        }}
+                        className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
+                          ${hasTouchScreen === 'no'
+                            ? 'border-primary bg-primary-light text-primary'
+                            : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                      >
+                        No Touch Screen
+                      </button>
+                    </div>
+                  </div>
+
+                  {hasTouchScreen === 'yes' && (
+                    <div className="space-y-4 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div>
+                        <h3 className="text-lg font-extrabold text-gray-900">Is the touch screen working properly?</h3>
+                        <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Confirm touch functionality</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button
+                          onClick={() => setIsTouchScreenWorking('yes')}
+                          className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
+                            ${isTouchScreenWorking === 'yes'
+                              ? 'border-primary bg-primary-light text-primary'
+                              : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                        >
+                          Yes, Working Properly
+                        </button>
+                        <button
+                          onClick={() => setIsTouchScreenWorking('no')}
+                          className={`py-6 rounded-2xl border-2 font-extrabold text-base transition-all
+                            ${isTouchScreenWorking === 'no'
+                              ? 'border-primary bg-primary-light text-primary'
+                              : 'border-gray-100 bg-white text-gray-700 hover:border-gray-200'}`}
+                        >
+                          No, Touch Screen Not Working
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Dedicated Graphics Card Question */}
                   <div className="space-y-4 pt-6 border-t border-gray-100">
                     <div>
@@ -916,62 +1056,38 @@ export default function LaptopConditionQuizPage() {
                 </div>
               )}
 
-              {/* STEP: Screen Assessment */}
+              {/* STEP: Screen Condition (Cashify parity) */}
               {STEPS[currentStepIndex]?.id === 'screen' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-extrabold text-gray-900">5. Select screen issues (if any)</h3>
-                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {screenOptions.map(i => {
-                      const isSelected = screenIssuesList.includes(i.id);
-                      const Icon = i.Icon;
-                      return (
-                        <button 
-                          key={i.id} 
-                          onClick={() => {
-                            setScreenIssuesList(prev => prev.includes(i.id) ? prev.filter(x => x !== i.id) : [...prev, i.id]);
-                          }} 
-                          className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-between gap-3 transition-all h-36
-                            ${isSelected ? 'border-primary bg-primary-light text-primary' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
-                        >
-                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-primary' : 'text-gray-500'} />
-                          <span className="text-[15px] font-extrabold text-center leading-tight">{i.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <LaptopScreenCashifyStep
+                  screenScratch={screenScratch}
+                  setScreenScratch={setScreenScratch}
+                  screenDiscolouration={screenDiscolouration}
+                  setScreenDiscolouration={setScreenDiscolouration}
+                  screenSpots={screenSpots}
+                  setScreenSpots={setScreenSpots}
+                  screenLines={screenLines}
+                  setScreenLines={setScreenLines}
+                  isScreenOriginal={isScreenOriginal}
+                  setIsScreenOriginal={setIsScreenOriginal}
+                  options={CASHIFY_STEP_OPTIONS}
+                />
               )}
 
-              {/* STEP: Body Condition */}
+              {/* STEP: Physical Condition (Cashify parity) */}
               {STEPS[currentStepIndex]?.id === 'body' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-extrabold text-gray-900">6. Select body damage/scratches (if any)</h3>
-                    <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Leave unselected if none apply and click Next</p>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[350px] overflow-y-auto pr-2 no-scrollbar">
-                    {bodyOptions.map(i => {
-                      const isSelected = bodyIssuesList.includes(i.id);
-                      const Icon = i.Icon;
-                      return (
-                        <button 
-                          key={i.id} 
-                          onClick={() => {
-                            setBodyIssuesList(prev => prev.includes(i.id) ? prev.filter(x => x !== i.id) : [...prev, i.id]);
-                          }} 
-                          className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-between gap-2 transition-all h-36
-                            ${isSelected ? 'border-primary bg-primary-light text-primary' : 'border-gray-100 bg-white text-gray-800 hover:border-gray-200'}`}
-                        >
-                          <Icon size={36} strokeWidth={1.6} className={isSelected ? 'text-primary' : 'text-gray-500'} />
-                          <span className="text-[15px] font-extrabold text-center leading-tight">{i.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <LaptopBodyCashifyStep
+                  bodyScratch={bodyScratch}
+                  setBodyScratch={setBodyScratch}
+                  dentTop={dentTop}
+                  setDentTop={setDentTop}
+                  dentBase={dentBase}
+                  setDentBase={setDentBase}
+                  looseHinges={looseHinges}
+                  setLooseHinges={setLooseHinges}
+                  panelCondition={panelCondition}
+                  setPanelCondition={setPanelCondition}
+                  options={CASHIFY_STEP_OPTIONS}
+                />
               )}
 
               {/* STEP: Accessories */}
@@ -1012,11 +1128,20 @@ export default function LaptopConditionQuizPage() {
                 </div>
               )}
 
+              {/* STEP: Software Issue */}
+              {STEPS[currentStepIndex]?.id === 'software' && (
+                <LaptopSoftwareStep
+                  softwareIssue={softwareIssue}
+                  setSoftwareIssue={setSoftwareIssue}
+                  options={CASHIFY_STEP_OPTIONS}
+                />
+              )}
+
               {/* STEP: Device Age */}
               {STEPS[currentStepIndex]?.id === 'age' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-extrabold text-gray-900">8. How old is your laptop?</h3>
+                    <h3 className="text-lg font-extrabold text-gray-900">9. How old is your laptop?</h3>
                     <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">Age determines final multiplier value</p>
                   </div>
                   <div className="flex flex-col gap-4">
@@ -1057,8 +1182,10 @@ export default function LaptopConditionQuizPage() {
                     disabled={
                       (STEPS[currentStepIndex]?.id === 'power' && powerStatus === null) ||
                       (STEPS[currentStepIndex]?.id === 'screenSize' && (
-                        screenSize === null || 
-                        hasGpu === null || 
+                        screenSize === null ||
+                        hasTouchScreen === null ||
+                        (hasTouchScreen === 'yes' && isTouchScreenWorking === null) ||
+                        hasGpu === null ||
                         (hasGpu === 'yes' && isGpuWorking === null)
                       ))
                     }
@@ -1091,10 +1218,12 @@ export default function LaptopConditionQuizPage() {
                    <SummaryItem label="Storage" value={specs.storage || '-'} active={true} />
                    <SummaryItem label="Power Status" value={powerStatus ? (powerStatus === 'on' ? 'Turns On' : 'Does Not Turn On') : '-'} active={powerStatus !== null} />
                    <SummaryItem label="Screen Size" value={screenSize ? SCREEN_SIZE_OPTIONS.find(o => o.key === screenSize)?.label : '-'} active={screenSize !== null} />
+                   <SummaryItem label="Touch Screen" value={hasTouchScreen ? (hasTouchScreen === 'yes' ? `Yes (${isTouchScreenWorking === 'yes' ? 'Working' : 'Not Working'})` : 'No') : '-'} active={hasTouchScreen !== null} />
                    <SummaryItem label="Graphic Card" value={hasGpu ? (hasGpu === 'yes' ? `Yes (${isGpuWorking === 'yes' ? 'Working' : 'Not Working'})` : 'No') : '-'} active={hasGpu !== null} />
                    <SummaryItem label="Functional" value={issuesList.length > 0 ? `${issuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'functional') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'functional')} />
-                   <SummaryItem label="Screen" value={screenIssuesList.length > 0 ? `${screenIssuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'screen') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'screen')} />
-                   <SummaryItem label="Body" value={bodyIssuesList.length > 0 ? `${bodyIssuesList.length} issue(s)` : currentStepIndex >= STEPS.findIndex(s => s.id === 'body') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'body')} />
+                   <SummaryItem label="Screen" value={screenHasIssue ? 'Issues set' : currentStepIndex >= STEPS.findIndex(s => s.id === 'screen') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'screen')} />
+                   <SummaryItem label="Body" value={bodyHasIssue ? 'Issues set' : currentStepIndex >= STEPS.findIndex(s => s.id === 'body') ? 'No Issues' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'body')} />
+                   <SummaryItem label="Software" value={softwareIssue === 'yes' ? 'Has issue' : currentStepIndex >= STEPS.findIndex(s => s.id === 'software') ? 'No issue' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'software')} />
                    <SummaryItem label="Accessories" value={accessories.length > 0 ? accessories.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ') : currentStepIndex >= STEPS.findIndex(s => s.id === 'accessories') ? 'None' : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'accessories')} />
                    <SummaryItem label="Age" value={age ? AGE_OPTIONS.find(o => o.key === age).label : '-'} active={currentStepIndex >= STEPS.findIndex(s => s.id === 'age')} />
                 </div>

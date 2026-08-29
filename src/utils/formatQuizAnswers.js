@@ -56,6 +56,8 @@ export function formatLaptopQuizAnswerSummary({
   ageLabel,
   powerStatus,
   screenSize,
+  hasTouchScreen,
+  isTouchScreenWorking,
   hasGpu,
   isGpuWorking,
   functionalIssues = [],
@@ -86,6 +88,13 @@ export function formatLaptopQuizAnswerSummary({
       question: 'Screen Size',
       answer: screenLabels[screenSize] || screenSize,
     });
+  }
+  if (hasTouchScreen === true || hasTouchScreen === 'yes') {
+    const working =
+      isTouchScreenWorking === true || isTouchScreenWorking === 'yes' ? 'Working' : 'Not Working';
+    rows.push({ question: 'Touch Screen', answer: `Available (${working})` });
+  } else if (hasTouchScreen === false || hasTouchScreen === 'no') {
+    rows.push({ question: 'Touch Screen', answer: 'Not Available' });
   }
   if (hasGpu === true || hasGpu === 'yes') {
     const working =
