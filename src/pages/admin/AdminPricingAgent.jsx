@@ -83,8 +83,8 @@ function BracketEditor({ title, rows, onChange }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Cashify min (₹)</th>
-              <th>Cashify max (₹)</th>
+              <th>DeviceKart base min (₹)</th>
+              <th>DeviceKart base max (₹)</th>
               <th>Increment %</th>
               <th style={{ width: 48 }} />
             </tr>
@@ -133,7 +133,7 @@ function BracketEditor({ title, rows, onChange }) {
         </table>
       </div>
       <p className="text-[11px] text-slate-500 font-600">
-        Leave max empty for open-ended (no upper limit). Offer = Cashify × (1 + %).
+        Bracket is chosen by catalog base price. Leave max empty for open-ended. Offer = Cashify × (1 + %).
       </p>
     </div>
   );
@@ -194,7 +194,7 @@ function PricingSettingsModal({ open, onClose }) {
           <div>
             <h3>Pricing brackets</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Set % increment by Cashify valuation range for phone and laptop.
+              Set % increment by DeviceKart catalog base price; applied to the Cashify quote.
             </p>
           </div>
           <button type="button" className="admin-modal-close" onClick={onClose}>
