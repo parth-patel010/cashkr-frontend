@@ -698,7 +698,7 @@ export default function LaptopConditionQuizPage() {
                     <img src={device.imageUrl} alt={device.modelName} className="max-h-full object-contain" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <span className="text-primary text-xs font-extrabold uppercase tracking-wider mb-2 block">Live market valuation — price locked</span>
+                    <span className="text-primary text-xs font-extrabold uppercase tracking-wider mb-2 block">Live market valuation</span>
                     <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">
                       {device.modelName} {specs.ram && specs.storage && <span className="text-gray-600 font-bold text-sm">({specs.ram}/{specs.storage})</span>}
                     </h1>
@@ -706,7 +706,7 @@ export default function LaptopConditionQuizPage() {
                       <span className="text-4xl font-extrabold text-gray-900 tracking-tighter">{formatCurrency(currentPrice)}</span>
                       <div className="flex items-center gap-2 bg-primary/5 text-primary px-3 py-1.5 rounded-xl border border-primary/10">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                        <span className="text-xs font-extrabold uppercase tracking-widest">Guaranteed</span>
+                        <span className="text-xs font-extrabold uppercase tracking-widest">Sales team touch</span>
                       </div>
                     </div>
                     <button onClick={handleRecalculate} className="text-primary font-extrabold text-sm underline underline-offset-8 hover:text-[#0452B9] transition-all">Recalculate</button>
@@ -729,7 +729,7 @@ export default function LaptopConditionQuizPage() {
                 <div className="mt-10 flex flex-wrap justify-center gap-x-12 gap-y-4 text-[13px] font-extrabold text-gray-600">
                   <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Free doorstep pickup</span>
                   <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Instant payment at pickup</span>
-                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Price locked for 24h</span>
+                  <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Provide Our Sales Team Suggestion or Human Touch ;)</span>
                 </div>
               </div>
 

@@ -600,7 +600,7 @@ export default function AdminValuationTest() {
                 {quoteResult.cashifyResult?.productUrl && (
                   <tr><td>Cashify URL</td><td className="text-xs break-all">{quoteResult.cashifyResult.productUrl}</td></tr>
                 )}
-                <tr><td>Our offer (Cashify + ₹1,000)</td><td>{quoteResult.comparison?.ourOffer != null ? formatCurrency(quoteResult.comparison.ourOffer) : '—'}</td></tr>
+                <tr><td>Our offer (bracket %)</td><td>{quoteResult.comparison?.ourOffer != null ? formatCurrency(quoteResult.comparison.ourOffer) : '—'}</td></tr>
                 <tr><td>Difference (internal − our offer)</td><td>{quoteResult.comparison?.difference != null ? formatCurrency(quoteResult.comparison.difference) : '—'}</td></tr>
                 <tr><td>Status</td><td>{quoteResult.status}</td></tr>
                 <tr><td>Duration</td><td>{quoteResult.durationMs} ms</td></tr>

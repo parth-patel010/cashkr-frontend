@@ -5,6 +5,7 @@ import {
   Volume2, Plug, Zap, Phone, Bluetooth, Vibrate, Mic, Radar, FileText, Package, Cable,
 } from 'lucide-react';
 import { deviceService } from '../services/device.service';
+import { valuationService } from '../services/valuation.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
 import { calculatePrice } from '../utils/priceCalculator';
@@ -13,6 +14,7 @@ import { isSpecialModel } from '../utils/specialModels';
 import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
 import NoIndexSEO from '../components/seo/NoIndexSEO';
+import LaptopValuationModal, { VALUATION_DURATION_SEC } from '../components/LaptopValuationModal';
 import { trackPhoneLead, trackPhoneInitiateCheckout } from '../utils/metaPixel';
 import { setLoginContext } from '../utils/loginContext';
 import { recordDeviceQuizOnce } from '../utils/recordDeviceQuiz';
@@ -124,6 +126,12 @@ export default function ConditionQuizPage() {
   const [priceAnimating, setPriceAnimating] = useState(false);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [breakdown, setBreakdown] = useState(null);
+  const [valuationOpen, setValuationOpen] = useState(false);
+  const [valuationAgentStatus, setValuationAgentStatus] = useState('pending');
+  const [valuationCached, setValuationCached] = useState(false);
+  const [valuationQueuePos, setValuationQueuePos] = useState(0);
+  const [valuationAgentBusy, setValuationAgentBusy] = useState(false);
+  const [valuationError, setValuationError] = useState(null);
   const leadTrackedRef = useRef(false);
   const quizRestoredRef = useRef(false);
   const autoShowResultRef = useRef(false);
@@ -319,10 +327,24 @@ export default function ConditionQuizPage() {
   ]);
 
   useEffect(() => {
-    if (!autoShowResultRef.current || !breakdown || !isAuthenticated || !device) return;
+    if (!autoShowResultRef.current || !isAuthenticated || !device) return;
+    if (ableToMakeCalls == null || isTouchScreenWorking == null || isScreenOriginal == null) return;
     autoShowResultRef.current = false;
-    const quoteValue = breakdown.finalPrice ?? currentPrice;
+    runAgentValuation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, device, ableToMakeCalls, isTouchScreenWorking, isScreenOriginal]);
+
+  const finalizeAgentValuation = (offerPrice, agentBreakdown = {}) => {
     const quizCtx = buildMobileQuizReport();
+    const quoteValue = offerPrice;
+    const priceBreakdown = {
+      ...breakdown,
+      ...agentBreakdown,
+      quotedFinalPrice: quoteValue,
+      priceSource: agentBreakdown.priceSource || 'agent_valuation',
+    };
+    setCurrentPrice(quoteValue);
+    setBreakdown(priceBreakdown);
     updateQuote({
       device: {
         brand: device.brand,
@@ -343,12 +365,12 @@ export default function ConditionQuizPage() {
         accessories: selectedAccessories,
         answerSummary: quizCtx.answerSummary,
       },
-      priceBreakdown: {
-        ...breakdown,
-        quotedFinalPrice: quoteValue,
-        priceSource: breakdown?.priceSource || 'mobile_v2_calculator',
-      },
-      priceLock: buildAgentPriceLock(quoteValue),
+      priceBreakdown,
+      price: quoteValue,
+      priceLock: buildAgentPriceLock(quoteValue, {
+        valuationRecordId: agentBreakdown.recordId,
+        quizHash: agentBreakdown.quizHash,
+      }),
     });
     if (!leadTrackedRef.current) {
       leadTrackedRef.current = true;
@@ -360,52 +382,94 @@ export default function ConditionQuizPage() {
     }
     setLoginContext(quizCtx);
     reportLastQuizDevice(quizCtx);
+    setValuationOpen(false);
     setShowResult(true);
-  }, [breakdown, isAuthenticated, device, currentPrice, storage, deviceAge, ableToMakeCalls, isTouchScreenWorking, isScreenOriginal, underWarranty, eSIMSupport, physicalIssues, technicalIssues, selectedAccessories, updateQuote, special]);
+  };
+
+  const pollMobileValuation = async (recordId) => {
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      const { data } = await valuationService.getMobileStatus(recordId);
+      setValuationAgentStatus(data.agentStatus);
+      setValuationQueuePos(data.queuePosition || 0);
+      setValuationAgentBusy(Boolean(data.agentBusy));
+      setValuationCached(Boolean(data.cached));
+      if (data.done) {
+        if (data.success && data.ourOffer != null) return data;
+        throw new Error(data.error || 'Could not fetch live valuation. Please try again.');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+    }
+    throw new Error('Valuation is taking longer than expected. Please try again in a moment.');
+  };
+
+  const runAgentValuation = async () => {
+    if (!device) return;
+    const quizCtx = buildMobileQuizReport();
+    setValuationError(null);
+    setValuationOpen(true);
+    setValuationAgentStatus('pending');
+    setValuationCached(false);
+    setValuationQueuePos(0);
+    const waitStartedAt = Date.now();
+    const minWaitMs = (cached) => (cached ? 2800 : VALUATION_DURATION_SEC * 1000);
+    const ensureMinWait = async (cached) => {
+      const remaining = minWaitMs(cached) - (Date.now() - waitStartedAt);
+      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+    };
+
+    try {
+      const { data: start } = await valuationService.submitMobileQuote({
+        slug: device.slug,
+        brand: device.brand,
+        modelName: device.modelName,
+        storage: quizCtx.storage,
+        quizPayload: quizCtx.quizPayload,
+        quizSummary: quizCtx.answerSummary,
+      });
+
+      setValuationAgentStatus(start.agentStatus || 'pending');
+      setValuationQueuePos(start.queuePosition || 0);
+      setValuationAgentBusy(Boolean(start.agentBusy));
+      setValuationCached(Boolean(start.cached));
+
+      let result = start;
+      if (start.cached && start.ourOffer != null) {
+        setValuationCached(true);
+        setValuationAgentStatus('overridden');
+        await ensureMinWait(true);
+      } else {
+        result = await pollMobileValuation(start.recordId);
+        setValuationAgentStatus(result.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
+      }
+
+      finalizeAgentValuation(result.ourOffer, {
+        cashifyEstimate: result.cashifyPrice,
+        internalPrice: result.internalPrice,
+        priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
+        agentStatus: result.agentStatus,
+        recordId: start.recordId || result.recordId,
+        quizHash: start.quizHash || result.quizHash,
+      });
+    } catch (err) {
+      setValuationError(err.response?.data?.message || err.message || 'Valuation failed');
+      setValuationAgentStatus('failed');
+    }
+  };
+
+  const handleValuationModalComplete = ({ failed } = {}) => {
+    if (failed) {
+      setValuationOpen(false);
+      setValuationError(null);
+    }
+  };
 
   const handleGetBestPrice = () => {
     if (!isAuthenticated) {
       redirectToLogin(true);
       return;
     }
-    const quoteValue = breakdown?.finalPrice ?? currentPrice;
-    const quizCtx = buildMobileQuizReport();
-    updateQuote({
-      device: { 
-        brand: device.brand, 
-        modelName: device.modelName, 
-        slug: device.slug,
-        category: 'mobile',
-        imageUrl: device.imageUrl || '',
-        storage: storage || device.variants[0].storage,
-        deviceAge: special ? 'Above 11 Months' : deviceAge,
-        ableToMakeCalls,
-        isTouchScreenWorking,
-        isScreenOriginal,
-        underWarranty: special ? false : underWarranty,
-        hasGSTBill: selectedAccessories.includes('Bill'),
-        eSIMSupport,
-        physicalIssues,
-        technicalIssues,
-        accessories: selectedAccessories,
-        answerSummary: quizCtx.answerSummary,
-      },
-      priceBreakdown: {
-        ...breakdown,
-        quotedFinalPrice: quoteValue,
-        priceSource: breakdown?.priceSource || 'mobile_v2_calculator',
-      },
-      priceLock: buildAgentPriceLock(quoteValue),
-    });
-    leadTrackedRef.current = true;
-    trackPhoneLead({
-      brand: device.brand,
-      modelName: device.modelName,
-      value: quoteValue,
-    });
-    setLoginContext(quizCtx);
-    reportLastQuizDevice(quizCtx);
-    setShowResult(true);
+    runAgentValuation();
   };
 
   const handleSchedulePickup = () => {
@@ -446,6 +510,19 @@ export default function ConditionQuizPage() {
   if (loading) return <Loader />;
   if (!device) return <div className="text-center py-20 text-gray-500">Device not found</div>;
 
+  const valuationOverlay = (
+    <LaptopValuationModal
+      open={valuationOpen}
+      agentStatus={valuationAgentStatus}
+      cached={valuationCached}
+      queuePosition={valuationQueuePos}
+      agentBusy={valuationAgentBusy}
+      error={valuationError}
+      onComplete={handleValuationModalComplete}
+      deviceKind="phone"
+    />
+  );
+
   if (showResult && !isAuthenticated) {
     return <Loader />;
   }
@@ -453,6 +530,8 @@ export default function ConditionQuizPage() {
   // --- RESULT VIEW ---
   if (showResult) {
     return (
+      <>
+        {valuationOverlay}
       <div className="bg-[#F7F9FC] min-h-screen py-10 sm:py-16 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header Progress */}
@@ -481,7 +560,7 @@ export default function ConditionQuizPage() {
                     />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <span className="text-primary text-sm font-extrabold uppercase tracking-wider mb-2 block">Offer ready — instant payout</span>
+                    <span className="text-primary text-sm font-extrabold uppercase tracking-wider mb-2 block">Live market valuation</span>
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">
                       {device.modelName} ({storage || device.variants[0].storage})
                     </h1>
@@ -489,7 +568,7 @@ export default function ConditionQuizPage() {
                       <span className="text-5xl font-extrabold text-gray-900">{formatCurrency(currentPrice)}</span>
                       <div className="flex items-center gap-1.5 bg-primary-light text-primary px-3 py-1.5 rounded-xl border border-primary/10">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                        <span className="text-xs font-extrabold uppercase tracking-wider">Guaranteed</span>
+                        <span className="text-xs font-extrabold uppercase tracking-wider">Sales team touch</span>
                       </div>
                     </div>
                     <button 
@@ -561,7 +640,7 @@ export default function ConditionQuizPage() {
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" /> Instant payment at pickup
                   </span>
                   <span className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" /> Price locked for 24h
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" /> Provide Our Sales Team Suggestion or Human Touch ;)
                   </span>
                 </div>
               </div>
@@ -651,11 +730,14 @@ export default function ConditionQuizPage() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // --- QUIZ VIEW ---
   return (
+    <>
+      {valuationOverlay}
     <div className="bg-[#F7F9FC] min-h-[70vh] py-6 sm:py-10 px-4 sm:px-6">
       <NoIndexSEO title="Device Condition Quiz" path={`/sell-old-mobile-phones/${brand}/${slug}/quiz`} />
       <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-5 sm:gap-6">
@@ -1065,6 +1147,7 @@ export default function ConditionQuizPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

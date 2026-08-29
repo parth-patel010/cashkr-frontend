@@ -6,44 +6,47 @@ export const VALUATION_VIDEO_SOURCES = [
 ];
 export const VALUATION_DURATION_SEC = 45;
 
-const PROGRESS_MESSAGES = [
-  'Analyzing your laptop configuration…',
-  'Matching CPU, RAM & storage with live market data…',
-  'Checking resale demand for your model…',
-  'Comparing prices across India\'s largest buyback network…',
-  'Calculating your best locked-in offer…',
-  'Almost there — locking your price for 24 hours…',
-];
+const HUMAN_TOUCH = 'Provide Our Sales Team Suggestion or Human Touch ;)';
 
-const QUEUE_MESSAGES = [
-  'Our AI agent is finishing another valuation — you\'re next.',
-  'Same quiz = same price. We remember your answers.',
-  'Free doorstep pickup · Instant payment · Price locked 24 hours.',
-];
-
-const ENGAGEMENT_TIPS = [
-  { icon: '🔒', text: 'Your price will be locked for 24 hours once ready.' },
-  { icon: '⚡', text: 'Most laptops are valued in under a minute.' },
-  { icon: '🏠', text: 'Free doorstep pickup — no visiting any store.' },
-  { icon: '💳', text: 'Get paid instantly at pickup via UPI or bank transfer.' },
-  { icon: '📈', text: 'We check live market rates so you get a fair offer.' },
-  { icon: '✅', text: 'Fill the same quiz again — you\'ll get the exact same price.' },
-];
-
-const TRUST_STATS = [
-  { value: '50,000+', label: 'Devices bought' },
-  { value: '24 hrs', label: 'Price lock' },
-  { value: '₹0', label: 'Pickup fee' },
-  { value: '100%', label: 'Instant pay' },
-];
-
-const STEPS = [
-  { id: 1, label: 'Reading specs' },
-  { id: 2, label: 'Checking condition' },
-  { id: 3, label: 'Live market scan' },
-  { id: 4, label: 'Building your offer' },
-  { id: 5, label: 'Locking price' },
-];
+function copyForDevice(deviceKind = 'laptop') {
+  const noun = deviceKind === 'phone' || deviceKind === 'mobile' ? 'phone' : 'laptop';
+  return {
+    progress: [
+      `Analyzing your ${noun} configuration…`,
+      'Matching specs with live market data…',
+      'Checking resale demand for your model…',
+      'Comparing prices across India\'s largest buyback network…',
+      'Calculating your best DeviceKart offer…',
+      `Almost there — ${HUMAN_TOUCH}`,
+    ],
+    queue: [
+      'Our AI agent is finishing another valuation — you\'re next.',
+      'Same quiz = same price. We remember your answers.',
+      `Free doorstep pickup · Instant payment · ${HUMAN_TOUCH}`,
+    ],
+    tips: [
+      { icon: '🤝', text: HUMAN_TOUCH },
+      { icon: '⚡', text: `Most ${noun}s are valued in under a minute.` },
+      { icon: '🏠', text: 'Free doorstep pickup — no visiting any store.' },
+      { icon: '💳', text: 'Get paid instantly at pickup via UPI or bank transfer.' },
+      { icon: '📈', text: 'We check live market rates so you get a fair offer.' },
+      { icon: '✅', text: 'Fill the same quiz again — you\'ll get the exact same price.' },
+    ],
+    trust: [
+      { value: '50,000+', label: 'Devices bought' },
+      { value: 'Human', label: 'Sales touch' },
+      { value: '₹0', label: 'Pickup fee' },
+      { value: '100%', label: 'Instant pay' },
+    ],
+    steps: [
+      { id: 1, label: 'Reading specs' },
+      { id: 2, label: 'Checking condition' },
+      { id: 3, label: 'Live market scan' },
+      { id: 4, label: 'Building your offer' },
+      { id: 5, label: 'Sales team touch' },
+    ],
+  };
+}
 
 function normalizeStatus(status) {
   return status === 'skipped' ? 'overridden' : status;
@@ -67,7 +70,14 @@ export default function LaptopValuationModal({
   agentBusy = false,
   error = null,
   onComplete,
+  deviceKind = 'laptop',
 }) {
+  const copy = copyForDevice(deviceKind);
+  const PROGRESS_MESSAGES = copy.progress;
+  const QUEUE_MESSAGES = copy.queue;
+  const ENGAGEMENT_TIPS = copy.tips;
+  const TRUST_STATS = copy.trust;
+  const STEPS = copy.steps;
   const videoRef = useRef(null);
   const startedAtRef = useRef(null);
   const [progress, setProgress] = useState(4);
@@ -293,4 +303,4 @@ export default function LaptopValuationModal({
   );
 }
 
-export { PROGRESS_MESSAGES, VALUATION_VIDEO_SOURCES as VALUATION_VIDEO };
+export { VALUATION_VIDEO_SOURCES as VALUATION_VIDEO, HUMAN_TOUCH };

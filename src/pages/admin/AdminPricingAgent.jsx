@@ -6,6 +6,9 @@ import {
   ChevronDown,
   Database,
   X,
+  Settings,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { adminService } from '../../services/admin.service';
 import { formatCurrency } from '../../utils/formatCurrency';
@@ -44,6 +47,192 @@ function StatusBadge({ status }) {
 function recordHasQuiz(row) {
   return Array.isArray(row?.quizSummary)
     && row.quizSummary.some((r) => r && String(r.question || '').trim() && String(r.answer ?? '').trim() !== '');
+}
+
+function emptyBracket() {
+  return { min: 0, max: '', percent: 0 };
+}
+
+function BracketEditor({ title, rows, onChange }) {
+  const updateRow = (idx, key, value) => {
+    const next = rows.map((row, i) => (i === idx ? { ...row, [key]: value } : row));
+    onChange(next);
+  };
+  const addRow = () => onChange([...rows, emptyBracket()]);
+  const removeRow = (idx) => onChange(rows.filter((_, i) => i !== idx));
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-800 text-slate-800">{title}</h4>
+        <button type="button" className="admin-btn admin-btn-ghost text-xs" onClick={addRow}>
+          <Plus size={14} /> Add bracket
+        </button>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-slate-200">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Cashify min (₹)</th>
+              <th>Cashify max (₹)</th>
+              <th>Increment %</th>
+              <th style={{ width: 48 }} />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, idx) => (
+              <tr key={`${title}-${idx}`}>
+                <td>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    value={row.min ?? 0}
+                    onChange={(e) => updateRow(idx, 'min', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    placeholder="∞"
+                    value={row.max ?? ''}
+                    onChange={(e) => updateRow(idx, 'max', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    className="admin-input"
+                    value={row.percent ?? 0}
+                    onChange={(e) => updateRow(idx, 'percent', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="p-2 text-slate-400 hover:text-red-500"
+                    onClick={() => removeRow(idx)}
+                    disabled={rows.length <= 1}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[11px] text-slate-500 font-600">
+        Leave max empty for open-ended (no upper limit). Offer = Cashify × (1 + %).
+      </p>
+    </div>
+  );
+}
+
+function PricingSettingsModal({ open, onClose }) {
+  const [mobileBrackets, setMobileBrackets] = useState([emptyBracket()]);
+  const [laptopBrackets, setLaptopBrackets] = useState([emptyBracket()]);
+  const [fallbackFixedInr, setFallbackFixedInr] = useState(1000);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setMessage('');
+      try {
+        const { data } = await adminService.getPricingAgentSettings();
+        if (cancelled) return;
+        setMobileBrackets(data.mobileBrackets?.length ? data.mobileBrackets : [emptyBracket()]);
+        setLaptopBrackets(data.laptopBrackets?.length ? data.laptopBrackets : [emptyBracket()]);
+        setFallbackFixedInr(data.fallbackFixedInr ?? 1000);
+      } catch (err) {
+        if (!cancelled) setMessage(err.response?.data?.message || 'Failed to load settings.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      await adminService.savePricingAgentSettings({
+        mobileBrackets,
+        laptopBrackets,
+        fallbackFixedInr: Number(fallbackFixedInr) || 0,
+      });
+      setMessage('Saved. New valuations will use these brackets.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="admin-modal-backdrop" onClick={onClose}>
+      <div className="admin-modal" style={{ maxWidth: 820 }} onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <div>
+            <h3>Pricing brackets</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Set % increment by Cashify valuation range for phone and laptop.
+            </p>
+          </div>
+          <button type="button" className="admin-modal-close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="admin-modal-body space-y-6">
+          {loading ? (
+            <p className="text-sm text-slate-500 font-600">Loading…</p>
+          ) : (
+            <>
+              <BracketEditor title="Phone (Mobile)" rows={mobileBrackets} onChange={setMobileBrackets} />
+              <BracketEditor title="Laptop" rows={laptopBrackets} onChange={setLaptopBrackets} />
+              <label className="block space-y-1.5">
+                <span className="text-xs font-800 uppercase tracking-wide text-slate-500">
+                  Fallback fixed ₹ (if no bracket matches)
+                </span>
+                <input
+                  type="number"
+                  className="admin-input max-w-[200px]"
+                  value={fallbackFixedInr}
+                  onChange={(e) => setFallbackFixedInr(e.target.value)}
+                />
+              </label>
+            </>
+          )}
+          {message && (
+            <div className="px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-sm font-600 text-blue-800">
+              {message}
+            </div>
+          )}
+        </div>
+        <div className="admin-modal-footer flex justify-end gap-2">
+          <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>
+            Close
+          </button>
+          <button
+            type="button"
+            className="admin-btn admin-btn-primary"
+            disabled={loading || saving}
+            onClick={handleSave}
+          >
+            {saving ? 'Saving…' : 'Save brackets'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ComparisonModal({ record, onClose }) {
@@ -120,7 +309,7 @@ function ComparisonModal({ record, onClose }) {
                   </div>
                 )}
                 <div className="flex justify-between gap-4 px-4 py-2.5">
-                  <span className="text-[11px] font-700 text-slate-500 uppercase">Our Offer (+ markup)</span>
+                  <span className="text-[11px] font-700 text-slate-500 uppercase">Our Offer (bracket %)</span>
                   <span className="text-sm font-700 text-slate-800">
                     {record.ourOffer != null ? formatCurrency(record.ourOffer) : '—'}
                   </span>
@@ -198,6 +387,7 @@ export default function AdminPricingAgent() {
   const [message, setMessage] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const downloadRef = useRef(null);
 
   const pages = Math.max(1, Math.ceil(total / 50));
@@ -358,6 +548,14 @@ export default function AdminPricingAgent() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="admin-btn admin-btn-ghost"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings size={16} />
+            Settings
+          </button>
           <button
             type="button"
             className="admin-btn admin-btn-ghost"
@@ -550,6 +748,7 @@ export default function AdminPricingAgent() {
       </div>
 
       <ComparisonModal record={selectedRecord} onClose={() => setSelectedRecord(null)} />
+      <PricingSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
