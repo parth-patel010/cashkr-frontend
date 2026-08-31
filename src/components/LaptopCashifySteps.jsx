@@ -1,4 +1,4 @@
-/** Reusable Cashify-parity single-select question blocks for laptop quiz. */
+/** Reusable single-select question blocks for laptop quiz. */
 
 function OptionGrid({ options, value, onChange, columns = 2 }) {
   return (
@@ -52,7 +52,7 @@ export function LaptopScreenCashifyStep({
       <div>
         <h3 className="text-lg font-extrabold text-gray-900">5. Screen condition</h3>
         <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">
-          Same questions as Cashify — choose one option per row (nothing is pre-selected)
+          Choose one option per row (nothing is pre-selected)
         </p>
       </div>
       <QuestionBlock title="Scratch or broken on screen" hint="Select screen scratch or broken condition">
@@ -92,7 +92,7 @@ export function LaptopBodyCashifyStep({
       <div>
         <h3 className="text-lg font-extrabold text-gray-900">6. Physical condition</h3>
         <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">
-          Same questions as Cashify — scratches, dents, hinges, and panel
+          Scratches, dents, hinges, and panel — choose one option per row
         </p>
       </div>
       <QuestionBlock title="Scratch on body" hint="Select body scratch condition">
@@ -120,7 +120,7 @@ export function LaptopSoftwareStep({ softwareIssue, setSoftwareIssue, options })
       <div>
         <h3 className="text-lg font-extrabold text-gray-900">8. Software issue</h3>
         <p className="text-xs font-extrabold text-gray-600 uppercase tracking-widest mt-1">
-          Overall condition — same as Cashify
+          Overall condition — choose what applies
         </p>
       </div>
       <OptionGrid options={options.SOFTWARE_OPTIONS} value={softwareIssue} onChange={setSoftwareIssue} />

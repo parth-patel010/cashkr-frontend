@@ -1,4 +1,4 @@
-/** Cashify laptop calculator — field definitions (labels match live Cashify API). */
+/** Laptop calculator quiz — field definitions (labels must match live buyback clicks). */
 
 export const BODY_SCRATCH_OPTIONS = [
   { key: 'none', label: 'No Scratches' },

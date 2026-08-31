@@ -23,10 +23,6 @@ export default function ModelSeoContent({ device, brandName }) {
         <Link to="/faq" className="text-[#0565E6] hover:underline">
           View all FAQs
         </Link>
-        {' · '}
-        <Link to="/compare/devicekart-vs-cashify" className="text-[#0565E6] hover:underline">
-          Compare with Cashify
-        </Link>
       </p>
     </section>
   );

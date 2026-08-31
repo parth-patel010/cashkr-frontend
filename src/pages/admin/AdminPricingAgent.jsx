@@ -9,6 +9,7 @@ import {
   Settings,
   Plus,
   Trash2,
+  CalendarRange,
 } from 'lucide-react';
 import { adminService } from '../../services/admin.service';
 import { formatCurrency } from '../../utils/formatCurrency';
@@ -57,6 +58,20 @@ function StatusBadge({ status }) {
 function recordHasQuiz(row) {
   return Array.isArray(row?.quizSummary)
     && row.quizSummary.some((r) => r && String(r.question || '').trim() && String(r.answer ?? '').trim() !== '');
+}
+
+function toLocalISODate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function defaultDateRange() {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - 29);
+  return { fromDate: toLocalISODate(from), toDate: toLocalISODate(to) };
 }
 
 function emptyBracket() {
@@ -406,6 +421,9 @@ function QuizSummaryList({ summary = [], compact = false }) {
 }
 
 export default function AdminPricingAgent() {
+  const defaults = useMemo(() => defaultDateRange(), []);
+  const [fromDate, setFromDate] = useState(defaults.fromDate);
+  const [toDate, setToDate] = useState(defaults.toDate);
   const [stats, setStats] = useState({});
   const [records, setRecords] = useState([]);
   const [total, setTotal] = useState(0);
@@ -432,12 +450,15 @@ export default function AdminPricingAgent() {
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
+      const dateParams = {};
+      if (fromDate) dateParams.fromDate = fromDate;
+      if (toDate) dateParams.toDate = toDate;
       const [statsRes, recordsRes] = await Promise.all([
-        adminService.getPricingAgentStats(),
-        adminService.getPricingAgentRecords({ page, limit: 50 }),
+        adminService.getPricingAgentStats(dateParams),
+        adminService.getPricingAgentRecords({ page, limit: 50, ...dateParams }),
       ]);
       setStats(statsRes.data?.stats || {});
-      const rows = (recordsRes.data?.records || []).filter(recordHasQuiz);
+      const rows = recordsRes.data?.records || [];
       setRecords(rows);
       setTotal(recordsRes.data?.total || rows.length);
     } catch (err) {
@@ -445,7 +466,7 @@ export default function AdminPricingAgent() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [page]);
+  }, [page, fromDate, toDate]);
 
   useEffect(() => {
     loadData();
@@ -518,7 +539,10 @@ export default function AdminPricingAgent() {
       }
       await loadData(true);
       if (selectedRecord?.id === row.id) {
-        const { data: list } = await adminService.getPricingAgentRecords({ page, limit: 50 });
+        const dateParams = {};
+        if (fromDate) dateParams.fromDate = fromDate;
+        if (toDate) dateParams.toDate = toDate;
+        const { data: list } = await adminService.getPricingAgentRecords({ page, limit: 50, ...dateParams });
         const updated = (list?.records || []).find((r) => r.id === row.id);
         if (updated) setSelectedRecord(updated);
       }
@@ -535,7 +559,10 @@ export default function AdminPricingAgent() {
     setDownloadOpen(false);
     setActionBusy(`dl-${format}`);
     try {
-      const { data } = await adminService.downloadPricingAgent(format);
+      const dateParams = {};
+      if (fromDate) dateParams.fromDate = fromDate;
+      if (toDate) dateParams.toDate = toDate;
+      const { data } = await adminService.downloadPricingAgent(format, dateParams);
       const blob = new Blob([data], {
         type: format === 'csv'
           ? 'text/csv'
@@ -563,6 +590,26 @@ export default function AdminPricingAgent() {
     hour: '2-digit',
     minute: '2-digit',
   }) : '—');
+
+  const applyPreset = (days) => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - (days - 1));
+    setPage(1);
+    setFromDate(toLocalISODate(from));
+    setToDate(toLocalISODate(to));
+  };
+
+  const applyToday = () => {
+    const today = toLocalISODate(new Date());
+    setPage(1);
+    setFromDate(today);
+    setToDate(today);
+  };
+
+  const dateRangeLabel = fromDate && toDate
+    ? (fromDate === toDate ? fromDate : `${fromDate} → ${toDate}`)
+    : 'All dates';
 
   return (
     <div className="space-y-6">
@@ -604,9 +651,12 @@ export default function AdminPricingAgent() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-900 text-slate-900 tracking-tight">Pricing Agent</h2>
+          <h2 className="text-xl font-900 text-slate-900 tracking-tight flex items-center gap-2">
+            <CalendarRange size={18} className="text-blue-500" />
+            Pricing Agent
+          </h2>
           <p className="text-sm text-slate-500 mt-1 max-w-xl">
-            Batch Cashify pricing for captured quizzes. Duplicate quizzes appear as Overridden with a locked price — filling the same quiz again always returns that override price.
+            Batch Cashify pricing for captured quizzes. Filter by date to review daily quiz collection — stats and records use quiz capture time.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -674,6 +724,37 @@ export default function AdminPricingAgent() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={applyToday}>
+          Today
+        </button>
+        <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={() => applyPreset(7)}>
+          Last 7 days
+        </button>
+        <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={() => applyPreset(30)}>
+          Last 30 days
+        </button>
+        <input
+          type="date"
+          className="admin-select"
+          value={fromDate}
+          max={toDate || undefined}
+          onChange={(e) => { setPage(1); setFromDate(e.target.value); }}
+          title="From date"
+        />
+        <input
+          type="date"
+          className="admin-select"
+          value={toDate}
+          min={fromDate || undefined}
+          onChange={(e) => { setPage(1); setToDate(e.target.value); }}
+          title="To date"
+        />
+        <span className="text-xs font-700 text-slate-500">
+          Showing: {dateRangeLabel}
+        </span>
+      </div>
+
       {message && (
         <div className="px-4 py-3 rounded-xl bg-blue-50 border border-blue-100 text-sm font-600 text-blue-800">
           {message}
@@ -684,6 +765,7 @@ export default function AdminPricingAgent() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm font-800 text-slate-700">
             Progress · {progressPct}% complete
+            <span className="ml-2 text-xs font-600 text-slate-500">({dateRangeLabel})</span>
             {shouldPoll && (
               <span className="ml-2 text-blue-600 pricing-agent-pulse">Live updating…</span>
             )}
@@ -704,7 +786,7 @@ export default function AdminPricingAgent() {
 
       <div className="admin-table-wrapper">
         <div className="admin-table-header">
-          <h3>Quiz Records ({total})</h3>
+          <h3>Quiz Records ({total}) · {dateRangeLabel}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="admin-table">
@@ -732,7 +814,7 @@ export default function AdminPricingAgent() {
               ) : !records.length ? (
                 <tr>
                   <td colSpan={10} className="text-center py-10 text-slate-400 font-600">
-                    No quiz-filled records yet. Complete a quiz or click Sync Quizzes.
+                    No quiz records for {dateRangeLabel}. Try another date or click Sync Quizzes.
                   </td>
                 </tr>
               ) : (

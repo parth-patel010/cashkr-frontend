@@ -1079,7 +1079,7 @@ export default function LaptopConditionQuizPage() {
                 </div>
               )}
 
-              {/* STEP: Screen Condition (Cashify parity) */}
+              {/* STEP: Screen Condition */}
               {STEPS[currentStepIndex]?.id === 'screen' && (
                 <LaptopScreenCashifyStep
                   screenScratch={screenScratch}
@@ -1096,7 +1096,7 @@ export default function LaptopConditionQuizPage() {
                 />
               )}
 
-              {/* STEP: Physical Condition (Cashify parity) */}
+              {/* STEP: Physical Condition */}
               {STEPS[currentStepIndex]?.id === 'body' && (
                 <LaptopBodyCashifyStep
                   bodyScratch={bodyScratch}

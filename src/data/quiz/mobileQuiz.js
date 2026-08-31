@@ -1,4 +1,4 @@
-/** Cashify mobile calculator — field definitions (labels match live Cashify clicks). */
+/** Mobile calculator quiz — field definitions (labels must match live buyback clicks). */
 
 export const MOBILE_STEPS = [
   { id: 'warranty', label: 'Age & Warranty' },
@@ -42,7 +42,7 @@ export const MOBILE_TECHNICAL_ISSUES = [
   { id: 'silent_button', label: 'Silent Button not working', pct: '2%' },
 ];
 
-/** Follow-up when screen defects are reported (Cashify screenPhysicalDetail). */
+/** Follow-up when screen defects are reported (screenPhysicalDetail step). */
 export const SCREEN_PHYSICAL_DETAIL_OPTIONS = [
   { key: 'minor12', label: '1-2 scratches on screen' },
   { key: 'more2', label: 'More than 2 scratches on screen' },

@@ -866,7 +866,7 @@ export default function ConditionQuizPage() {
                     {supportsESIM(device?.modelName) && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-bold text-gray-900">3. How many eSIMs does your device support?</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest -mt-2">Same options as Cashify</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest -mt-2">Choose what applies to your device</p>
                         <div className="grid grid-cols-2 gap-4">
                           <button
                             type="button"
@@ -976,7 +976,7 @@ export default function ConditionQuizPage() {
                     {special && supportsESIM(device?.modelName) && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-bold text-gray-900">4. How many eSIMs does your device support?</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest -mt-2">Same options as Cashify</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest -mt-2">Choose what applies to your device</p>
                         <div className="grid grid-cols-2 gap-4">
                           <button
                             type="button"
@@ -1010,7 +1010,7 @@ export default function ConditionQuizPage() {
                     <div>
                       <h3 className="text-lg font-bold text-gray-900">Select screen / body defects (if any)</h3>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-                        Same options as Cashify — leave unselected if none apply, then answer detail questions below
+                        Choose what applies to your device — leave unselected if none apply, then answer detail questions below
                       </p>
                     </div>
 
@@ -1050,8 +1050,8 @@ export default function ConditionQuizPage() {
                       <h4 className="text-base font-extrabold text-gray-900">Screen scratch / crack detail</h4>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                         {physicalIssues.includes('glass_crack')
-                          ? 'Required — choose one (Cashify follow-up)'
-                          : 'Select “Broken/scratch on device screen” above to unlock this (Cashify only asks when selected)'}
+                          ? 'Required — choose one'
+                          : 'Select “Broken/scratch on device screen” above to unlock this'}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {SCREEN_PHYSICAL_DETAIL_OPTIONS.map((opt) => (

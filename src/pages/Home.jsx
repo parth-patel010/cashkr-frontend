@@ -485,12 +485,6 @@ export default function HomePage() {
             <Link to="/best-place-to-sell-old-phone-india" className="text-[#0565E6] font-semibold hover:underline">
               Best place to sell old phone
             </Link>
-            <Link to="/compare/devicekart-vs-cashify" className="text-[#0565E6] font-semibold hover:underline">
-              DeviceKart vs Cashify
-            </Link>
-            <Link to="/alternatives/cashify-alternatives" className="text-[#0565E6] font-semibold hover:underline">
-              Cashify alternatives
-            </Link>
             <Link to="/sell-old-mobile-phones/brand" className="text-[#0565E6] font-semibold hover:underline">
               Sell mobiles
             </Link>
