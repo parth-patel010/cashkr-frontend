@@ -55,6 +55,15 @@ function StatusBadge({ status }) {
   );
 }
 
+function recordActivityTime(row) {
+  const stamps = [row?.updatedAt, row?.runAt, row?.completedAt, row?.capturedAt, row?.createdAt]
+    .filter(Boolean)
+    .map((d) => new Date(d).getTime())
+    .filter((n) => Number.isFinite(n));
+  if (!stamps.length) return null;
+  return new Date(Math.max(...stamps));
+}
+
 function recordHasQuiz(row) {
   return Array.isArray(row?.quizSummary)
     && row.quizSummary.some((r) => r && String(r.question || '').trim() && String(r.answer ?? '').trim() !== '');
@@ -609,7 +618,7 @@ export default function AdminPricingAgent() {
 
   const dateRangeLabel = fromDate && toDate
     ? (fromDate === toDate ? fromDate : `${fromDate} → ${toDate}`)
-    : 'All dates';
+    : (!fromDate && !toDate ? 'All time' : 'All dates');
 
   return (
     <div className="space-y-6">
@@ -725,6 +734,9 @@ export default function AdminPricingAgent() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={() => { setPage(1); setFromDate(''); setToDate(''); }}>
+          All time
+        </button>
         <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={applyToday}>
           Today
         </button>
@@ -831,7 +843,7 @@ export default function AdminPricingAgent() {
                     >
                       <td className="font-800 text-slate-400">{sr}</td>
                       <td className="text-xs text-slate-600 whitespace-nowrap">
-                        {formatTime(row.capturedAt || row.createdAt)}
+                        {formatTime(recordActivityTime(row))}
                       </td>
                       <td>
                         <div className="font-700 text-slate-800 text-sm">

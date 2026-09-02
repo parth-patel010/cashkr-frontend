@@ -197,6 +197,7 @@ function BannerEditor({
 
 export default function AdminWebsiteSettings() {
   const [categories, setCategories] = useState([]);
+  const [pages, setPages] = useState([]);
   const [banners, setBanners] = useState([]);
   const [sellBanners, setSellBanners] = useState([]);
   const [repairBanners, setRepairBanners] = useState([]);
@@ -209,6 +210,12 @@ export default function AdminWebsiteSettings() {
     setLoading(true);
     try {
       const { data } = await adminService.getAppSettings();
+      setPages(
+        (data.pages || []).map((p) => ({
+          ...p,
+          enabled: p.enabled !== false,
+        })),
+      );
       setCategories(
         (data.categories || []).map((c) => ({
           ...c,
@@ -249,6 +256,13 @@ export default function AdminWebsiteSettings() {
   const updateCategory = (key, patch) => {
     setCategories((list) => list.map((c) => (c.key === key ? { ...c, ...patch } : c)));
   };
+
+  const updatePage = (key, patch) => {
+    setPages((list) => list.map((p) => (p.key === key ? { ...p, ...patch } : p)));
+  };
+
+  const buyPage = pages.find((p) => p.key === 'buy');
+  const repairPage = pages.find((p) => p.key === 'repair');
 
   const onUploadCategoryImage = async (key, file) => {
     if (!file) return;
@@ -296,6 +310,11 @@ export default function AdminWebsiteSettings() {
     setMessage('');
     try {
       const payload = {
+        pages: pages.map((p) => ({
+          ...p,
+          enabled: p.enabled === true,
+          restrictByPincode: Boolean(p.restrictByPincode),
+        })),
         categories: categories.map((c) => ({
           ...c,
           enabledSell: c.enabledSell === true,
@@ -307,6 +326,12 @@ export default function AdminWebsiteSettings() {
         repairBanners: mapBanners(repairBanners).slice(0, MAX_SLOT),
       };
       const { data } = await adminService.saveAppSettings(payload);
+      setPages(
+        (data.pages || []).map((p) => ({
+          ...p,
+          enabled: p.enabled !== false,
+        })),
+      );
       setCategories(data.categories || []);
       setBanners(data.banners || []);
       setSellBanners(data.sellBanners || []);
@@ -350,6 +375,48 @@ export default function AdminWebsiteSettings() {
           {message}
         </div>
       ) : null}
+
+      <section className="admin-card space-y-4">
+        <h3 className="text-base font-black text-slate-900">Website pages — Buy &amp; Repair</h3>
+        <p className="text-xs text-slate-500 font-semibold max-w-2xl">
+          Turn OFF to show a <strong>Coming Soon</strong> page on the website when users open Buy or
+          Repair (same toggle as App Settings → Pages). Sell is always available here.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer">
+            <div>
+              <div className="font-bold text-slate-900">Buy Refurbished</div>
+              <div className="text-xs text-slate-500 font-semibold mt-0.5">/buy and all buy routes</div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="checkbox"
+                checked={buyPage?.enabled !== false}
+                onChange={(e) => updatePage('buy', { enabled: e.target.checked })}
+              />
+              <span className="text-xs font-bold text-slate-600">
+                {buyPage?.enabled !== false ? 'Live' : 'Coming Soon'}
+              </span>
+            </div>
+          </label>
+          <label className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer">
+            <div>
+              <div className="font-bold text-slate-900">Repair Device</div>
+              <div className="text-xs text-slate-500 font-semibold mt-0.5">/repair</div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="checkbox"
+                checked={repairPage?.enabled !== false}
+                onChange={(e) => updatePage('repair', { enabled: e.target.checked })}
+              />
+              <span className="text-xs font-bold text-slate-600">
+                {repairPage?.enabled !== false ? 'Live' : 'Coming Soon'}
+              </span>
+            </div>
+          </label>
+        </div>
+      </section>
 
       <BannerEditor
         title="Homepage Banners"

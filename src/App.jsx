@@ -4,6 +4,7 @@ import Navbar from './components/navbar.jsx';
 import Footer from './components/footer.jsx';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AdminProtectedRoute from './components/layout/AdminProtectedRoute';
+import PageGate from './components/layout/PageGate';
 import Loader from './components/ui/Loader';
 import './index.css';
 
@@ -147,18 +148,18 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Login />} />
-          {/* Buy flow */}
-          <Route path="/buy" element={<BuyHubPage />} />
+          {/* Buy flow — admin can disable → Coming Soon */}
+          <Route path="/buy" element={<PageGate pageKey="buy"><BuyHubPage /></PageGate>} />
           <Route path="/sell" element={<SellHubPage />} />
-          <Route path="/repair" element={<RepairPage />} />
+          <Route path="/repair" element={<PageGate pageKey="repair"><RepairPage /></PageGate>} />
           <Route path="/sell/tv" element={<SellTvRequestPage />} />
           <Route path="/sell/refrigerator" element={<SellFridgeRequestPage />} />
           <Route path="/sell/tv/brand" element={<Navigate to="/sell/tv" replace />} />
           <Route path="/sell/refrigerator/brand" element={<Navigate to="/sell/refrigerator" replace />} />
-          <Route path="/buy/order-confirmation/:orderId" element={<ProtectedRoute><BuyOrderConfirmationPage /></ProtectedRoute>} />
-          <Route path="/buy/:category/brand" element={<BuyBrandSelectionPage />} />
-          <Route path="/buy/:category/:brand/:slug" element={<BuyProductPage />} />
-          <Route path="/buy/:category/:brand" element={<BuyProductListPage />} />
+          <Route path="/buy/order-confirmation/:orderId" element={<PageGate pageKey="buy"><ProtectedRoute><BuyOrderConfirmationPage /></ProtectedRoute></PageGate>} />
+          <Route path="/buy/:category/brand" element={<PageGate pageKey="buy"><BuyBrandSelectionPage /></PageGate>} />
+          <Route path="/buy/:category/:brand/:slug" element={<PageGate pageKey="buy"><BuyProductPage /></PageGate>} />
+          <Route path="/buy/:category/:brand" element={<PageGate pageKey="buy"><BuyProductListPage /></PageGate>} />
           {/* Mobile flow */}
           <Route path="/sell-old-mobile-phones/brand" element={<BrandSelectionPage />} />
           <Route path="/sell-old-mobile-phones/:brand" element={<ModelSelectionPage />} />
