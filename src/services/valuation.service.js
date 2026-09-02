@@ -1,5 +1,12 @@
 import api from './api';
 
+/** User quote runs Cashify inline while the modal is open — allow up to 5 minutes. */
+const VALUATION_SUBMIT_TIMEOUT_MS = 5 * 60 * 1000;
+
+function valuationPost(path, payload) {
+  return postWithDbRetry(() => api.post(path, payload, { timeout: VALUATION_SUBMIT_TIMEOUT_MS }));
+}
+
 function isDbUnavailableError(err) {
   const status = err?.response?.status;
   const message = String(err?.response?.data?.message || err?.message || '');
@@ -13,7 +20,7 @@ async function sleep(ms) {
 export async function pollValuationStatus(getStatus, onTick, {
   intervalMs = 2500,
   maxAttempts = 480,
-  maxDbRetries = 20,
+  maxDbRetries = 40,
 } = {}) {
   let dbRetries = 0;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -40,18 +47,18 @@ export async function pollValuationStatus(getStatus, onTick, {
 }
 
 export const valuationService = {
-  submitLaptopQuote: (payload) => postWithDbRetry(() => api.post('/valuation/laptop/quote', payload)),
+  submitLaptopQuote: (payload) => valuationPost('/valuation/laptop/quote', payload),
   getLaptopStatus: (recordId) => api.get(`/valuation/laptop/status/${recordId}`),
   getAgentStatus: () => api.get('/valuation/laptop/agent-status'),
 
-  submitMobileQuote: (payload) => postWithDbRetry(() => api.post('/valuation/mobile/quote', payload)),
+  submitMobileQuote: (payload) => valuationPost('/valuation/mobile/quote', payload),
   getMobileStatus: (recordId) => api.get(`/valuation/mobile/status/${recordId}`),
   getMobileAgentStatus: () => api.get('/valuation/mobile/agent-status'),
 
   pollValuationStatus,
 };
 
-async function postWithDbRetry(requestFn, { maxDbRetries = 8 } = {}) {
+async function postWithDbRetry(requestFn, { maxDbRetries = 15 } = {}) {
   let dbRetries = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {

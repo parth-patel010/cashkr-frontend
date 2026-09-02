@@ -134,7 +134,13 @@ export default function LaptopValuationModal({
 
       setProgress((prev) => {
         const targetDuration = VALUATION_DURATION_SEC;
-        const timePct = Math.min((elapsed / targetDuration) * 92, 92);
+        let timePct;
+        if (elapsed <= targetDuration) {
+          timePct = (elapsed / targetDuration) * 92;
+        } else {
+          const extra = Math.min((elapsed - targetDuration) / 120, 1);
+          timePct = 92 + extra * 6;
+        }
         if (phase === 'queued') {
           const queueCap = agentBusy ? 28 : 35;
           return Math.min(Math.max(prev, timePct * 0.4), queueCap);
@@ -227,7 +233,9 @@ export default function LaptopValuationModal({
             <p className="text-sm font-semibold text-gray-600 min-h-[36px]">{error || subline}</p>
             {phase !== 'failed' && phase !== 'cached' && (
               <p className="text-xs font-bold text-primary">
-                ~{remainingSec}s remaining · usually ready in 40–50 seconds
+                {elapsedSec <= VALUATION_DURATION_SEC
+                  ? `~${remainingSec}s remaining · usually ready in 40–50 seconds`
+                  : 'Still checking live market rates — please stay on this screen'}
               </p>
             )}
           </div>

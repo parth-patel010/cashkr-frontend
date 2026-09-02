@@ -355,26 +355,16 @@ export default function LaptopConditionQuizPage() {
     setShowResult(true);
   };
 
-  const pollValuationRecord = async (recordId) => valuationService.pollValuationStatus(
-    () => valuationService.getLaptopStatus(recordId),
-    (data) => {
-      setValuationAgentStatus(data.agentStatus);
-      setValuationQueuePos(data.queuePosition || 0);
-      setValuationAgentBusy(Boolean(data.agentBusy));
-      setValuationCached(Boolean(data.cached));
-    },
-    { intervalMs: 5000, maxAttempts: 240 },
-  );
-
   const runAgentValuation = async () => {
     if (!device || !specs || age == null) return;
 
     const quizCtx = buildQuizContext();
     setValuationError(null);
     setValuationOpen(true);
-    setValuationAgentStatus('pending');
+    setValuationAgentStatus('running');
     setValuationCached(false);
     setValuationQueuePos(0);
+    setValuationAgentBusy(true);
     const waitStartedAt = Date.now();
     const minWaitMs = (cached) => (cached ? 2800 : VALUATION_DURATION_SEC * 1000);
 
@@ -397,39 +387,41 @@ export default function LaptopConditionQuizPage() {
 
       reportLastQuizDevice(quizCtx);
 
-      setValuationAgentStatus(start.agentStatus || 'pending');
-      setValuationQueuePos(start.queuePosition || 0);
-      setValuationAgentBusy(Boolean(start.agentBusy));
-      setValuationCached(Boolean(start.cached));
-
-      let result = start;
-      if (start.done) {
-        if (!start.success || start.ourOffer == null) {
-          throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
-        }
-        setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
-        await ensureMinWait(false);
-      } else if (start.cached && start.ourOffer != null) {
+      if (start.cached && start.ourOffer != null) {
         setValuationCached(true);
         setValuationAgentStatus('overridden');
         await ensureMinWait(true);
-      } else {
-        result = await pollValuationRecord(start.recordId);
-        setValuationAgentStatus(result.agentStatus === 'overridden' ? 'overridden' : 'completed');
-        await ensureMinWait(false);
+        finalizeValuationResult(start.ourOffer, {
+          cashifyEstimate: start.cashifyPrice,
+          internalPrice: start.internalPrice,
+          priceSource: 'valuation_cache',
+          agentStatus: start.agentStatus,
+          valuationRecordId: start.recordId,
+          quizHash: start.quizHash,
+        });
+        return;
       }
 
-      finalizeValuationResult(result.ourOffer, {
-        cashifyEstimate: result.cashifyPrice,
-        internalPrice: result.internalPrice,
-        priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
-        agentStatus: result.agentStatus,
-        valuationRecordId: start.recordId || result.recordId,
-        quizHash: result.record?.quizHash || start.quizHash,
+      if (!start.done || !start.success || start.ourOffer == null) {
+        throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
+      }
+
+      setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
+      await ensureMinWait(false);
+      finalizeValuationResult(start.ourOffer, {
+        cashifyEstimate: start.cashifyPrice,
+        internalPrice: start.internalPrice,
+        priceSource: 'agent_valuation',
+        agentStatus: start.agentStatus,
+        valuationRecordId: start.recordId,
+        quizHash: start.quizHash,
       });
     } catch (err) {
+      reportLastQuizDevice(quizCtx);
       setValuationError(err.response?.data?.message || err.message || 'Valuation failed');
       setValuationAgentStatus('failed');
+    } finally {
+      setValuationAgentBusy(false);
     }
   };
 

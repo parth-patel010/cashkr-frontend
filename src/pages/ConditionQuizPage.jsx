@@ -402,25 +402,15 @@ export default function ConditionQuizPage() {
     setShowResult(true);
   };
 
-  const pollMobileValuation = async (recordId) => valuationService.pollValuationStatus(
-    () => valuationService.getMobileStatus(recordId),
-    (data) => {
-      setValuationAgentStatus(data.agentStatus);
-      setValuationQueuePos(data.queuePosition || 0);
-      setValuationAgentBusy(Boolean(data.agentBusy));
-      setValuationCached(Boolean(data.cached));
-    },
-    { intervalMs: 2500, maxAttempts: 480 },
-  );
-
   const runAgentValuation = async () => {
     if (!device) return;
     const quizCtx = buildMobileQuizReport();
     setValuationError(null);
     setValuationOpen(true);
-    setValuationAgentStatus('pending');
+    setValuationAgentStatus('running');
     setValuationCached(false);
     setValuationQueuePos(0);
+    setValuationAgentBusy(true);
     const waitStartedAt = Date.now();
     const minWaitMs = (cached) => (cached ? 2800 : VALUATION_DURATION_SEC * 1000);
     const ensureMinWait = async (cached) => {
@@ -429,6 +419,7 @@ export default function ConditionQuizPage() {
     };
 
     try {
+      // Popup stays open while Cashify runs inline (same as Super Admin valuation test).
       const { data: start } = await valuationService.submitMobileQuote({
         slug: device.slug,
         brand: device.brand,
@@ -440,39 +431,41 @@ export default function ConditionQuizPage() {
 
       reportLastQuizDevice(quizCtx);
 
-      setValuationAgentStatus(start.agentStatus || 'pending');
-      setValuationQueuePos(start.queuePosition || 0);
-      setValuationAgentBusy(Boolean(start.agentBusy));
-      setValuationCached(Boolean(start.cached));
-
-      let result = start;
-      if (start.done) {
-        if (!start.success || start.ourOffer == null) {
-          throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
-        }
-        setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
-        await ensureMinWait(false);
-      } else if (start.cached && start.ourOffer != null) {
+      if (start.cached && start.ourOffer != null) {
         setValuationCached(true);
         setValuationAgentStatus('overridden');
         await ensureMinWait(true);
-      } else {
-        result = await pollMobileValuation(start.recordId);
-        setValuationAgentStatus(result.agentStatus === 'overridden' ? 'overridden' : 'completed');
-        await ensureMinWait(false);
+        finalizeAgentValuation(start.ourOffer, {
+          cashifyEstimate: start.cashifyPrice,
+          internalPrice: start.internalPrice,
+          priceSource: 'valuation_cache',
+          agentStatus: start.agentStatus,
+          recordId: start.recordId,
+          quizHash: start.quizHash,
+        });
+        return;
       }
 
-      finalizeAgentValuation(result.ourOffer, {
-        cashifyEstimate: result.cashifyPrice,
-        internalPrice: result.internalPrice,
-        priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
-        agentStatus: result.agentStatus,
-        recordId: start.recordId || result.recordId,
-        quizHash: start.quizHash || result.quizHash,
+      if (!start.done || !start.success || start.ourOffer == null) {
+        throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
+      }
+
+      setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
+      await ensureMinWait(false);
+      finalizeAgentValuation(start.ourOffer, {
+        cashifyEstimate: start.cashifyPrice,
+        internalPrice: start.internalPrice,
+        priceSource: 'agent_valuation',
+        agentStatus: start.agentStatus,
+        recordId: start.recordId,
+        quizHash: start.quizHash,
       });
     } catch (err) {
+      reportLastQuizDevice(quizCtx);
       setValuationError(err.response?.data?.message || err.message || 'Valuation failed');
       setValuationAgentStatus('failed');
+    } finally {
+      setValuationAgentBusy(false);
     }
   };
 
