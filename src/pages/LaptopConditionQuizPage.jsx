@@ -355,25 +355,16 @@ export default function LaptopConditionQuizPage() {
     setShowResult(true);
   };
 
-  const pollValuationRecord = async (recordId) => {
-    // ~20 min max — queue can wait while higher-value jobs run first.
-    for (let attempt = 0; attempt < 240; attempt += 1) {
-      const { data } = await valuationService.getLaptopStatus(recordId);
+  const pollValuationRecord = async (recordId) => valuationService.pollValuationStatus(
+    () => valuationService.getLaptopStatus(recordId),
+    (data) => {
       setValuationAgentStatus(data.agentStatus);
       setValuationQueuePos(data.queuePosition || 0);
       setValuationAgentBusy(Boolean(data.agentBusy));
       setValuationCached(Boolean(data.cached));
-
-      if (data.done) {
-        if (data.success && data.ourOffer != null) {
-          return data;
-        }
-        throw new Error(data.error || 'Could not fetch live valuation. Please try again.');
-      }
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
-    throw new Error('Valuation is taking longer than expected. Please keep this tab open or try again in a moment.');
-  };
+    },
+    { intervalMs: 5000, maxAttempts: 240 },
+  );
 
   const runAgentValuation = async () => {
     if (!device || !specs || age == null) return;

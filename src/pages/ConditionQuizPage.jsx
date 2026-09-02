@@ -402,22 +402,16 @@ export default function ConditionQuizPage() {
     setShowResult(true);
   };
 
-  const pollMobileValuation = async (recordId) => {
-    // ~20 min max — queue can wait while higher-value jobs run first.
-    for (let attempt = 0; attempt < 480; attempt += 1) {
-      const { data } = await valuationService.getMobileStatus(recordId);
+  const pollMobileValuation = async (recordId) => valuationService.pollValuationStatus(
+    () => valuationService.getMobileStatus(recordId),
+    (data) => {
       setValuationAgentStatus(data.agentStatus);
       setValuationQueuePos(data.queuePosition || 0);
       setValuationAgentBusy(Boolean(data.agentBusy));
       setValuationCached(Boolean(data.cached));
-      if (data.done) {
-        if (data.success && data.ourOffer != null) return data;
-        throw new Error(data.error || 'Could not fetch live valuation. Please try again.');
-      }
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-    }
-    throw new Error('Valuation is taking longer than expected. Please keep this tab open or try again in a moment.');
-  };
+    },
+    { intervalMs: 2500, maxAttempts: 480 },
+  );
 
   const runAgentValuation = async () => {
     if (!device) return;
