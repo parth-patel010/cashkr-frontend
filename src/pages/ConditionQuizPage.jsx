@@ -438,13 +438,21 @@ export default function ConditionQuizPage() {
         quizSummary: quizCtx.answerSummary,
       });
 
+      reportLastQuizDevice(quizCtx);
+
       setValuationAgentStatus(start.agentStatus || 'pending');
       setValuationQueuePos(start.queuePosition || 0);
       setValuationAgentBusy(Boolean(start.agentBusy));
       setValuationCached(Boolean(start.cached));
 
       let result = start;
-      if (start.cached && start.ourOffer != null) {
+      if (start.done) {
+        if (!start.success || start.ourOffer == null) {
+          throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
+        }
+        setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
+      } else if (start.cached && start.ourOffer != null) {
         setValuationCached(true);
         setValuationAgentStatus('overridden');
         await ensureMinWait(true);
