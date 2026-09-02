@@ -20,23 +20,19 @@ async function sleep(ms) {
 export async function pollValuationStatus(getStatus, onTick, {
   intervalMs = 2500,
   maxAttempts = 480,
-  maxDbRetries = 40,
 } = {}) {
-  let dbRetries = 0;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       const response = await getStatus();
-      dbRetries = 0;
       const data = response.data;
       onTick?.(data);
       if (data.done) {
         if (data.success && data.ourOffer != null) return data;
-        throw new Error(data.error || 'Could not fetch live valuation. Please try again.');
+        throw new Error(data.error || data.note || 'Could not fetch live valuation. Please try again.');
       }
     } catch (err) {
-      if (isDbUnavailableError(err) && dbRetries < maxDbRetries) {
-        dbRetries += 1;
-        await sleep(1500 + dbRetries * 400);
+      if (isDbUnavailableError(err)) {
+        await sleep(Math.min(1500 + attempt * 200, 8000));
         continue;
       }
       throw err;
@@ -48,11 +44,11 @@ export async function pollValuationStatus(getStatus, onTick, {
 
 export const valuationService = {
   submitLaptopQuote: (payload) => valuationPost('/valuation/laptop/quote', payload),
-  getLaptopStatus: (recordId) => api.get(`/valuation/laptop/status/${recordId}`),
+  getLaptopStatus: (recordId) => api.get(`/valuation/laptop/status/${recordId}`, { timeout: 30000 }),
   getAgentStatus: () => api.get('/valuation/laptop/agent-status'),
 
   submitMobileQuote: (payload) => valuationPost('/valuation/mobile/quote', payload),
-  getMobileStatus: (recordId) => api.get(`/valuation/mobile/status/${recordId}`),
+  getMobileStatus: (recordId) => api.get(`/valuation/mobile/status/${recordId}`, { timeout: 30000 }),
   getMobileAgentStatus: () => api.get('/valuation/mobile/agent-status'),
 
   pollValuationStatus,
