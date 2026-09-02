@@ -402,6 +402,17 @@ export default function ConditionQuizPage() {
     setShowResult(true);
   };
 
+  const pollMobileValuation = async (recordId) => valuationService.pollValuationStatus(
+    () => valuationService.getMobileStatus(recordId),
+    (data) => {
+      setValuationAgentStatus(data.agentStatus);
+      setValuationQueuePos(data.queuePosition || 0);
+      setValuationAgentBusy(Boolean(data.agentBusy));
+      setValuationCached(Boolean(data.cached));
+    },
+    { intervalMs: 2500, maxAttempts: 480 },
+  );
+
   const runAgentValuation = async () => {
     if (!device) return;
     const quizCtx = buildMobileQuizReport();
@@ -419,7 +430,6 @@ export default function ConditionQuizPage() {
     };
 
     try {
-      // Popup stays open while Cashify runs inline (same as Super Admin valuation test).
       const { data: start } = await valuationService.submitMobileQuote({
         slug: device.slug,
         brand: device.brand,
@@ -446,19 +456,29 @@ export default function ConditionQuizPage() {
         return;
       }
 
-      if (!start.done || !start.success || start.ourOffer == null) {
-        throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
+      let result = start;
+      if (start.done && start.success && start.ourOffer != null) {
+        setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
+      } else if (start.recordId) {
+        result = await pollMobileValuation(start.recordId);
+        setValuationAgentStatus(result.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
+      } else {
+        throw new Error(start.error || start.note || 'Could not start valuation. Please try again.');
       }
 
-      setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
-      await ensureMinWait(false);
-      finalizeAgentValuation(start.ourOffer, {
-        cashifyEstimate: start.cashifyPrice,
-        internalPrice: start.internalPrice,
-        priceSource: 'agent_valuation',
-        agentStatus: start.agentStatus,
-        recordId: start.recordId,
-        quizHash: start.quizHash,
+      if (result.ourOffer == null) {
+        throw new Error(result.error || result.note || 'Could not fetch live valuation. Please try again.');
+      }
+
+      finalizeAgentValuation(result.ourOffer, {
+        cashifyEstimate: result.cashifyPrice,
+        internalPrice: result.internalPrice,
+        priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
+        agentStatus: result.agentStatus,
+        recordId: start.recordId || result.recordId,
+        quizHash: start.quizHash || result.quizHash,
       });
     } catch (err) {
       reportLastQuizDevice(quizCtx);

@@ -1,7 +1,7 @@
 import api from './api';
 
-/** User quote runs Cashify inline while the modal is open — allow up to 5 minutes. */
-const VALUATION_SUBMIT_TIMEOUT_MS = 5 * 60 * 1000;
+/** Submit only saves the record — Cashify runs server-side while the modal polls status. */
+const VALUATION_SUBMIT_TIMEOUT_MS = 60 * 1000;
 
 function valuationPost(path, payload) {
   return postWithDbRetry(() => api.post(path, payload, { timeout: VALUATION_SUBMIT_TIMEOUT_MS }));

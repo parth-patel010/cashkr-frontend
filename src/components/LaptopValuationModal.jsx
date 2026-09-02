@@ -145,7 +145,7 @@ export default function LaptopValuationModal({
           const queueCap = agentBusy ? 28 : 35;
           return Math.min(Math.max(prev, timePct * 0.4), queueCap);
         }
-        return Math.max(prev, timePct);
+        return Math.min(Math.max(prev, timePct), 97);
       });
     }, 250);
 

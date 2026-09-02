@@ -355,6 +355,17 @@ export default function LaptopConditionQuizPage() {
     setShowResult(true);
   };
 
+  const pollValuationRecord = async (recordId) => valuationService.pollValuationStatus(
+    () => valuationService.getLaptopStatus(recordId),
+    (data) => {
+      setValuationAgentStatus(data.agentStatus);
+      setValuationQueuePos(data.queuePosition || 0);
+      setValuationAgentBusy(Boolean(data.agentBusy));
+      setValuationCached(Boolean(data.cached));
+    },
+    { intervalMs: 2500, maxAttempts: 480 },
+  );
+
   const runAgentValuation = async () => {
     if (!device || !specs || age == null) return;
 
@@ -402,19 +413,29 @@ export default function LaptopConditionQuizPage() {
         return;
       }
 
-      if (!start.done || !start.success || start.ourOffer == null) {
-        throw new Error(start.error || start.note || 'Could not fetch live valuation. Please try again.');
+      let result = start;
+      if (start.done && start.success && start.ourOffer != null) {
+        setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
+      } else if (start.recordId) {
+        result = await pollValuationRecord(start.recordId);
+        setValuationAgentStatus(result.agentStatus === 'overridden' ? 'overridden' : 'completed');
+        await ensureMinWait(false);
+      } else {
+        throw new Error(start.error || start.note || 'Could not start valuation. Please try again.');
       }
 
-      setValuationAgentStatus(start.agentStatus === 'overridden' ? 'overridden' : 'completed');
-      await ensureMinWait(false);
-      finalizeValuationResult(start.ourOffer, {
-        cashifyEstimate: start.cashifyPrice,
-        internalPrice: start.internalPrice,
-        priceSource: 'agent_valuation',
-        agentStatus: start.agentStatus,
-        valuationRecordId: start.recordId,
-        quizHash: start.quizHash,
+      if (result.ourOffer == null) {
+        throw new Error(result.error || result.note || 'Could not fetch live valuation. Please try again.');
+      }
+
+      finalizeValuationResult(result.ourOffer, {
+        cashifyEstimate: result.cashifyPrice,
+        internalPrice: result.internalPrice,
+        priceSource: start.cached ? 'valuation_cache' : 'agent_valuation',
+        agentStatus: result.agentStatus,
+        valuationRecordId: start.recordId || result.recordId,
+        quizHash: start.quizHash || result.quizHash,
       });
     } catch (err) {
       reportLastQuizDevice(quizCtx);
