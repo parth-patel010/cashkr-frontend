@@ -55,6 +55,7 @@ api.interceptors.request.use((config) => {
   if (appKey) {
     config.headers['X-DeviceKart-App-Key'] = appKey;
   }
+  config.headers['X-DeviceKart-Client'] = 'Website';
   if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
     if (config.headers) {
       delete config.headers['Content-Type'];

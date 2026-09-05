@@ -21,6 +21,7 @@ import {
   Inbox,
   FlaskConical,
   Bot,
+  Percent,
 } from 'lucide-react';
 import './admin.css';
 
@@ -51,6 +52,7 @@ export default function AdminLayout() {
     if (path.includes('/category-quizzes')) return 'Category Quizzes';
     if (path.includes('/valuation-test')) return 'Valuation Test';
     if (path.includes('/pricing-agent')) return 'Pricing Agent';
+    if (path.includes('/vendor-commission')) return 'Vendor Commission';
     if (path.includes('/security-audit')) return 'Security Audit';
     if (path.includes('/repair-services')) return 'Repair Prices (Model-wise)';
     if (path.includes('/leads')) return 'Leads (TV / Fridge / Repair)';
@@ -165,6 +167,14 @@ export default function AdminLayout() {
           >
             <Bot />
             <span>Pricing Agent</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/vendor-commission" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Percent />
+            <span>Vendor Commission</span>
           </NavLink>
 
           <NavLink 

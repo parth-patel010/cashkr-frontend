@@ -77,6 +77,28 @@ export default function AdminValuationTest() {
     [selectedDevice],
   );
 
+  const isMacDevice = useMemo(() => {
+    if (!selectedDevice) return false;
+    const brandName = String(selectedDevice.brand || '').toLowerCase().trim();
+    const model = String(selectedDevice.modelName || '').toLowerCase();
+    return (
+      selectedDevice.category === 'mac'
+      || brandName === 'apple'
+      || model.includes('macbook')
+      || model.includes('imac')
+      || model.includes('mac mini')
+    );
+  }, [selectedDevice]);
+
+  useEffect(() => {
+    if (!isMacDevice) return;
+    setLaptopQuiz((prev) => (
+      prev.hasGpu === 'no' && prev.isGpuWorking == null
+        ? prev
+        : { ...prev, hasGpu: 'no', isGpuWorking: null }
+    ));
+  }, [isMacDevice]);
+
   const laptopRamOptions = useMemo(() => {
     const fromVariants = (selectedDevice?.variants || []).map((v) => v.ram).filter(Boolean);
     return [...new Set([...MASTER_RAM, ...fromVariants])];
@@ -169,8 +191,8 @@ export default function AdminValuationTest() {
         functionalIssues: laptopQuiz.issuesList,
         screenIssues: laptopQuiz.screenIssuesList,
         bodyIssues: laptopQuiz.bodyIssuesList,
-        hasGpu: laptopQuiz.hasGpu === 'yes',
-        isGpuWorking: laptopQuiz.hasGpu === 'yes' ? laptopQuiz.isGpuWorking === 'yes' : false,
+        hasGpu: !isMacDevice && laptopQuiz.hasGpu === 'yes',
+        isGpuWorking: !isMacDevice && laptopQuiz.hasGpu === 'yes' ? laptopQuiz.isGpuWorking === 'yes' : false,
       };
     }
     return {
@@ -344,21 +366,28 @@ export default function AdminValuationTest() {
                 </button>
               ))}
             </div>
-            <div className="flex gap-3">
-              {['yes', 'no'].map((val) => (
-                <button key={val} type="button" className={`admin-btn ${laptopQuiz.hasGpu === val ? 'admin-btn-primary' : ''}`} onClick={() => setLaptopQuiz({ ...laptopQuiz, hasGpu: val, isGpuWorking: val === 'no' ? null : laptopQuiz.isGpuWorking })}>
-                  {val === 'yes' ? 'Has dedicated GPU' : 'No dedicated GPU'}
-                </button>
-              ))}
-            </div>
-            {laptopQuiz.hasGpu === 'yes' && (
-              <div className="flex gap-3">
-                {['yes', 'no'].map((val) => (
-                  <button key={val} type="button" className={`admin-btn ${laptopQuiz.isGpuWorking === val ? 'admin-btn-primary' : ''}`} onClick={() => setLaptopQuiz({ ...laptopQuiz, isGpuWorking: val })}>
-                    GPU {val === 'yes' ? 'working' : 'not working'}
-                  </button>
-                ))}
-              </div>
+            {!isMacDevice && (
+              <>
+                <div className="flex gap-3">
+                  {['yes', 'no'].map((val) => (
+                    <button key={val} type="button" className={`admin-btn ${laptopQuiz.hasGpu === val ? 'admin-btn-primary' : ''}`} onClick={() => setLaptopQuiz({ ...laptopQuiz, hasGpu: val, isGpuWorking: val === 'no' ? null : laptopQuiz.isGpuWorking })}>
+                      {val === 'yes' ? 'Has dedicated GPU' : 'No dedicated GPU'}
+                    </button>
+                  ))}
+                </div>
+                {laptopQuiz.hasGpu === 'yes' && (
+                  <div className="flex gap-3">
+                    {['yes', 'no'].map((val) => (
+                      <button key={val} type="button" className={`admin-btn ${laptopQuiz.isGpuWorking === val ? 'admin-btn-primary' : ''}`} onClick={() => setLaptopQuiz({ ...laptopQuiz, isGpuWorking: val })}>
+                        GPU {val === 'yes' ? 'working' : 'not working'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {isMacDevice && (
+              <p className="text-xs text-gray-500">Mac devices skip dedicated graphics card (matches Cashify).</p>
             )}
           </div>
         );

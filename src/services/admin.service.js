@@ -179,7 +179,7 @@ export const adminService = {
   getValuationLastRun: () => adminApi.get('/admin/valuation-test/last-run'),
   downloadValuationLastRun: () => adminApi.get('/admin/valuation-test/last-run/download', { responseType: 'blob' }),
 
-  // Pricing agent (Cashify batch)
+  // Pricing agent
   getPricingAgentStats: (params) => adminApi.get('/admin/pricing-agent/stats', { params }),
   getPricingAgentRecords: (params) => adminApi.get('/admin/pricing-agent/records', { params }),
   syncPricingAgent: () => adminApi.post('/admin/pricing-agent/sync'),
@@ -191,6 +191,13 @@ export const adminService = {
     params: { format, ...params },
     responseType: 'blob',
   }),
+
+  // Vendor commission brackets
+  getVendorCommissionSettings: () => adminApi.get('/admin/vendor-commission/settings'),
+  saveVendorCommissionSettings: (payload) => adminApi.put('/admin/vendor-commission/settings', payload),
+  listVendorCommissions: (params) => adminApi.get('/admin/vendor-commission', { params }),
+  getVendorCommissionDetail: (id) => adminApi.get(`/admin/vendor-commission/${id}`),
+  updateVendorCommissionBrackets: (id, payload) => adminApi.put(`/admin/vendor-commission/${id}`, payload),
 };
 
 export default adminApi;

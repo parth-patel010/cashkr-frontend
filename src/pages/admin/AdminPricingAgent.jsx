@@ -285,6 +285,8 @@ function ComparisonModal({ record, onClose, onRun, runBusy = false }) {
             <h3>{record.brand} {record.modelName}</h3>
             <p className="text-xs text-slate-500 mt-1 capitalize">
               {record.category}{record.storage ? ` · ${record.storage}` : ''}
+              {' · '}
+              {record.clientPlatform === 'App' ? 'App' : 'Website'}
             </p>
           </div>
           <button type="button" className="admin-modal-close" onClick={onClose}>
@@ -433,6 +435,7 @@ export default function AdminPricingAgent() {
   const defaults = useMemo(() => defaultDateRange(), []);
   const [fromDate, setFromDate] = useState(defaults.fromDate);
   const [toDate, setToDate] = useState(defaults.toDate);
+  const [clientPlatform, setClientPlatform] = useState('');
   const [stats, setStats] = useState({});
   const [records, setRecords] = useState([]);
   const [total, setTotal] = useState(0);
@@ -462,6 +465,7 @@ export default function AdminPricingAgent() {
       const dateParams = {};
       if (fromDate) dateParams.fromDate = fromDate;
       if (toDate) dateParams.toDate = toDate;
+      if (clientPlatform) dateParams.clientPlatform = clientPlatform;
       const [statsRes, recordsRes] = await Promise.all([
         adminService.getPricingAgentStats(dateParams),
         adminService.getPricingAgentRecords({ page, limit: 50, ...dateParams }),
@@ -475,7 +479,7 @@ export default function AdminPricingAgent() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [page, fromDate, toDate]);
+  }, [page, fromDate, toDate, clientPlatform]);
 
   useEffect(() => {
     loadData();
@@ -551,6 +555,7 @@ export default function AdminPricingAgent() {
         const dateParams = {};
         if (fromDate) dateParams.fromDate = fromDate;
         if (toDate) dateParams.toDate = toDate;
+        if (clientPlatform) dateParams.clientPlatform = clientPlatform;
         const { data: list } = await adminService.getPricingAgentRecords({ page, limit: 50, ...dateParams });
         const updated = (list?.records || []).find((r) => r.id === row.id);
         if (updated) setSelectedRecord(updated);
@@ -571,6 +576,7 @@ export default function AdminPricingAgent() {
       const dateParams = {};
       if (fromDate) dateParams.fromDate = fromDate;
       if (toDate) dateParams.toDate = toDate;
+      if (clientPlatform) dateParams.clientPlatform = clientPlatform;
       const { data } = await adminService.downloadPricingAgent(format, dateParams);
       const blob = new Blob([data], {
         type: format === 'csv'
@@ -734,7 +740,7 @@ export default function AdminPricingAgent() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={() => { setPage(1); setFromDate(''); setToDate(''); }}>
+        <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={() => { setPage(1); setFromDate(''); setToDate(''); setClientPlatform(''); }}>
           All time
         </button>
         <button type="button" className="admin-btn admin-btn-ghost text-xs py-2 px-3" onClick={applyToday}>
@@ -765,6 +771,16 @@ export default function AdminPricingAgent() {
         <span className="text-xs font-700 text-slate-500">
           Showing: {dateRangeLabel}
         </span>
+        <select
+          className="admin-select"
+          value={clientPlatform}
+          onChange={(e) => { setPage(1); setClientPlatform(e.target.value); }}
+          title="Source platform"
+        >
+          <option value="">All sources</option>
+          <option value="App">App</option>
+          <option value="Website">Website</option>
+        </select>
       </div>
 
       {message && (
@@ -806,6 +822,7 @@ export default function AdminPricingAgent() {
               <tr>
                 <th style={{ width: 48 }}>#</th>
                 <th>Time</th>
+                <th>Source</th>
                 <th>Device</th>
                 <th>Our Price</th>
                 <th>Quiz</th>
@@ -819,13 +836,13 @@ export default function AdminPricingAgent() {
             <tbody>
               {loading && !records.length ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={11} className="text-center py-10 text-slate-400 font-600">
                     Loading…
                   </td>
                 </tr>
               ) : !records.length ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 text-slate-400 font-600">
+                  <td colSpan={11} className="text-center py-10 text-slate-400 font-600">
                     No quiz records for {dateRangeLabel}. Try another date or click Sync Quizzes.
                   </td>
                 </tr>
@@ -844,6 +861,11 @@ export default function AdminPricingAgent() {
                       <td className="font-800 text-slate-400">{sr}</td>
                       <td className="text-xs text-slate-600 whitespace-nowrap">
                         {formatTime(recordActivityTime(row))}
+                      </td>
+                      <td>
+                        <span className={`text-[11px] font-800 uppercase px-2 py-1 rounded-full ${row.clientPlatform === 'App' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-600'}`}>
+                          {row.clientPlatform === 'App' ? 'App' : 'Website'}
+                        </span>
                       </td>
                       <td>
                         <div className="font-700 text-slate-800 text-sm">

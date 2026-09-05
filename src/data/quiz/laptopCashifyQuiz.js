@@ -153,6 +153,8 @@ export function buildCashifyAnswerSummary(fields = {}) {
   if (fields.screenSpots) rows.push({ question: 'Spots on Screen', answer: pickLabel(SCREEN_SPOTS_OPTIONS, fields.screenSpots) });
   if (fields.screenLines) rows.push({ question: 'Lines on Screen', answer: pickLabel(SCREEN_LINES_OPTIONS, fields.screenLines) });
   if (fields.isScreenOriginal) rows.push({ question: 'Screen Original', answer: pickLabel(SCREEN_ORIGINAL_OPTIONS, fields.isScreenOriginal) });
-  if (fields.softwareIssue) rows.push({ question: 'Software Issue', answer: pickLabel(SOFTWARE_OPTIONS, fields.softwareIssue) });
+  if (fields.softwareIssue && fields.softwareIssue !== 'no') {
+    rows.push({ question: 'Software Issue', answer: pickLabel(SOFTWARE_OPTIONS, fields.softwareIssue) });
+  }
   return rows;
 }

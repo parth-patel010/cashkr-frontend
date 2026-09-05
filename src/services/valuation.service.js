@@ -1,12 +1,21 @@
 import api from './api';
 
-/** Submit only saves the record — Cashify runs server-side while the modal polls status. */
+/** Submit only saves the record — live market agent runs server-side while the modal polls status. */
 const VALUATION_SUBMIT_TIMEOUT_MS = 60 * 1000;
 
-function valuationPost(path, payload) {
-  return postWithDbRetry(() => api.post(path, payload, { timeout: VALUATION_SUBMIT_TIMEOUT_MS }));
+/** Never show partner brand names in customer-facing valuation errors. */
+export function sanitizePublicValuationError(message) {
+  let text = String(message || '').trim();
+  if (!text) return 'Could not fetch live valuation. Please try again.';
+  return text.replace(/\bcashify\b/gi, 'live market');
 }
 
+function valuationPost(path, payload) {
+  return postWithDbRetry(() => api.post(path, {
+    clientPlatform: 'Website',
+    ...payload,
+  }, { timeout: VALUATION_SUBMIT_TIMEOUT_MS }));
+}
 function isDbUnavailableError(err) {
   const status = err?.response?.status;
   const message = String(err?.response?.data?.message || err?.message || '');
@@ -28,12 +37,15 @@ export async function pollValuationStatus(getStatus, onTick, {
       onTick?.(data);
       if (data.done) {
         if (data.success && data.ourOffer != null) return data;
-        throw new Error(data.error || data.note || 'Could not fetch live valuation. Please try again.');
+        throw new Error(sanitizePublicValuationError(data.error || data.note || 'Could not fetch live valuation. Please try again.'));
       }
     } catch (err) {
       if (isDbUnavailableError(err)) {
         await sleep(Math.min(1500 + attempt * 200, 8000));
         continue;
+      }
+      if (err?.response?.data?.message) {
+        throw new Error(sanitizePublicValuationError(err.response.data.message));
       }
       throw err;
     }

@@ -420,6 +420,53 @@ function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAss
                 </Section>
               ) : null}
 
+              {order.customerIdProof?.frontUrl || order.customerIdProof?.backUrl ? (
+                <Section icon={Camera} title={`Customer ID proof${order.customerIdProof?.idType ? ` (${order.customerIdProof.idType})` : ''}`}>
+                  <div className="grid grid-cols-2 gap-3 py-3">
+                    {order.customerIdProof?.frontUrl ? (
+                      <a
+                        href={order.customerIdProof.frontUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-xl overflow-hidden border border-slate-200 bg-white">
+                        <img
+                          src={order.customerIdProof.frontUrl}
+                          alt="ID front"
+                          className="w-full h-28 object-cover"
+                        />
+                        <p className="text-[11px] font-700 text-slate-500 uppercase text-center py-1.5">
+                          Front
+                        </p>
+                      </a>
+                    ) : null}
+                    {order.customerIdProof?.backUrl ? (
+                      <a
+                        href={order.customerIdProof.backUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-xl overflow-hidden border border-slate-200 bg-white">
+                        <img
+                          src={order.customerIdProof.backUrl}
+                          alt="ID back"
+                          className="w-full h-28 object-cover"
+                        />
+                        <p className="text-[11px] font-700 text-slate-500 uppercase text-center py-1.5">
+                          Back
+                        </p>
+                      </a>
+                    ) : null}
+                  </div>
+                  <InfoRow
+                    label="Uploaded"
+                    value={
+                      order.customerIdProof?.uploadedAt
+                        ? new Date(order.customerIdProof.uploadedAt).toLocaleString()
+                        : null
+                    }
+                  />
+                </Section>
+              ) : null}
+
               <Section icon={User} title="Assigned Vendor">
                 <InfoRow label="Vendor Name" value={order.partnerName || 'Unassigned'} />
                 <InfoRow label="Vendor Phone" value={order.partnerPhone || '—'} />

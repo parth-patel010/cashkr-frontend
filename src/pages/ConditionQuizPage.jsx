@@ -5,7 +5,7 @@ import {
   Volume2, Plug, Zap, Phone, Bluetooth, Vibrate, Mic, Radar, FileText, Package, Cable, Monitor,
 } from 'lucide-react';
 import { deviceService } from '../services/device.service';
-import { valuationService } from '../services/valuation.service';
+import { valuationService, sanitizePublicValuationError } from '../services/valuation.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
 import { calculatePrice } from '../utils/priceCalculator';
@@ -37,6 +37,13 @@ import {
   toEsimPayload,
   fromEsimPayload,
 } from '../data/quiz/mobileQuiz';
+import QuizOptionIcon from '../components/quiz/QuizOptionIcon';
+import {
+  MOBILE_PHYSICAL_ICON_FILES,
+  MOBILE_TECHNICAL_ICON_FILES,
+  MOBILE_ACCESSORY_ICON_FILES,
+  getQuizIconSrc,
+} from '../utils/quizIcons';
 
 // --- Icons & Assets (Matching Screenshots) ---
 const IconTrend = () => (
@@ -74,14 +81,17 @@ const ALL_STEPS = MOBILE_STEPS;
 const ALL_ACCESSORIES = MOBILE_ACCESSORIES.map((a) => ({
   ...a,
   Icon: a.id === 'Bill' ? FileText : a.id === 'Box' ? Package : Cable,
+  iconSrc: getQuizIconSrc(MOBILE_ACCESSORY_ICON_FILES, a.id),
 }));
 const PHYSICAL_ISSUES = MOBILE_PHYSICAL_ISSUES.map((i) => ({
   ...i,
   Icon: PHYSICAL_ICON_MAP[i.id] || Smartphone,
+  iconSrc: getQuizIconSrc(MOBILE_PHYSICAL_ICON_FILES, i.id),
 }));
 const TECHNICAL_ISSUES = MOBILE_TECHNICAL_ISSUES.map((i) => ({
   ...i,
   Icon: TECHNICAL_ICON_MAP[i.id] || Smartphone,
+  iconSrc: getQuizIconSrc(MOBILE_TECHNICAL_ICON_FILES, i.id),
 }));
 const AGE_OPTIONS = MOBILE_AGE_OPTIONS;
 
@@ -482,7 +492,7 @@ export default function ConditionQuizPage() {
       });
     } catch (err) {
       reportLastQuizDevice(quizCtx);
-      setValuationError(err.response?.data?.message || err.message || 'Valuation failed');
+      setValuationError(sanitizePublicValuationError(err.response?.data?.message || err.message || 'Valuation failed'));
       setValuationAgentStatus('failed');
     } finally {
       setValuationAgentBusy(false);
@@ -1032,7 +1042,6 @@ export default function ConditionQuizPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {PHYSICAL_ISSUES.map(issue => {
                         const selected = physicalIssues.includes(issue.id);
-                        const Icon = issue.Icon;
                         return (
                           <button
                             key={issue.id}
@@ -1046,14 +1055,20 @@ export default function ConditionQuizPage() {
                                 return next;
                               });
                             }}
-                            className={`p-5 rounded-2xl border-2 text-left transition-all flex flex-col justify-between min-h-[9rem]
+                            className={`p-5 rounded-2xl border-2 text-left transition-all flex flex-col gap-3 min-h-[9rem]
                               ${selected
                                 ? 'border-primary bg-primary-light'
                                 : 'border-gray-100 bg-white hover:border-gray-200'}`}
                           >
-                            <Icon size={28} strokeWidth={1.6} className={selected ? 'text-primary' : 'text-gray-500'} />
+                            <QuizOptionIcon
+                              src={issue.iconSrc}
+                              Icon={issue.Icon}
+                              size={48}
+                              selected={selected}
+                              alt={issue.label}
+                            />
                             <div>
-                              <p className={`font-extrabold text-sm ${selected ? 'text-primary' : 'text-gray-900'}`}>{issue.label}</p>
+                              <p className={`font-extrabold text-sm leading-snug ${selected ? 'text-primary' : 'text-gray-900'}`}>{issue.label}</p>
                               <p className="text-xs text-gray-400 mt-1">{issue.desc}</p>
                             </div>
                           </button>
@@ -1137,25 +1152,31 @@ export default function ConditionQuizPage() {
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Leave unselected if none apply</p>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[360px] overflow-y-auto pr-2 no-scrollbar">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[420px] overflow-y-auto pr-2 no-scrollbar">
                       {TECHNICAL_ISSUES.map(issue => {
                         const selected = technicalIssues.includes(issue.id);
-                        const Icon = issue.Icon;
                         return (
                           <button
                             key={issue.id}
+                            type="button"
                             onClick={() => {
                               setTechnicalIssues(prev => 
                                 prev.includes(issue.id) ? prev.filter(i => i !== issue.id) : [...prev, issue.id]
                               );
                             }}
-                            className={`p-4 rounded-xl border-2 text-center transition-all flex flex-col items-center justify-center gap-2
+                            className={`p-4 rounded-xl border-2 text-center transition-all flex flex-col items-center justify-center gap-2.5 min-h-[7.5rem]
                               ${selected 
                                 ? 'border-primary bg-primary-light text-primary' 
                                 : 'border-gray-50 bg-white text-gray-500 hover:border-gray-100'}`}
                           >
-                            <Icon size={28} strokeWidth={1.6} className={selected ? 'text-primary' : 'text-gray-500'} />
-                            <span className="text-xs font-bold leading-tight">{issue.label}</span>
+                            <QuizOptionIcon
+                              src={issue.iconSrc}
+                              Icon={issue.Icon}
+                              size={44}
+                              selected={selected}
+                              alt={issue.label}
+                            />
+                            <span className={`text-xs font-bold leading-tight ${selected ? 'text-primary' : 'text-gray-700'}`}>{issue.label}</span>
                           </button>
                         );
                       })}
@@ -1174,23 +1195,29 @@ export default function ConditionQuizPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       {ACCESSORIES.map(acc => {
                         const selected = selectedAccessories.includes(acc.id);
-                        const Icon = acc.Icon;
                         return (
                           <button
                             key={acc.id}
+                            type="button"
                             onClick={() => {
                               setSelectedAccessories(prev => 
                                 prev.includes(acc.id) ? prev.filter(a => a !== acc.id) : [...prev, acc.id]
                               );
                             }}
-                            className={`p-6 rounded-2xl border-2 text-left transition-all flex flex-col justify-between h-40 group
+                            className={`p-6 rounded-2xl border-2 text-left transition-all flex flex-col justify-between h-44 group
                               ${selected 
                                 ? 'border-primary bg-primary-light' 
                                 : 'border-gray-100 bg-white hover:border-gray-200'}`}
                           >
-                            <div className="flex justify-between items-start w-full">
-                              <Icon size={28} strokeWidth={1.6} className={selected ? 'text-primary' : 'text-gray-500'} />
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                            <div className="flex justify-between items-start w-full gap-3">
+                              <QuizOptionIcon
+                                src={acc.iconSrc}
+                                Icon={acc.Icon}
+                                size={48}
+                                selected={selected}
+                                alt={acc.label}
+                              />
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0
                                 ${selected ? 'border-primary bg-primary' : 'border-gray-200'}`}>
                                 {selected && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>}
                               </div>
