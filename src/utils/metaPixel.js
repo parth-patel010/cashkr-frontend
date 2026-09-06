@@ -102,30 +102,32 @@ export function trackPhoneViewContent() {
  */
 /** Existing Google Ads quote conversion (legacy account). */
 const GOOGLE_ADS_QUOTE_CONVERSION = 'AW-18298173248/8c7OCNnx588cEMDun5VE';
-/** Begin checkout → purchase funnel (AW-18430219806). */
-const GOOGLE_ADS_BEGIN_CHECKOUT_CONVERSION = 'AW-18430219806/sHfdCNv3n-4cEJ6sm9RE';
+/** AW-18430219806 — Sign-up / Lead */
+const GOOGLE_ADS_LEAD_CONVERSION = 'AW-18430219806/Y5rYCK-j8e8cEJ6sm9RE';
+/** AW-18430219806 — Begin checkout */
+const GOOGLE_ADS_CHECKOUT_CONVERSION = 'AW-18430219806/dEbxCIev7e8cEJ6sm9RE';
+/** AW-18430219806 — Purchase */
+const GOOGLE_ADS_PURCHASE_CONVERSION = 'AW-18430219806/4Le3CPCE5O8cEJ6sm9RE';
 
-function trackGoogleAdsConversion(sendTo, value) {
+function trackGoogleAdsConversion(sendTo, { value, transactionId } = {}) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
   const payload = {
     send_to: sendTo,
     value: value != null && !Number.isNaN(Number(value)) ? Number(value) : 1.0,
     currency: CURRENCY,
   };
+  if (transactionId) {
+    payload.transaction_id = String(transactionId);
+  }
   window.gtag('event', 'conversion', payload);
 }
 
 function trackGoogleAdsQuoteConversion(value) {
-  trackGoogleAdsConversion(GOOGLE_ADS_QUOTE_CONVERSION, value);
-}
-
-/** Same conversion as Google's gtag_report_conversion snippet — lead → purchase path. */
-function trackGoogleAdsBeginCheckoutConversion(value) {
-  trackGoogleAdsConversion(GOOGLE_ADS_BEGIN_CHECKOUT_CONVERSION, value);
+  trackGoogleAdsConversion(GOOGLE_ADS_QUOTE_CONVERSION, { value });
 }
 
 /**
- * HTML-link helper matching Google's snippet (optional redirect after fire).
+ * HTML-link helper for begin-checkout (optional redirect after fire).
  * Prefer calling trackPhone* helpers from React; this is for raw <a onclick>.
  */
 export function gtag_report_conversion(url) {
@@ -139,7 +141,7 @@ export function gtag_report_conversion(url) {
     }
   };
   window.gtag('event', 'conversion', {
-    send_to: GOOGLE_ADS_BEGIN_CHECKOUT_CONVERSION,
+    send_to: GOOGLE_ADS_CHECKOUT_CONVERSION,
     value: 1.0,
     currency: CURRENCY,
     event_callback: callback,
@@ -168,7 +170,7 @@ export function trackPhoneLead({ brand, modelName, value }) {
   fireWithRetry(fire);
   // Google Ads once (not inside fbq retry loop)
   trackGoogleAdsQuoteConversion(value);
-  trackGoogleAdsBeginCheckoutConversion(value);
+  trackGoogleAdsConversion(GOOGLE_ADS_LEAD_CONVERSION, { value });
 }
 
 export function trackPhoneInitiateCheckout({ brand, modelName, value }) {
@@ -178,7 +180,7 @@ export function trackPhoneInitiateCheckout({ brand, modelName, value }) {
   
   trackOnce(`checkout_${slug}`, () => {
     fireWithRetry(() => fireFbq('trackSingle', 'InitiateCheckout', params, eventId));
-    trackGoogleAdsBeginCheckoutConversion(value);
+    trackGoogleAdsConversion(GOOGLE_ADS_CHECKOUT_CONVERSION, { value });
   });
 }
 
@@ -191,6 +193,9 @@ export function trackPhonePurchase({ orderId, brand, modelName, value }) {
   
   trackOnce(`purchase_${orderId}`, () => {
     fireWithRetry(() => fireFbq('trackSingle', 'Purchase', params, eventId));
-    trackGoogleAdsBeginCheckoutConversion(value);
+    trackGoogleAdsConversion(GOOGLE_ADS_PURCHASE_CONVERSION, {
+      value,
+      transactionId: orderId || '',
+    });
   });
 }
