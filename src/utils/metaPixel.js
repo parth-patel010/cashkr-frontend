@@ -100,16 +100,51 @@ export function trackPhoneViewContent() {
  * Phone quote completed.
  * Fires standard Lead (for Meta Ads) + custom PhoneQuote (visible in Pixel Helper if Lead is filtered).
  */
+/** Existing Google Ads quote conversion (legacy account). */
 const GOOGLE_ADS_QUOTE_CONVERSION = 'AW-18298173248/8c7OCNnx588cEMDun5VE';
+/** Begin checkout → purchase funnel (AW-18430219806). */
+const GOOGLE_ADS_BEGIN_CHECKOUT_CONVERSION = 'AW-18430219806/sHfdCNv3n-4cEJ6sm9RE';
+
+function trackGoogleAdsConversion(sendTo, value) {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  const payload = {
+    send_to: sendTo,
+    value: value != null && !Number.isNaN(Number(value)) ? Number(value) : 1.0,
+    currency: CURRENCY,
+  };
+  window.gtag('event', 'conversion', payload);
+}
 
 function trackGoogleAdsQuoteConversion(value) {
-  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
-  const payload = { send_to: GOOGLE_ADS_QUOTE_CONVERSION };
-  if (value != null && !Number.isNaN(Number(value))) {
-    payload.value = Number(value);
-    payload.currency = CURRENCY;
+  trackGoogleAdsConversion(GOOGLE_ADS_QUOTE_CONVERSION, value);
+}
+
+/** Same conversion as Google's gtag_report_conversion snippet — lead → purchase path. */
+function trackGoogleAdsBeginCheckoutConversion(value) {
+  trackGoogleAdsConversion(GOOGLE_ADS_BEGIN_CHECKOUT_CONVERSION, value);
+}
+
+/**
+ * HTML-link helper matching Google's snippet (optional redirect after fire).
+ * Prefer calling trackPhone* helpers from React; this is for raw <a onclick>.
+ */
+export function gtag_report_conversion(url) {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
+    if (typeof url !== 'undefined') window.location = url;
+    return false;
   }
-  window.gtag('event', 'conversion', payload);
+  const callback = () => {
+    if (typeof url !== 'undefined') {
+      window.location = url;
+    }
+  };
+  window.gtag('event', 'conversion', {
+    send_to: GOOGLE_ADS_BEGIN_CHECKOUT_CONVERSION,
+    value: 1.0,
+    currency: CURRENCY,
+    event_callback: callback,
+  });
+  return false;
 }
 
 export function trackPhoneLead({ brand, modelName, value }) {
@@ -125,15 +160,15 @@ export function trackPhoneLead({ brand, modelName, value }) {
     if (typeof window.fbq === 'function') {
       window.fbq('trackSingle', PIXEL_ID, 'Lead', params, { eventID: eventId });
       window.fbq('trackSingleCustom', PIXEL_ID, 'PhoneQuote', params);
+      return true;
     }
-
-    // Google Ads — Request quote conversion
-    trackGoogleAdsQuoteConversion(value);
-
-    return true;
+    return false;
   };
 
   fireWithRetry(fire);
+  // Google Ads once (not inside fbq retry loop)
+  trackGoogleAdsQuoteConversion(value);
+  trackGoogleAdsBeginCheckoutConversion(value);
 }
 
 export function trackPhoneInitiateCheckout({ brand, modelName, value }) {
@@ -143,6 +178,7 @@ export function trackPhoneInitiateCheckout({ brand, modelName, value }) {
   
   trackOnce(`checkout_${slug}`, () => {
     fireWithRetry(() => fireFbq('trackSingle', 'InitiateCheckout', params, eventId));
+    trackGoogleAdsBeginCheckoutConversion(value);
   });
 }
 
@@ -155,5 +191,6 @@ export function trackPhonePurchase({ orderId, brand, modelName, value }) {
   
   trackOnce(`purchase_${orderId}`, () => {
     fireWithRetry(() => fireFbq('trackSingle', 'Purchase', params, eventId));
+    trackGoogleAdsBeginCheckoutConversion(value);
   });
 }

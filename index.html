@@ -67,6 +67,22 @@
       gtag('config', 'AW-18298173248');
       gtag('config', 'AW-18430219806');
       gtag('config', 'G-BPR9ZESN7G');
+
+      /** Begin checkout conversion — also fired from metaPixel.js on Lead / Checkout / Purchase */
+      window.gtag_report_conversion = function gtag_report_conversion(url) {
+        var callback = function () {
+          if (typeof url != 'undefined') {
+            window.location = url;
+          }
+        };
+        gtag('event', 'conversion', {
+          send_to: 'AW-18430219806/sHfdCNv3n-4cEJ6sm9RE',
+          value: 1.0,
+          currency: 'INR',
+          event_callback: callback
+        });
+        return false;
+      };
     </script>
     <!-- Meta Pixel Code -->
     <script>
