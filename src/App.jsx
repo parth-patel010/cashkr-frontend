@@ -89,6 +89,7 @@ import AdminCategoryQuiz from './pages/admin/AdminCategoryQuiz.jsx';
 import AdminValuationTest from './pages/admin/AdminValuationTest.jsx';
 import AdminPricingAgent from './pages/admin/AdminPricingAgent.jsx';
 import AdminVendorCommission from './pages/admin/AdminVendorCommission.jsx';
+import AdminStorage from './pages/admin/AdminStorage.jsx';
 import AdminNotifications from './pages/admin/AdminNotifications.jsx';
 import AdminSecurityAudit from './pages/admin/AdminSecurityAudit.jsx';
 import AdminRepairServices from './pages/admin/AdminRepairServices.jsx';
@@ -235,6 +236,7 @@ function App() {
             <Route path="valuation-test" element={<AdminValuationTest />} />
             <Route path="pricing-agent" element={<AdminPricingAgent />} />
             <Route path="vendor-commission" element={<AdminVendorCommission />} />
+            <Route path="storage" element={<AdminStorage />} />
             <Route path="security-audit" element={<AdminSecurityAudit />} />
             <Route path="repair-services" element={<AdminRepairServices />} />
             <Route path="chat" element={<AdminChat />} />

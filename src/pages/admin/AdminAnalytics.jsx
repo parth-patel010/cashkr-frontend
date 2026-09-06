@@ -9,6 +9,8 @@ import {
   Settings,
   X,
   CalendarRange,
+  Percent,
+  CheckCircle2,
 } from 'lucide-react';
 import { adminService } from '../../services/admin.service';
 import './admin.css';
@@ -16,6 +18,11 @@ import './admin.css';
 function formatINR(value) {
   if (value == null || Number.isNaN(Number(value))) return '—';
   return `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+}
+
+function formatPercent(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—';
+  return `${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 2 })}%`;
 }
 
 function toLocalISODate(date) {
@@ -217,6 +224,24 @@ export default function AdminAnalytics() {
       accent: '#2dd4bf',
       hint: 'Completed orders in range',
     },
+    {
+      key: 'conversionRate',
+      label: 'Conversion Rate',
+      value: formatPercent(data?.conversionRate),
+      icon: <Percent size={20} className="text-violet-500" />,
+      bg: 'rgba(139, 92, 246, 0.1)',
+      accent: '#a78bfa',
+      hint: 'Orders ÷ users × 100',
+    },
+    {
+      key: 'completionRate',
+      label: 'Completion Rate',
+      value: formatPercent(data?.completionRate),
+      icon: <CheckCircle2 size={20} className="text-cyan-500" />,
+      bg: 'rgba(6, 182, 212, 0.1)',
+      accent: '#22d3ee',
+      hint: 'Completed ÷ orders × 100',
+    },
   ];
 
   return (
@@ -264,7 +289,7 @@ export default function AdminAnalytics() {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="admin-stat-card admin-skeleton h-[140px]" />
           ))}
         </div>
@@ -310,7 +335,7 @@ export default function AdminAnalytics() {
             <div>
               Formula:{' '}
               <span className="font-semibold text-slate-900">
-                Cost/User = Meta Spend ÷ Users · Cost/Order = Meta Spend ÷ Orders
+                Conversion = Orders ÷ Users · Completion = Completed ÷ Orders · Cost/User = Meta ÷ Users · Cost/Order = Meta ÷ Orders
               </span>
             </div>
             {data.metaSpend <= 0 && (

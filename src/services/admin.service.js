@@ -167,6 +167,23 @@ export const adminService = {
   getAnalytics: (params) => adminApi.get('/admin/analytics', { params }),
   updateMetaSpend: (data) => adminApi.put('/admin/analytics/meta-spend', data),
 
+  // Document storage
+  getStorageDocuments: (params) => adminApi.get('/admin/storage', { params }),
+  uploadStorageDocument: ({ file, category, title, description, vendorId }) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    formData.append('title', title);
+    if (description) formData.append('description', description);
+    if (vendorId) formData.append('vendorId', vendorId);
+    return adminApi.post('/admin/storage', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  downloadStorageDocument: (id) =>
+    adminApi.get(`/admin/storage/${id}/download`, { responseType: 'blob' }),
+  deleteStorageDocument: (id) => adminApi.delete(`/admin/storage/${id}`),
+
   // Valuation test (Cashify agent)
   getValuationTestModels: () => adminApi.get('/admin/valuation-test/models'),
   getValuationTestDevices: (params) => adminApi.get('/admin/valuation-test/devices', { params }),

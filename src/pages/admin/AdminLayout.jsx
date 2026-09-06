@@ -22,6 +22,7 @@ import {
   FlaskConical,
   Bot,
   Percent,
+  FolderOpen,
 } from 'lucide-react';
 import './admin.css';
 
@@ -53,6 +54,7 @@ export default function AdminLayout() {
     if (path.includes('/valuation-test')) return 'Valuation Test';
     if (path.includes('/pricing-agent')) return 'Pricing Agent';
     if (path.includes('/vendor-commission')) return 'Vendor Commission';
+    if (path.includes('/storage')) return 'Storage';
     if (path.includes('/security-audit')) return 'Security Audit';
     if (path.includes('/repair-services')) return 'Repair Prices (Model-wise)';
     if (path.includes('/leads')) return 'Leads (TV / Fridge / Repair)';
@@ -175,6 +177,14 @@ export default function AdminLayout() {
           >
             <Percent />
             <span>Vendor Commission</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/storage" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <FolderOpen />
+            <span>Storage</span>
           </NavLink>
 
           <NavLink 
