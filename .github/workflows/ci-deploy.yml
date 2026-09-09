@@ -1,0 +1,132 @@
+name: CI and Deploy Frontend
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write # artifact upload/download within this workflow
+
+concurrency:
+  group: production-frontend
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build:
+    name: Build Vite dist artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # Public Vite vars only — never production API secrets
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_MOBILE_APP_API_KEY: ${{ vars.VITE_MOBILE_APP_API_KEY }}
+
+      - name: Package dist tarball
+        run: |
+          test -f dist/index.html
+          mkdir -p dist-release
+          tar -czf "dist-release/frontend-${GITHUB_SHA}.tgz" -C dist .
+          printf '%s\n' "${GITHUB_SHA}" > dist-release/RELEASE_SHA
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-${{ github.sha }}
+          path: dist-release/frontend-${{ github.sha }}.tgz
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    name: Deploy to VPS
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout (deploy scripts)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: frontend-${{ github.sha }}
+          path: dist-release
+
+      - name: Configure SSH (pinned host key)
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          : "${VPS_HOST:?VPS_HOST secret required}"
+          : "${VPS_USER:?VPS_USER secret required}"
+          : "${VPS_SSH_PRIVATE_KEY:?VPS_SSH_PRIVATE_KEY secret required}"
+          : "${VPS_SSH_KNOWN_HOSTS:?VPS_SSH_KNOWN_HOSTS secret required}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          cat > ~/.ssh/config <<EOF
+Host cashkr-vps
+  HostName ${VPS_HOST}
+  User ${VPS_USER}
+  Port ${VPS_PORT:-22}
+  IdentityFile ~/.ssh/id_deploy
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+  UserKnownHostsFile ~/.ssh/known_hosts
+EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Transfer artifact and deploy scripts
+        run: |
+          set -euo pipefail
+          STAGE="/tmp/cashkr-frontend-staging/${GITHUB_SHA}"
+          ssh cashkr-vps "mkdir -p '${STAGE}' /opt/cashkr/frontend/scripts/deploy"
+          scp "dist-release/frontend-${GITHUB_SHA}.tgz" "cashkr-vps:${STAGE}/release.tgz"
+          scp scripts/deploy/remote-deploy.sh cashkr-vps:/opt/cashkr/frontend/scripts/deploy/remote-deploy.sh
+          scp scripts/deploy/rollback-test.sh cashkr-vps:/opt/cashkr/frontend/scripts/deploy/rollback-test.sh
+          ssh cashkr-vps "chmod +x /opt/cashkr/frontend/scripts/deploy/*.sh"
+
+      - name: Remote atomic deploy
+        env:
+          HEALTH_URL: ${{ vars.FRONTEND_HEALTH_URL || 'https://www.devicekart.in/' }}
+        run: |
+          set -euo pipefail
+          STAGE="/tmp/cashkr-frontend-staging/${GITHUB_SHA}"
+          ssh cashkr-vps env \
+            RELEASE_SHA="${GITHUB_SHA}" \
+            RELEASE_TGZ="${STAGE}/release.tgz" \
+            APP_ROOT=/opt/cashkr/frontend \
+            HEALTH_URL="${HEALTH_URL}" \
+            KEEP_RELEASES=5 \
+            WORKFLOW_RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            bash -lc 'echo "Workflow: $WORKFLOW_RUN_URL" >> /opt/cashkr/frontend/deploy.log; /opt/cashkr/frontend/scripts/deploy/remote-deploy.sh'
