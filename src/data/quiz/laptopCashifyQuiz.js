@@ -8,14 +8,14 @@ export const BODY_SCRATCH_OPTIONS = [
 
 export const DENT_TOP_OPTIONS = [
   { key: 'none', label: 'No Dents on top panel' },
-  { key: 'minor2', label: 'Upto 2 Minor Dents' },
+  { key: 'minor2', label: 'Up to 2 Minor Dents' },
   { key: 'minorMore2', label: 'More than 2 Minor Dents' },
   { key: 'major', label: '1 or more Major Dents' },
 ];
 
 export const DENT_BASE_OPTIONS = [
   { key: 'none', label: 'No Dents on base panel' },
-  { key: 'minor2', label: 'Upto 2 Minor Dents' },
+  { key: 'minor2', label: 'Up to 2 Minor Dents' },
   { key: 'minorMore2', label: 'More than 2 Minor Dents' },
   { key: 'major', label: '1 or more Major Dents' },
 ];
@@ -69,8 +69,8 @@ export const SOFTWARE_OPTIONS = [
 
 export const CASHIFY_BODY_LABELS = {
   bodyScratch: { none: 'No Scratches', minor: 'Minor Scratch on Body', major: 'Major Scratch on Body' },
-  dentTop: { none: 'No Dents on top panel', minor2: 'Upto 2 Minor Dents', minorMore2: 'More than 2 Minor Dents', major: '1 or more Major Dents' },
-  dentBase: { none: 'No Dents on base panel', minor2: 'Upto 2 Minor Dents', minorMore2: 'More than 2 Minor Dents', major: '1 or more Major Dents' },
+  dentTop: { none: 'No Dents on top panel', minor2: 'Up to 2 Minor Dents', minorMore2: 'More than 2 Minor Dents', major: '1 or more Major Dents' },
+  dentBase: { none: 'No Dents on base panel', minor2: 'Up to 2 Minor Dents', minorMore2: 'More than 2 Minor Dents', major: '1 or more Major Dents' },
   looseHinges: { no: 'No Loose Hinges', yes: 'Yes - Loose Hinges' },
   panelCondition: { none: 'No Cracked or Loose Panel', loose: 'Loose Panel', crack: 'Crack/Damage Panel' },
 };

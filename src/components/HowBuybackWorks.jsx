@@ -3,7 +3,7 @@ import { getCategoryBrandMeta } from "../data/categoryBrandContent";
 
 const ASSETS = {
   quote: "/landing_page_assets/how-it-work-phone-card1.png",
-  schedule: "/landing_page_assets/how-it-work-calender-card2.png",
+  schedule: "/landing_page_assets/how-it-work-calendar-card2.png?v=2",
   inspection: "/landing_page_assets/delivery-person.png",
   offer: "/landing_page_assets/how-it-work-pricing-accept.png",
   wipe: "/landing_page_assets/how-it-work-5th.png",
@@ -20,7 +20,7 @@ const STEPS = [
   {
     num: "02",
     title: "Schedule Pickup",
-    desc: "Choose a convenient date and time. We'll come to your doorstep and pickup your device for free.",
+    desc: "Choose a convenient date and time. We'll come to your doorstep and pick up your device for free.",
     image: ASSETS.schedule,
   },
   {

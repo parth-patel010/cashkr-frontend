@@ -46,7 +46,7 @@ const PROCESS_STEPS = [
   {
     n: 2,
     title: "Confirm Details",
-    desc: "Answer few questions about your device.",
+    desc: "Answer a few questions about your device.",
     Icon: ClipboardList,
     color: "bg-[#DCFCE7] text-[#16A34A]",
   },
@@ -128,7 +128,7 @@ function DeviceCard({ device, badge, active, onActivate }) {
         {device.modelName}
       </h3>
       <p className="text-sm text-gray-500 mt-1 mb-4">
-        Upto {formatCurrency(device.maxPrice)}
+        Up to {formatCurrency(device.maxPrice)}
       </p>
 
       <div className="hidden sm:grid grid-cols-3 gap-1 mb-4">

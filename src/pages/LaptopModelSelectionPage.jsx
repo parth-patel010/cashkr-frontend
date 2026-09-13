@@ -107,7 +107,7 @@ export default function LaptopModelSelectionPage() {
                     model.ramOptions?.length
                       ? `${model.ramOptions[0]} – ${model.ramOptions[model.ramOptions.length - 1]} RAM`
                       : null,
-                    `Upto ${formatCurrency(model.maxPrice)}`,
+                    `Up to ${formatCurrency(model.maxPrice)}`,
                   ]
                     .filter(Boolean)
                     .join(" · ")

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { deviceService } from "../services/device.service";
 
-const HERO_IMG = "/landing_page_assets/hero-right-img.png";
+const HERO_IMG = "/landing_page_assets/hero-right-img.png?v=4";
 
 const POPULAR = [
   "iPhone 15",

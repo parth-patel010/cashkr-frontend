@@ -178,7 +178,7 @@ export default function SellCategoryVariantPage() {
                         {variant.storage}
                       </p>
                       <p className="text-sm font-semibold text-gray-500 mt-0.5">
-                        Get upto {formatCurrency(variant.basePrice)}
+                        Get up to {formatCurrency(variant.basePrice)}
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-white border border-[#E8EEF5] flex items-center justify-center text-gray-300 group-hover:bg-primary group-hover:border-primary group-hover:text-white transition-all">

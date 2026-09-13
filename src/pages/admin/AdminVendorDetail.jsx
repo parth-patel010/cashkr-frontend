@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   IndianRupee,
@@ -17,6 +17,7 @@ import {
   User,
 } from 'lucide-react';
 import { adminService } from '../../services/admin.service';
+import { OrderDetailModal } from './AdminOrders';
 import './admin.css';
 
 const STATUS_LABELS = {
@@ -64,11 +65,22 @@ export default function AdminVendorDetail() {
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    adminService
+      .getVendors({ limit: 200 })
+      .then((res) => setVendors(res.data.vendors || []))
+      .catch(() => setVendors([]));
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -81,13 +93,17 @@ export default function AdminVendorDetail() {
   useEffect(() => {
     setLoading(true);
     setError('');
+    const params = {
+      status: status || undefined,
+      search: debouncedSearch || undefined,
+      page,
+      limit: 20,
+    };
+    if (sort === 'pickupClosest') params.sort = 'pickupClosest';
+    else if (sort === 'pickupDateDesc') params.sort = 'pickupDateDesc';
+
     adminService
-      .getVendor(id, {
-        status: status || undefined,
-        search: debouncedSearch || undefined,
-        page,
-        limit: 20,
-      })
+      .getVendor(id, params)
       .then((res) => {
         setVendor(res.data.vendor);
         setStats(res.data.stats);
@@ -100,7 +116,35 @@ export default function AdminVendorDetail() {
         setError(err.response?.data?.message || 'Failed to load vendor');
       })
       .finally(() => setLoading(false));
-  }, [id, status, debouncedSearch, page]);
+  }, [id, status, debouncedSearch, sort, page]);
+
+  const handleLaterAdjust = async (order, payload) => {
+    try {
+      const idForApi = order._id || order.orderId;
+      const res = await adminService.laterAdjustOrder(idForApi, payload);
+      const updated = res.data.order;
+      setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...updated } : o)));
+      setSelectedOrder((prev) => (prev && prev._id === order._id ? { ...prev, ...updated } : prev));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to apply later adjustment');
+      throw err;
+    }
+  };
+
+  const handleAssignVendor = async (order, vendorId) => {
+    setAssigning(true);
+    try {
+      const idForApi = order._id || order.orderId;
+      const res = await adminService.assignOrderVendor(idForApi, vendorId || null);
+      const updated = res.data.order;
+      setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...updated } : o)));
+      setSelectedOrder((prev) => (prev && prev._id === order._id ? { ...prev, ...updated } : prev));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to assign vendor');
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   if (loading && !vendor) {
     return (
@@ -174,7 +218,7 @@ export default function AdminVendorDetail() {
       label: 'Credits',
       value: stats?.credits || 0,
       icon: <Coins size={20} className="text-sky-400" />,
-      bg: 'rgba(14, 165, 233, 0.1)',
+      bg: 'rgba(14, 165, 233, 0.12)',
       accent: '#38bdf8',
     },
     {
@@ -266,13 +310,28 @@ export default function AdminVendorDetail() {
         </div>
       </div>
 
-      <div className="admin-search-bar">
-        <Search size={16} />
-        <input
-          placeholder="Search order ID, device, customer, city, pincode..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div className="admin-search-bar flex-1">
+          <Search size={16} />
+          <input
+            placeholder="Search order ID, device, customer, city, pincode..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <select
+          className="admin-select"
+          value={sort}
+          onChange={(e) => {
+            setSort(e.target.value);
+            setPage(1);
+          }}
+          title="Sort orders"
+        >
+          <option value="newest">Newest first</option>
+          <option value="pickupClosest">Closest pickup date</option>
+          <option value="pickupDateDesc">Farthest pickup date</option>
+        </select>
       </div>
 
       <div className="admin-table-wrap">
@@ -287,15 +346,20 @@ export default function AdminVendorDetail() {
               <th>Value</th>
               <th>Status</th>
               <th>Assigned</th>
+              <th>View Details</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => (
               <tr key={order._id}>
                 <td>
-                  <Link to="/admin/orders" className="font-mono text-xs text-blue-600 font-semibold">
+                  <button
+                    type="button"
+                    className="font-mono text-xs text-blue-600 font-semibold bg-transparent border-0 p-0 cursor-pointer"
+                    onClick={() => setSelectedOrder(order)}
+                  >
                     {order.orderId}
-                  </Link>
+                  </button>
                 </td>
                 <td>
                   <div className="font-semibold text-slate-800">
@@ -326,11 +390,20 @@ export default function AdminVendorDetail() {
                     ? new Date(order.assignedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
                     : new Date(order.createdAt).toLocaleDateString('en-IN')}
                 </td>
+                <td>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-ghost text-xs"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <MapPin size={12} /> View
+                  </button>
+                </td>
               </tr>
             ))}
             {!orders.length ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center' }}>
+                <td colSpan={9} style={{ textAlign: 'center' }}>
                   {loading ? 'Loading orders...' : 'No orders assigned to this vendor for the selected filter.'}
                 </td>
               </tr>
@@ -363,6 +436,18 @@ export default function AdminVendorDetail() {
             </button>
           </div>
         </div>
+      ) : null}
+
+      {selectedOrder ? (
+        <OrderDetailModal
+          order={selectedOrder}
+          orderType="sell"
+          vendors={vendors}
+          assigning={assigning}
+          onAssignVendor={handleAssignVendor}
+          onLaterAdjust={handleLaterAdjust}
+          onClose={() => setSelectedOrder(null)}
+        />
       ) : null}
     </div>
   );

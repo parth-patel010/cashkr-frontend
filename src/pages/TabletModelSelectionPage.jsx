@@ -101,7 +101,7 @@ export default function TabletModelSelectionPage() {
                 key={model.slug}
                 to={`/sell-tablet/${brand}/${model.slug}`}
                 title={model.modelName}
-                subtitle={`Upto ${formatCurrency(model.maxPrice)}`}
+                subtitle={`Up to ${formatCurrency(model.maxPrice)}`}
                 image={
                   model.imageUrl ? (
                     <img

@@ -16,7 +16,7 @@ const STATUS_BY_TYPE = {
   repair: ['booked', 'assigned', 'picked', 'repairing', 'quality_check', 'delivered', 'cancelled'],
 };
 
-function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAssignVendor, onLaterAdjust }) {
+export function OrderDetailModal({ order, orderType, onClose, vendors, assigning, onAssignVendor, onLaterAdjust }) {
   const pbInit = order?.priceBreakdown || {};
   const [laterAmount, setLaterAmount] = useState(String(pbInit.laterAdjustment || ''));
   const [laterNote, setLaterNote] = useState(pbInit.laterAdjustmentNote || '');
@@ -564,6 +564,7 @@ export default function AdminOrders() {
   const [status, setStatus] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [sort, setSort] = useState('newest');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
@@ -601,6 +602,8 @@ export default function AdminOrders() {
     if (orderType === 'sell') {
       if (fromDate) params.fromDate = fromDate;
       if (toDate) params.toDate = toDate;
+      if (sort === 'pickupClosest') params.sort = 'pickupClosest';
+      else if (sort === 'pickupDateDesc') params.sort = 'pickupDateDesc';
     }
 
     const request =
@@ -625,7 +628,7 @@ export default function AdminOrders() {
 
   useEffect(() => {
     fetchOrders();
-  }, [debouncedSearch, status, fromDate, toDate, page, orderType]);
+  }, [debouncedSearch, status, fromDate, toDate, sort, page, orderType]);
 
   const handleExport = async () => {
     if (orderType !== 'sell') {
@@ -639,6 +642,8 @@ export default function AdminOrders() {
       if (status) params.status = status;
       if (fromDate) params.fromDate = fromDate;
       if (toDate) params.toDate = toDate;
+      if (sort === 'pickupClosest') params.sort = 'pickupClosest';
+      else if (sort === 'pickupDateDesc') params.sort = 'pickupDateDesc';
       const res = await adminService.exportOrders(params);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
@@ -775,6 +780,19 @@ export default function AdminOrders() {
 
           {orderType === 'sell' ? (
             <>
+              <select
+                className="admin-select"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setPage(1);
+                }}
+                title="Sort orders"
+              >
+                <option value="newest">Newest first</option>
+                <option value="pickupClosest">Closest pickup date</option>
+                <option value="pickupDateDesc">Farthest pickup date</option>
+              </select>
               <input
                 type="date"
                 className="admin-select"

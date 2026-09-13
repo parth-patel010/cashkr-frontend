@@ -102,7 +102,7 @@ export default function ModelSelectionPage() {
                 key={model.slug}
                 to={`/sell-old-mobile-phones/${brand}/${model.slug}`}
                 title={model.modelName}
-                subtitle={`Upto ${formatCurrency(model.maxPrice)}`}
+                subtitle={`Up to ${formatCurrency(model.maxPrice)}`}
                 image={
                   model.imageUrl ? (
                     <img

@@ -12,7 +12,7 @@ export const SUPPORT_EMAIL = 'support@devicekart.in';
 
 export const SOCIAL_LINKS = {
   twitter: 'https://twitter.com/devicekart',
-  instagram: 'https://instagram.com/devicekart',
+  instagram: 'https://www.instagram.com/devicekart_/',
   facebook: 'https://facebook.com/devicekart',
   linkedin: 'https://linkedin.com/company/devicekart',
 };
